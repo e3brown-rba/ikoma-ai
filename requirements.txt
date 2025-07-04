@@ -1,8 +1,13 @@
-langchain==0.3.26
-langchain-openai==0.3.27
-langchain-community==0.3.27
-langchain-core==0.3.68
+# LangChain - Let pip resolve the exact versions for compatibility
+langchain
+langchain-openai
+langchain-community
+langchain-core
+langchain-chroma
+
+# Other Dependencies
 numexpr==2.11.0
 openai==1.93.0
 chromadb==0.5.23
-sentence-transformers==3.3.1 
+sentence-transformers==3.3.1
+python-dotenv==1.0.1 
