@@ -4,10 +4,14 @@ langchain-openai
 langchain-community
 langchain-core
 langchain-chroma
+langgraph
 
 # Other Dependencies
 numexpr==2.11.0
 openai==1.93.0
 chromadb==0.5.23
 sentence-transformers==3.3.1
-python-dotenv==1.0.1 
+python-dotenv==1.0.1
+
+# Development Tools
+yamllint 

@@ -4,14 +4,18 @@ from pathlib import Path
 import openai
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_react_agent, AgentExecutor
-from langchain.prompts import PromptTemplate
-from langchain_chroma import Chroma
-from langchain_openai import OpenAIEmbeddings
 from langchain.tools import tool
 from langchain_community.agent_toolkits.load_tools import load_tools
-from langchain.memory import ConversationBufferMemory
-from typing import List
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langgraph.graph import StateGraph, END
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.store.memory import InMemoryStore
+from langchain_openai import OpenAIEmbeddings
+from typing import List, Dict, Any, TypedDict, Annotated, Optional
+from langgraph.graph.message import add_messages
+import uuid
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -34,8 +38,31 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
         response = temp_client.embeddings.create(input=text, model=self.model)
         return response.data[0].embedding
 
+# --- State Definition ---
+class AgentState(TypedDict):
+    """State schema for the agent with unified memory capabilities."""
+    messages: Annotated[List[Any], add_messages]
+    memory_context: Optional[str]
+    user_profile: Optional[Dict[str, Any]]
+    session_summary: Optional[str]
+
 # --- File Tools ---
 SANDBOX = Path(os.getenv("SANDBOX_PATH", "agent/ikoma_sandbox")).expanduser()
+
+def confirm_destructive_action(action_description: str, filename: str) -> bool:
+    """Ask user for confirmation before performing destructive file operations."""
+    print(f"\n⚠️  CONFIRMATION REQUIRED:")
+    print(f"   Action: {action_description}")
+    print(f"   File: {filename}")
+    
+    while True:
+        response = input("   Continue? (yes/no): ").strip().lower()
+        if response in ['yes', 'y']:
+            return True
+        elif response in ['no', 'n']:
+            return False
+        else:
+            print("   Please enter 'yes' or 'no'")
 
 @tool
 def list_sandbox_files(query: str = "") -> str:
@@ -64,6 +91,11 @@ def update_text_file(filename_and_content: str) -> str:
         filepath = os.path.join(SANDBOX, filename)
         if not os.path.exists(filepath):
             return f"File '{filename}' not found. Use create_text_file to create new files."
+        
+        # Request confirmation before overwriting
+        if not confirm_destructive_action("Overwrite existing file", filename):
+            return f"❌ Operation cancelled: File '{filename}' was not modified."
+        
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
         return f"✓ Updated file: {filename} with new content."
@@ -84,6 +116,11 @@ def create_text_file(filename_and_content: str) -> str:
         filepath = os.path.join(SANDBOX, filename)
         if os.path.exists(filepath):
             return f"File '{filename}' already exists. Use update_text_file."
+        
+        # Request confirmation before creating new file
+        if not confirm_destructive_action("Create new file", filename):
+            return f"❌ Operation cancelled: File '{filename}' was not created."
+        
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
         return f"✓ Created file: {filename} with content."
@@ -110,103 +147,204 @@ def read_text_file(filename: str) -> str:
     except Exception as e:
         return f"Error reading file: {e}"
 
-def setup_agent():
-    """Initializes and returns all the core components of the agent."""
-    base_url   = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
-    chat_model = os.getenv("LMSTUDIO_MODEL", "meta-llama-3-8b-instruct")
-    embed_model = os.getenv(
-        "LMSTUDIO_EMBED_MODEL",
-        "nomic-ai/nomic-embed-text-v1.5-GGUF",  # safe default embedding model
-    )
+# --- Memory Management Functions ---
+def retrieve_long_term_memory(state: AgentState, config: dict, *, store) -> AgentState:
+    """Retrieve relevant long-term memories based on current context."""
+    try:
+        # Extract user ID from config
+        user_id = config.get("configurable", {}).get("user_id", "default")
+        
+        # Get the last user message for context
+        user_messages = [msg for msg in state["messages"] if hasattr(msg, 'type') and msg.type == "human"]
+        if not user_messages:
+            return state
+        
+        last_user_message = user_messages[-1].content
+        
+        # Search for relevant memories using semantic search
+        namespace = ("memories", user_id)
+        
+        try:
+            memories = store.search(namespace, query=last_user_message, limit=3)
+            
+            if memories:
+                memory_context = "Previous relevant context:\n"
+                for memory in memories:
+                    memory_context += f"- {memory.value.get('content', '')}\n"
+                
+                state["memory_context"] = memory_context
+        except Exception as e:
+            print(f"Warning: Could not retrieve memories: {e}")
+            
+    except Exception as e:
+        print(f"Error in retrieve_long_term_memory: {e}")
+    
+    return state
 
-    llm = ChatOpenAI(
-        base_url=base_url,
-        model=chat_model,
-        temperature=0.1,
-    )
+def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentState:
+    """Store important information to long-term memory."""
+    try:
+        # Extract user ID from config
+        user_id = config.get("configurable", {}).get("user_id", "default")
+        
+        # Get the last few messages for context
+        recent_messages = state["messages"][-4:] if len(state["messages"]) >= 4 else state["messages"]
+        
+        # Extract memorable content (simplified logic)
+        memorable_content = []
+        for msg in recent_messages:
+            if hasattr(msg, 'content') and msg.content:
+                # Simple heuristic: store if it contains certain keywords or is sufficiently long
+                if any(keyword in msg.content.lower() for keyword in ['prefer', 'like', 'remember', 'important', 'project', 'task']):
+                    memorable_content.append(msg.content)
+        
+        # Store memories if we have content worth remembering
+        if memorable_content:
+            namespace = ("memories", user_id)
+            memory_id = str(uuid.uuid4())
+            
+            memory_entry = {
+                "content": " ".join(memorable_content),
+                "timestamp": datetime.now().isoformat(),
+                "context": "conversation"
+            }
+            
+            try:
+                store.put(namespace, memory_id, memory_entry)
+            except Exception as e:
+                print(f"Warning: Could not store memory: {e}")
+                
+    except Exception as e:
+        print(f"Error in store_long_term_memory: {e}")
+    
+    return state
 
+def agent_response(state: AgentState, config: dict, *, store) -> AgentState:
+    """Generate agent response using LLM with memory context."""
+    try:
+        # Get environment variables
+        base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
+        model_name = os.getenv("LMSTUDIO_MODEL", "meta-llama-3-8b-instruct")
+        
+        # Initialize LLM
+        llm = ChatOpenAI(
+            base_url=base_url,
+            model=model_name,
+            temperature=0.1,
+        )
+        
+        # Prepare tools
+        math_tools = load_tools(["llm-math"], llm=llm)
+        file_tools = [list_sandbox_files, create_text_file, update_text_file, read_text_file]
+        tools = math_tools + file_tools
+        
+        # Bind tools to LLM
+        llm_with_tools = llm.bind_tools(tools)
+        
+        # Build system message with memory context
+        system_content = """You are Ikoma, a helpful AI assistant with memory capabilities.
+
+You have access to the following tools:
+- Math calculations (llm-math)
+- File operations (create, read, update, list files in sandbox)
+
+For file operations, always use the exact format specified in the tool descriptions.
+
+If you have relevant context from previous conversations, use it to provide more personalized responses."""
+        
+        # Add memory context if available
+        if state.get("memory_context"):
+            system_content += f"\n\n{state['memory_context']}"
+        
+        # Prepare messages
+        messages = [SystemMessage(content=system_content)] + state["messages"]
+        
+        # Get response
+        response = llm_with_tools.invoke(messages)
+        
+        # Handle tool calls if present
+        if hasattr(response, 'tool_calls') and response.tool_calls:
+            # Execute tools and get results
+            tool_results = []
+            for tool_call in response.tool_calls:
+                tool_name = tool_call['name']
+                tool_args = tool_call['args']
+                
+                # Find and execute the tool
+                for tool in tools:
+                    if tool.name == tool_name:
+                        try:
+                            result = tool.invoke(tool_args)
+                            tool_results.append(f"{tool_name}: {result}")
+                        except Exception as e:
+                            tool_results.append(f"{tool_name}: Error - {e}")
+                        break
+            
+            # Create final response with tool results
+            if tool_results:
+                final_content = response.content + "\n\nTool Results:\n" + "\n".join(tool_results)
+                response = AIMessage(content=final_content)
+        
+        return {"messages": [response]}
+        
+    except Exception as e:
+        error_msg = f"I encountered an error: {e}"
+        return {"messages": [AIMessage(content=error_msg)]}
+
+# --- Agent Setup ---
+def create_agent():
+    """Create and configure the memory-enhanced agent."""
+    # Get environment variables
+    base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
+    embed_model = os.getenv("LMSTUDIO_EMBED_MODEL", "nomic-ai/nomic-embed-text-v1.5-GGUF")
+    
+    # Initialize embeddings for semantic search
     embeddings = PatchedOpenAIEmbeddings(
         openai_api_key="sk-dummy",
         openai_api_base=base_url,
         model=embed_model,
     )
-
-    vectorstore = Chroma(
-        persist_directory="agent/memory",
-        embedding_function=embeddings,
-        collection_name="ikoma_mem"
-    )
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 6})
-
-    math_tools = load_tools(["llm-math"], llm=llm)
-    file_tools = [list_sandbox_files, create_text_file, update_text_file, read_text_file]
-    tools = math_tools + file_tools
-
-    template = """You are Ikoma, a helpful AI assistant.
-
-TOOLS:
-------
-You have access to the following tools:
-{tools}
-
-CONVERSATION HISTORY (for short-term memory):
-----------------------------------------------
-{chat_history}
-
-INSTRUCTIONS:
--------------
-The user's new input is below. It may include relevant context from your long-term memory. Use this information to inform your response.
-
-To use a tool, you MUST use the following format:
-```
-Thought: Do I need to use a tool? Yes
-Action: The name of the tool to use, chosen from [{tool_names}]
-Action Input: The input to the tool
-Observation: The result of the tool
-```
-
-When you have a response for the user, or if you don't need to use a tool, you MUST use the format:
-```
-Thought: Do I need to use a tool? No
-Final Answer: [your response to the user]
-```
-
-Begin!
-
-New input: {input}
-{agent_scratchpad}
-"""
-    prompt = PromptTemplate.from_template(template)
-
-    agent = create_react_agent(llm, tools, prompt)
-    # TODO: ConversationBufferMemory is deprecated (LangChain warning).  
-    #       Migrate to the new LangGraph memory per
-    #       https://python.langchain.com/docs/versions/migrating_memory/
-    memory = ConversationBufferMemory(memory_key="chat_history")
-    agent_executor = AgentExecutor(
-        agent=agent,
-        tools=tools,
-        verbose=False,
-        handle_parsing_errors=True,
-        max_iterations=3,
-        memory=memory
-    )
-
-    def save_to_memory(input_str, output_str):
-        """Saves the conversation to the vector store."""
-        vectorstore.add_texts([f"User: {input_str}", f"AI: {output_str}"])
-
-    return agent_executor, retriever, save_to_memory
+    
+    # Initialize memory store for long-term memory
+    store = InMemoryStore()
+    
+    # Initialize checkpointer for short-term memory (conversation state)
+    checkpointer = SqliteSaver("agent/memory/conversations.sqlite")
+    
+    # Create state graph
+    workflow = StateGraph(AgentState)
+    
+    # Add nodes
+    workflow.add_node("retrieve_memory", retrieve_long_term_memory)
+    workflow.add_node("agent_response", agent_response)
+    workflow.add_node("store_memory", store_long_term_memory)
+    
+    # Add edges
+    workflow.add_edge("retrieve_memory", "agent_response")
+    workflow.add_edge("agent_response", "store_memory")
+    workflow.add_edge("store_memory", END)
+    
+    # Set entry point
+    workflow.set_entry_point("retrieve_memory")
+    
+    # Compile the graph
+    app = workflow.compile(checkpointer=checkpointer, store=store)
+    
+    return app
 
 # --- Main Loop ---
 if __name__ == "__main__":
-    agent_executor, retriever, save_to_memory = setup_agent()
+    agent = create_agent()
     
-    print("🤖 Ikoma: Hello! I can help with conversations, math, and file management.")
-    print("🤖 Ikoma: File operations are limited to the sandbox directory for safety.")
+    print("🤖 Ikoma: Hello! I'm your AI assistant with enhanced memory capabilities.")
+    print("🤖 Ikoma: I can remember our conversations and help with math and file operations.")
     print("🤖 Ikoma: Type 'quit' or 'exit' to end.")
     print("-" * 50)
-
+    
+    # Default user ID - in production, this would come from authentication
+    user_id = "default_user"
+    thread_id = f"thread_{user_id}_{uuid.uuid4().hex[:8]}"
+    
     while True:
         user_input = input("🧑‍💻 You: ").strip()
         if user_input.lower() in {"quit", "exit", "q"}:
@@ -219,28 +357,38 @@ if __name__ == "__main__":
         try:
             print("🤖 Ikoma: Let me think about that...")
             
-            retrieved_docs = retriever.invoke(user_input)
-            retrieved_context = "\n".join([doc.page_content for doc in retrieved_docs])
+            # Prepare config with user and thread identification
+            config = {
+                "configurable": {
+                    "thread_id": thread_id,
+                    "user_id": user_id
+                }
+            }
             
-            combined_input = (
-                "CONTEXT FROM LONG-TERM MEMORY:\n"
-                f"{retrieved_context}\n\n"
-                "---\n\n"
-                f"USER'S QUESTION:\n{user_input}"
-            )
+            # Invoke agent with memory capabilities
+            initial_state = {
+                "messages": [HumanMessage(content=user_input)],
+                "memory_context": None,
+                "user_profile": None,
+                "session_summary": None
+            }
             
-            response = agent_executor.invoke({"input": combined_input})
-            output = response.get('output', 'I apologize, but I had trouble processing that request.')
-            print(f"🤖 Ikoma: {output}")
-
-            save_to_memory(user_input, output)
+            result = agent.invoke(initial_state, config)
+            
+            # Get the last AI message
+            ai_messages = [msg for msg in result["messages"] if hasattr(msg, 'type') and msg.type == "ai"]
+            if ai_messages:
+                output = ai_messages[-1].content
+                print(f"🤖 Ikoma: {output}")
+            else:
+                print("🤖 Ikoma: I apologize, but I had trouble processing that request.")
             
         except Exception as e:
             print(f"🤖 Ikoma: I encountered an issue: {e}")
-            try:
-                fallback_response = llm.invoke(f"You are Ikoma, a helpful AI assistant. Respond to: {user_input}")
-                print(f"🤖 Ikoma: {fallback_response.content}")
-            except:
-                print("🤖 Ikoma: I'm having connection issues. Please check your LM Studio server.")
+            print("🤖 Ikoma: Please check that your LM Studio server is running.")
         
-        print("-" * 50) 
+        print("-" * 50)
+
+# TODO: Add a cronable reflection job (reflect.py)
+#   Each night, summarise the day's (User, AI) pairs into "lessons learned"
+#   and append those summaries to long-term memory for improved responses. 

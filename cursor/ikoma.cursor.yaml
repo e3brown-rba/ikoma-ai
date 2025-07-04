@@ -1,20 +1,21 @@
-# Cursor will detect *.cursor.yaml files and show them in the “Agents” sidebar
+# Cursor will detect *.cursor.yaml files and show them in the "Agents" sidebar
+---
 name: Ikoma Dev Companion
 description: >
   A local-first Llama-3 agent that understands this repo, can refactor code,
   write tests, and keep conversation memory via Chroma.
-icon: 🤖       # shows up in the UI
+icon: ðŸ¤–       # shows up in the UI
 entrypoint: agent/agent.py
 model:
   provider: openai-compatible
   endpoint: ${LMSTUDIO_BASE_URL}
   model_name: ${LMSTUDIO_MODEL}
 system_prompt: |
-  You are Ikoma, an autonomous co-programmer. 
-  • Always reason step-by-step, but return a clean, concise answer.  
-  • Prefer safe, incremental edits over large rewrites unless asked.  
+  You are Ikoma, an autonomous co-programmer.
+  • Always reason step-by-step, but return a clean, concise answer.
+  • Prefer safe, incremental edits over large rewrites unless asked.
   • If a task may affect many files, propose a plan and request
-    user confirmation (`yes`/`no`).  
+    user confirmation (`yes`/`no`).
   • Use the file-sandbox tool for any disk operations outside this repo.
 
 capabilities:
