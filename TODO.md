@@ -72,6 +72,12 @@
   - ✅ Optimized node functions with shared LLM and tool instances
   - ✅ 3-5x performance improvement through resource sharing
 
+### ✅ Persistence Integration (Phase 1-B Extension)
+- [x] Swap in Chromadb client everywhere (agent & reflection)
+- [x] Regression test to verify memories survive restarts
+- [x] CLI to reset vector store
+- [x] check_env() for critical configuration warnings
+
 ## 🎉 Complete Accomplishment Summary
 
 ### 🏗️ **Modern Architecture (Phase 1 + 1-B)**

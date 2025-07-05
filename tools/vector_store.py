@@ -260,3 +260,33 @@ def get_vector_store() -> PersistentVectorStore:
             base_url=os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
         )
     return vector_store 
+
+def example_persist():
+    """Minimal example to verify persistence in regression tests."""
+    store = get_vector_store()
+    test_ns = ("tests", "persistence")
+    test_key = "demo"
+    test_value = {"content": "Hello persistence", "timestamp": datetime.now().isoformat()}
+    store.put(test_ns, test_key, test_value)
+    return store.get(test_ns, test_key)
+
+if __name__ == "__main__":
+    import argparse, shutil
+
+    parser = argparse.ArgumentParser(description="PersistentVectorStore utility helper")
+    parser.add_argument("--reset", action="store_true", help="Delete the entire persistent vector store (irreversible)")
+    parser.add_argument("--path", type=str, default="agent/memory/vector_store", help="Path to the persistent vector store directory")
+
+    args = parser.parse_args()
+
+    if args.reset:
+        target_path = Path(args.path)
+        if target_path.exists() and target_path.is_dir():
+            confirmation = input(f"⚠️  This will permanently delete the vector store at {target_path}. Continue? (yes/no): ").strip().lower()
+            if confirmation == "yes":
+                shutil.rmtree(target_path)
+                print(f"✅ Vector store at {target_path} has been deleted.")
+            else:
+                print("❌ Reset cancelled.")
+        else:
+            print(f"Vector store directory {target_path} does not exist.") 

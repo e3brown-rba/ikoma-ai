@@ -27,7 +27,7 @@ import uuid
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
-from langgraph.store.memory import InMemoryStore
+from tools.vector_store import get_vector_store
 from langchain_openai import OpenAIEmbeddings
 
 # Load environment variables
@@ -71,7 +71,7 @@ class ReflectionEngine:
             model=self.embed_model,
         )
         
-        self.store = InMemoryStore()
+        self.store = get_vector_store()
         
         # Database path
         self.db_path = Path("agent/memory/conversations.sqlite")

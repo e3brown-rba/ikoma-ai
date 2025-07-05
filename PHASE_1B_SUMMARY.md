@@ -95,6 +95,17 @@ MAX_ITERATIONS=3
 - Optimized LLM calls with shared instances
 - Efficient vector search for memory retrieval
 
+## 💾 Persistence Integration (Phase 1-B Extension)
+
+| Deliverable | Status |
+|-------------|--------|
+| Swap in Chromadb client | ✅ Complete – agent & reflection now use persistent store |
+| Regression test (memory survives restart) | ✅ `test_persistence_vector_store.py` created |
+| Vector-store reset CLI | ✅ `python tools/vector_store.py --reset` |
+| Environment sanity check | ✅ `check_env()` warns if critical vars are missing |
+
+These finishing touches guarantee that long-term memories persist across runs and that developers receive clear feedback when configuration is incomplete.
+
 ## 🏗️ Architecture Overview
 
 ```

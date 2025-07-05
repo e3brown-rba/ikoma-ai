@@ -10,7 +10,6 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
-from langgraph.store.memory import InMemoryStore
 from langchain_openai import OpenAIEmbeddings
 from typing import List, Dict, Any, TypedDict, Annotated, Optional, Union
 from langgraph.graph.message import add_messages
@@ -674,9 +673,31 @@ Let me know if you need anything else!"""
     
     return state
 
+# --- Environment Sanity Check ---
+def check_env() -> None:
+    """Warn the user when critical environment variables are missing or invalid."""
+    critical_vars = [
+        "LMSTUDIO_BASE_URL",
+        "LMSTUDIO_MODEL",
+        "LMSTUDIO_EMBED_MODEL",
+        "VECTOR_STORE_PATH",
+    ]
+    for var in critical_vars:
+        value = os.getenv(var)
+        if not value:
+            print(f"⚠️  ENV WARNING: Required variable {var} is not set. Using default built-in fallback.")
+        elif var == "VECTOR_STORE_PATH":
+            # Warn if the vector store path does not exist (it will be created automatically, but notify the user)
+            store_path = Path(value)
+            if not store_path.exists():
+                print(f"ℹ️  INFO: VECTOR_STORE_PATH {store_path} does not exist yet – it will be created on first use.")
+
 # --- Agent Setup ---
 def create_agent():
     """Create and configure the enhanced plan-execute-reflect agent."""
+    # Perform environment sanity check once at startup
+    check_env()
+
     # Get environment variables
     base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
     embed_model = os.getenv("LMSTUDIO_EMBED_MODEL", "nomic-ai/nomic-embed-text-v1.5-GGUF")
