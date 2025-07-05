@@ -1,9 +1,9 @@
 # LangChain - Let pip resolve the exact versions for compatibility
-langchain
-langchain-openai
-langchain-community
-langchain-core
-langchain-chroma
+langchain==0.2.2
+langchain-core==0.1.55
+langchain-openai==0.0.7
+langchain-community==0.0.19
+langchain-chroma==0.0.7
 langgraph
 
 # Other Dependencies

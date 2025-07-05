@@ -1,6 +1,14 @@
 import os
 from pathlib import Path
-from langchain.tools import tool
+try:
+    from langchain.tools import tool  # LangChain <=0.1.x
+except ImportError:  # LangChain >=0.2.x moved decorators
+    try:
+        from langchain_core.tools import tool  # New location
+    except ImportError:
+        # Fallback no-op decorator so code remains runnable in minimal envs (e.g. tests)
+        def tool(fn):
+            return fn
 
 # Sandbox configuration
 SANDBOX = Path(os.getenv("SANDBOX_PATH", "agent/ikoma_sandbox")).expanduser()
