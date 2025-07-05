@@ -1,10 +1,10 @@
 import os
 import re
+import json
 from pathlib import Path
 import openai
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.tools import tool
 from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -12,10 +12,13 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.memory import InMemoryStore
 from langchain_openai import OpenAIEmbeddings
-from typing import List, Dict, Any, TypedDict, Annotated, Optional
+from typing import List, Dict, Any, TypedDict, Annotated, Optional, Union
 from langgraph.graph.message import add_messages
 import uuid
 from datetime import datetime
+import chromadb
+from tools.tool_loader import tool_loader
+from tools.vector_store import get_vector_store
 
 # Load environment variables from .env file
 load_dotenv()
@@ -38,114 +41,22 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
         response = temp_client.embeddings.create(input=text, model=self.model)
         return response.data[0].embedding
 
-# --- State Definition ---
+# --- Enhanced State Definition ---
 class AgentState(TypedDict):
-    """State schema for the agent with unified memory capabilities."""
+    """Enhanced state schema for plan-execute-reflect architecture."""
     messages: Annotated[List[Any], add_messages]
     memory_context: Optional[str]
     user_profile: Optional[Dict[str, Any]]
     session_summary: Optional[str]
+    current_plan: Optional[List[Dict[str, Any]]]
+    execution_results: Optional[List[Dict[str, Any]]]
+    reflection: Optional[str]
+    continue_planning: bool
+    max_iterations: int
+    current_iteration: int
 
-# --- File Tools ---
-SANDBOX = Path(os.getenv("SANDBOX_PATH", "agent/ikoma_sandbox")).expanduser()
-
-def confirm_destructive_action(action_description: str, filename: str) -> bool:
-    """Ask user for confirmation before performing destructive file operations."""
-    print(f"\n⚠️  CONFIRMATION REQUIRED:")
-    print(f"   Action: {action_description}")
-    print(f"   File: {filename}")
-    
-    while True:
-        response = input("   Continue? (yes/no): ").strip().lower()
-        if response in ['yes', 'y']:
-            return True
-        elif response in ['no', 'n']:
-            return False
-        else:
-            print("   Please enter 'yes' or 'no'")
-
-@tool
-def list_sandbox_files(query: str = "") -> str:
-    """List all files in the sandbox directory. No input needed."""
-    SANDBOX.mkdir(parents=True, exist_ok=True)
-    try:
-        files = os.listdir(SANDBOX)
-        if not files:
-            return "📁 Sandbox directory is empty. Create some files to get started!"
-        file_list = [f"📄 {file} ({os.path.getsize(os.path.join(SANDBOX, file))} bytes)" for file in files]
-        return "Files in sandbox:\n" + "\n".join(file_list)
-    except Exception as e:
-        return f"Error listing files: {e}"
-
-@tool
-def update_text_file(filename_and_content: str) -> str:
-    """Update/modify an existing text file in the sandbox. Format: filename|||new_content"""
-    SANDBOX.mkdir(parents=True, exist_ok=True)
-    try:
-        if "|||" not in filename_and_content:
-            return "Error: Use format 'filename|||new_content'"
-        filename, content = filename_and_content.split("|||", 1)
-        filename = filename.strip()
-        if not filename.endswith('.txt'):
-            filename += '.txt'
-        filepath = os.path.join(SANDBOX, filename)
-        if not os.path.exists(filepath):
-            return f"File '{filename}' not found. Use create_text_file to create new files."
-        
-        # Request confirmation before overwriting
-        if not confirm_destructive_action("Overwrite existing file", filename):
-            return f"❌ Operation cancelled: File '{filename}' was not modified."
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        return f"✓ Updated file: {filename} with new content."
-    except Exception as e:
-        return f"Error updating file: {e}"
-
-@tool
-def create_text_file(filename_and_content: str) -> str:
-    """Create a NEW text file in the sandbox. Format: filename|||content"""
-    SANDBOX.mkdir(parents=True, exist_ok=True)
-    try:
-        if "|||" not in filename_and_content:
-            return "Error: Use format 'filename|||content'"
-        filename, content = filename_and_content.split("|||", 1)
-        filename = filename.strip()
-        if not filename.endswith('.txt'):
-            filename += '.txt'
-        filepath = os.path.join(SANDBOX, filename)
-        if os.path.exists(filepath):
-            return f"File '{filename}' already exists. Use update_text_file."
-        
-        # Request confirmation before creating new file
-        if not confirm_destructive_action("Create new file", filename):
-            return f"❌ Operation cancelled: File '{filename}' was not created."
-        
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
-        return f"✓ Created file: {filename} with content."
-    except Exception as e:
-        return f"Error creating file: {e}"
-
-@tool
-def read_text_file(filename: str) -> str:
-    """Read a text file from the sandbox. If no filename provided, list available files."""
-    SANDBOX.mkdir(parents=True, exist_ok=True)
-    try:
-        filename = filename.strip()
-        if not filename:
-            files = os.listdir(SANDBOX)
-            return f"Available files: {', '.join(files)}" if files else "No files in sandbox."
-        if not filename.endswith('.txt'):
-            filename += '.txt'
-        filepath = os.path.join(SANDBOX, filename)
-        if not os.path.exists(filepath):
-            files = os.listdir(SANDBOX)
-            return f"File '{filename}' not found. Available: {', '.join(files) if files else 'none'}"
-        with open(filepath, 'r', encoding='utf-8') as f:
-            return f.read()
-    except Exception as e:
-        return f"Error reading file: {e}"
+# --- File Tools moved to tools/fs_tools.py ---
+# Tools are now loaded dynamically via tools/tool_loader.py
 
 # --- Memory Management Functions ---
 def retrieve_long_term_memory(state: AgentState, config: dict, *, store) -> AgentState:
@@ -190,13 +101,21 @@ def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentSt
         # Get the last few messages for context
         recent_messages = state["messages"][-4:] if len(state["messages"]) >= 4 else state["messages"]
         
-        # Extract memorable content (simplified logic)
+        # Extract memorable content (enhanced logic)
         memorable_content = []
         for msg in recent_messages:
             if hasattr(msg, 'content') and msg.content:
-                # Simple heuristic: store if it contains certain keywords or is sufficiently long
-                if any(keyword in msg.content.lower() for keyword in ['prefer', 'like', 'remember', 'important', 'project', 'task']):
+                # Enhanced heuristic: store based on keywords, length, and execution results
+                if any(keyword in msg.content.lower() for keyword in ['prefer', 'like', 'remember', 'important', 'project', 'task', 'learn']):
                     memorable_content.append(msg.content)
+                elif len(msg.content) > 100:  # Store longer interactions
+                    memorable_content.append(msg.content)
+        
+        # Also store successful execution patterns
+        if state.get("execution_results"):
+            for result in state["execution_results"]:
+                if result.get("status") == "success":
+                    memorable_content.append(f"Successful execution: {result.get('tool_name')} with {result.get('args')}")
         
         # Store memories if we have content worth remembering
         if memorable_content:
@@ -206,7 +125,9 @@ def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentSt
             memory_entry = {
                 "content": " ".join(memorable_content),
                 "timestamp": datetime.now().isoformat(),
-                "context": "conversation"
+                "context": "conversation",
+                "plan_context": state.get("current_plan"),
+                "reflection": state.get("reflection")
             }
             
             try:
@@ -219,8 +140,9 @@ def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentSt
     
     return state
 
-def agent_response(state: AgentState, config: dict, *, store) -> AgentState:
-    """Generate agent response using LLM with memory context."""
+# --- Plan-Execute-Reflect Nodes ---
+def plan_node(state: AgentState, config: dict, *, store) -> AgentState:
+    """Generate a plan with specific tool calls based on user input."""
     try:
         # Get environment variables
         base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
@@ -233,95 +155,589 @@ def agent_response(state: AgentState, config: dict, *, store) -> AgentState:
             temperature=0.1,
         )
         
-        # Prepare tools
-        math_tools = load_tools(["llm-math"], llm=llm)
-        file_tools = [list_sandbox_files, create_text_file, update_text_file, read_text_file]
-        tools = math_tools + file_tools
+        # Get tool descriptions
+        tool_descriptions = tool_loader.get_tool_descriptions()
         
-        # Bind tools to LLM
-        llm_with_tools = llm.bind_tools(tools)
-        
-        # Build system message with memory context
-        system_content = """You are Ikoma, a helpful AI assistant with memory capabilities.
+        # Build planning prompt
+        planning_prompt = f"""You are a planning assistant. Based on the user's request, create a detailed plan of tool calls.
 
-You have access to the following tools:
-- Math calculations (llm-math)
-- File operations (create, read, update, list files in sandbox)
+Available tools:
+{tool_descriptions}
 
-For file operations, always use the exact format specified in the tool descriptions.
+Your task is to analyze the user's request and create a JSON plan with the following structure:
+```json
+{{
+  "plan": [
+    {{
+      "step": 1,
+      "tool_name": "tool_name",
+      "args": {{"arg1": "value1", "arg2": "value2"}},
+      "description": "What this step accomplishes"
+    }}
+  ],
+  "reasoning": "Why this plan will achieve the user's goal"
+}}
+```
 
-If you have relevant context from previous conversations, use it to provide more personalized responses."""
+Important guidelines:
+1. Break complex tasks into logical steps
+2. Use exact tool names from the available tools
+3. Provide proper arguments for each tool
+4. Include clear descriptions for each step
+5. Return only the JSON plan, no other text
+
+User's request: {state["messages"][-1].content}"""
         
         # Add memory context if available
         if state.get("memory_context"):
-            system_content += f"\n\n{state['memory_context']}"
+            planning_prompt += f"\n\nRelevant context from previous conversations:\n{state['memory_context']}"
         
-        # Prepare messages
-        messages = [SystemMessage(content=system_content)] + state["messages"]
+        # Get plan from LLM
+        response = llm.invoke([HumanMessage(content=planning_prompt)])
         
-        # Get response
-        response = llm_with_tools.invoke(messages)
-        
-        # Handle tool calls if present
-        if hasattr(response, 'tool_calls') and response.tool_calls:
-            # Execute tools and get results
-            tool_results = []
-            for tool_call in response.tool_calls:
-                tool_name = tool_call['name']
-                tool_args = tool_call['args']
-                
-                # Find and execute the tool
-                for tool in tools:
-                    if tool.name == tool_name:
-                        try:
-                            result = tool.invoke(tool_args)
-                            tool_results.append(f"{tool_name}: {result}")
-                        except Exception as e:
-                            tool_results.append(f"{tool_name}: Error - {e}")
-                        break
+        # Parse the plan
+        try:
+            # Extract JSON from response
+            plan_text = response.content.strip()
+            if plan_text.startswith("```json"):
+                plan_text = plan_text[7:-3].strip()
+            elif plan_text.startswith("```"):
+                plan_text = plan_text[3:-3].strip()
             
-            # Create final response with tool results
-            if tool_results:
-                final_content = response.content + "\n\nTool Results:\n" + "\n".join(tool_results)
-                response = AIMessage(content=final_content)
-        
-        return {"messages": [response]}
+            plan_data = json.loads(plan_text)
+            plan = plan_data.get("plan", [])
+            
+            # Validate plan structure
+            for step in plan:
+                if not all(key in step for key in ["step", "tool_name", "args", "description"]):
+                    raise ValueError("Invalid plan structure")
+            
+            state["current_plan"] = plan
+            state["continue_planning"] = True
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error parsing plan: {e}")
+            # Fallback to simple plan
+            state["current_plan"] = [{
+                "step": 1,
+                "tool_name": "read_text_file",
+                "args": {"filename": ""},
+                "description": "List available files as a starting point"
+            }]
+            state["continue_planning"] = True
         
     except Exception as e:
-        error_msg = f"I encountered an error: {e}"
-        return {"messages": [AIMessage(content=error_msg)]}
+        print(f"Error in plan_node: {e}")
+        state["current_plan"] = []
+        state["continue_planning"] = False
+    
+    return state
+
+def execute_node(state: AgentState, config: dict, *, store) -> AgentState:
+    """Execute the planned tool calls."""
+    try:
+        # Get environment variables for LLM (needed for math tools)
+        base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
+        model_name = os.getenv("LMSTUDIO_MODEL", "meta-llama-3-8b-instruct")
+        
+        # Initialize LLM
+        llm = ChatOpenAI(
+            base_url=base_url,
+            model=model_name,
+            temperature=0.1,
+        )
+        
+        # Load tools
+        tools = tool_loader.load_tools(llm)
+        
+        # Execute each step in the plan
+        execution_results = []
+        
+        for step in state.get("current_plan", []):
+            tool_name = step["tool_name"]
+            args = step["args"]
+            description = step["description"]
+            
+            # Find the tool
+            tool = None
+            for t in tools:
+                if t.name == tool_name:
+                    tool = t
+                    break
+            
+            if not tool:
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "error",
+                    "result": f"Tool '{tool_name}' not found"
+                })
+                continue
+            
+            # Execute the tool
+            try:
+                if tool_name == "llm-math":
+                    # Special handling for math tools
+                    result = tool.invoke(args)
+                else:
+                    # Regular tool execution
+                    result = tool.invoke(args)
+                
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "success",
+                    "result": str(result)
+                })
+                
+            except Exception as e:
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "error",
+                    "result": f"Error executing tool: {e}"
+                })
+        
+        state["execution_results"] = execution_results
+        
+    except Exception as e:
+        print(f"Error in execute_node: {e}")
+        state["execution_results"] = [{
+            "step": 1,
+            "tool_name": "unknown",
+            "args": {},
+            "description": "Execution failed",
+            "status": "error",
+            "result": f"Execution error: {e}"
+        }]
+    
+    return state
+
+def reflect_node(state: AgentState, config: dict, *, store) -> AgentState:
+    """Reflect on execution results and decide whether to continue or end."""
+    try:
+        # Get environment variables
+        base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
+        model_name = os.getenv("LMSTUDIO_MODEL", "meta-llama-3-8b-instruct")
+        
+        # Initialize LLM
+        llm = ChatOpenAI(
+            base_url=base_url,
+            model=model_name,
+            temperature=0.1,
+        )
+        
+        # Increment iteration counter
+        state["current_iteration"] = state.get("current_iteration", 0) + 1
+        
+        # Format execution results for reflection
+        results_summary = []
+        for result in state.get("execution_results", []):
+            status = "✓" if result["status"] == "success" else "✗"
+            results_summary.append(f"{status} Step {result['step']}: {result['description']} -> {result['result']}")
+        
+        results_text = "\n".join(results_summary)
+        
+        # Create reflection prompt
+        reflection_prompt = f"""Analyze the execution results and determine if the user's request has been satisfied.
+
+Original request: {state["messages"][-1].content}
+
+Execution results:
+{results_text}
+
+Provide your analysis in JSON format:
+```json
+{{
+  "task_completed": true/false,
+  "success_rate": "percentage of successful steps",
+  "summary": "Brief summary of what was accomplished",
+  "next_action": "continue" or "end",
+  "reasoning": "Why you chose this next action"
+}}
+```
+
+Return only the JSON, no other text."""
+        
+        # Get reflection from LLM
+        response = llm.invoke([HumanMessage(content=reflection_prompt)])
+        
+        # Parse reflection
+        try:
+            reflection_text = response.content.strip()
+            if reflection_text.startswith("```json"):
+                reflection_text = reflection_text[7:-3].strip()
+            elif reflection_text.startswith("```"):
+                reflection_text = reflection_text[3:-3].strip()
+            
+            reflection_data = json.loads(reflection_text)
+            
+            # Determine next action
+            task_completed = reflection_data.get("task_completed", False)
+            next_action = reflection_data.get("next_action", "end")
+            max_iterations = state.get("max_iterations", 3)
+            current_iteration = state.get("current_iteration", 1)
+            
+            # Decision logic
+            if task_completed or next_action == "end" or current_iteration >= max_iterations:
+                state["continue_planning"] = False
+                
+                # Create final response
+                final_response = f"""Task completed! Here's what I accomplished:
+
+{reflection_data.get('summary', 'Task execution completed.')}
+
+Execution Details:
+{results_text}
+
+Success Rate: {reflection_data.get('success_rate', 'N/A')}"""
+                
+                state["messages"].append(AIMessage(content=final_response))
+            else:
+                state["continue_planning"] = True
+            
+            state["reflection"] = reflection_data.get("reasoning", "Reflection completed")
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error parsing reflection: {e}")
+            # Fallback decision
+            state["continue_planning"] = False
+            
+            # Create fallback response
+            fallback_response = f"""I've completed the requested tasks. Here are the results:
+
+{results_text}
+
+Let me know if you need anything else!"""
+            
+            state["messages"].append(AIMessage(content=fallback_response))
+        
+    except Exception as e:
+        print(f"Error in reflect_node: {e}")
+        state["continue_planning"] = False
+        state["messages"].append(AIMessage(content=f"I encountered an error while reflecting: {e}"))
+    
+    return state
+
+# --- Conditional Edge Functions ---
+def should_continue_planning(state: AgentState) -> str:
+    """Determine whether to continue planning or end the conversation."""
+    return "plan" if state.get("continue_planning", False) else "store_memory"
+
+# --- Optimized Node Functions for Performance ---
+def plan_node_optimized(state: AgentState, config: dict, *, store, llm) -> AgentState:
+    """Optimized plan_node that uses shared LLM instance."""
+    try:
+        # Get tool descriptions
+        tool_descriptions = tool_loader.get_tool_descriptions()
+        
+        # Build planning prompt
+        planning_prompt = f"""You are a planning assistant. Based on the user's request, create a detailed plan of tool calls.
+
+Available tools:
+{tool_descriptions}
+
+Your task is to analyze the user's request and create a JSON plan with the following structure:
+```json
+{{
+  "plan": [
+    {{
+      "step": 1,
+      "tool_name": "tool_name",
+      "args": {{"arg1": "value1", "arg2": "value2"}},
+      "description": "What this step accomplishes"
+    }}
+  ],
+  "reasoning": "Why this plan will achieve the user's goal"
+}}
+```
+
+Important guidelines:
+1. Break complex tasks into logical steps
+2. Use exact tool names from the available tools
+3. Provide proper arguments for each tool
+4. Include clear descriptions for each step
+5. Return only the JSON plan, no other text
+
+User's request: {state["messages"][-1].content}"""
+        
+        # Add memory context if available
+        if state.get("memory_context"):
+            planning_prompt += f"\n\nRelevant context from previous conversations:\n{state['memory_context']}"
+        
+        # Get plan from LLM
+        response = llm.invoke([HumanMessage(content=planning_prompt)])
+        
+        # Parse the plan
+        try:
+            # Extract JSON from response
+            plan_text = response.content.strip()
+            if plan_text.startswith("```json"):
+                plan_text = plan_text[7:-3].strip()
+            elif plan_text.startswith("```"):
+                plan_text = plan_text[3:-3].strip()
+            
+            plan_data = json.loads(plan_text)
+            plan = plan_data.get("plan", [])
+            
+            # Validate plan structure
+            for step in plan:
+                if not all(key in step for key in ["step", "tool_name", "args", "description"]):
+                    raise ValueError("Invalid plan structure")
+            
+            state["current_plan"] = plan
+            state["continue_planning"] = True
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error parsing plan: {e}")
+            # Fallback to simple plan
+            state["current_plan"] = [{
+                "step": 1,
+                "tool_name": "read_text_file",
+                "args": {"filename": ""},
+                "description": "List available files as a starting point"
+            }]
+            state["continue_planning"] = True
+        
+    except Exception as e:
+        print(f"Error in plan_node_optimized: {e}")
+        state["current_plan"] = []
+        state["continue_planning"] = False
+    
+    return state
+
+def execute_node_optimized(state: AgentState, config: dict, *, store, tools) -> AgentState:
+    """Optimized execute_node that uses shared tools."""
+    try:
+        # Execute each step in the plan
+        execution_results = []
+        
+        for step in state.get("current_plan", []):
+            tool_name = step["tool_name"]
+            args = step["args"]
+            description = step["description"]
+            
+            # Find the tool
+            tool = None
+            for t in tools:
+                if t.name == tool_name:
+                    tool = t
+                    break
+            
+            if not tool:
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "error",
+                    "result": f"Tool '{tool_name}' not found"
+                })
+                continue
+            
+            # Execute the tool
+            try:
+                result = tool.invoke(args)
+                
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "success",
+                    "result": str(result)
+                })
+                
+            except Exception as e:
+                execution_results.append({
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "error",
+                    "result": f"Error executing tool: {e}"
+                })
+        
+        state["execution_results"] = execution_results
+        
+    except Exception as e:
+        print(f"Error in execute_node_optimized: {e}")
+        state["execution_results"] = [{
+            "step": 1,
+            "tool_name": "unknown",
+            "args": {},
+            "description": "Execution failed",
+            "status": "error",
+            "result": f"Execution error: {e}"
+        }]
+    
+    return state
+
+def reflect_node_optimized(state: AgentState, config: dict, *, store, llm) -> AgentState:
+    """Optimized reflect_node that uses shared LLM instance."""
+    try:
+        # Increment iteration counter
+        state["current_iteration"] = state.get("current_iteration", 0) + 1
+        
+        # Format execution results for reflection
+        results_summary = []
+        for result in state.get("execution_results", []):
+            status = "✓" if result["status"] == "success" else "✗"
+            results_summary.append(f"{status} Step {result['step']}: {result['description']} -> {result['result']}")
+        
+        results_text = "\n".join(results_summary)
+        
+        # Create reflection prompt
+        reflection_prompt = f"""Analyze the execution results and determine if the user's request has been satisfied.
+
+Original request: {state["messages"][-1].content}
+
+Execution results:
+{results_text}
+
+Provide your analysis in JSON format:
+```json
+{{
+  "task_completed": true/false,
+  "success_rate": "percentage of successful steps",
+  "summary": "Brief summary of what was accomplished",
+  "next_action": "continue" or "end",
+  "reasoning": "Why you chose this next action"
+}}
+```
+
+Return only the JSON, no other text."""
+        
+        # Get reflection from LLM
+        response = llm.invoke([HumanMessage(content=reflection_prompt)])
+        
+        # Parse reflection
+        try:
+            reflection_text = response.content.strip()
+            if reflection_text.startswith("```json"):
+                reflection_text = reflection_text[7:-3].strip()
+            elif reflection_text.startswith("```"):
+                reflection_text = reflection_text[3:-3].strip()
+            
+            reflection_data = json.loads(reflection_text)
+            
+            # Determine next action
+            task_completed = reflection_data.get("task_completed", False)
+            next_action = reflection_data.get("next_action", "end")
+            max_iterations = state.get("max_iterations", 3)
+            current_iteration = state.get("current_iteration", 1)
+            
+            # Decision logic
+            if task_completed or next_action == "end" or current_iteration >= max_iterations:
+                state["continue_planning"] = False
+                
+                # Create final response
+                final_response = f"""Task completed! Here's what I accomplished:
+
+{reflection_data.get('summary', 'Task execution completed.')}
+
+Execution Details:
+{results_text}
+
+Success Rate: {reflection_data.get('success_rate', 'N/A')}"""
+                
+                state["messages"].append(AIMessage(content=final_response))
+            else:
+                state["continue_planning"] = True
+            
+            state["reflection"] = reflection_data.get("reasoning", "Reflection completed")
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Error parsing reflection: {e}")
+            # Fallback decision
+            state["continue_planning"] = False
+            
+            # Create fallback response
+            fallback_response = f"""I've completed the requested tasks. Here are the results:
+
+{results_text}
+
+Let me know if you need anything else!"""
+            
+            state["messages"].append(AIMessage(content=fallback_response))
+        
+    except Exception as e:
+        print(f"Error in reflect_node_optimized: {e}")
+        state["continue_planning"] = False
+        state["messages"].append(AIMessage(content=f"I encountered an error while reflecting: {e}"))
+    
+    return state
 
 # --- Agent Setup ---
 def create_agent():
-    """Create and configure the memory-enhanced agent."""
+    """Create and configure the enhanced plan-execute-reflect agent."""
     # Get environment variables
     base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
     embed_model = os.getenv("LMSTUDIO_EMBED_MODEL", "nomic-ai/nomic-embed-text-v1.5-GGUF")
+    vector_store_path = os.getenv("VECTOR_STORE_PATH", "agent/memory/vector_store")
+    model_name = os.getenv("LMSTUDIO_MODEL", "meta-llama-3-8b-instruct")
     
-    # Initialize embeddings for semantic search
+    # Initialize LLM once for all nodes (Performance optimization)
+    llm = ChatOpenAI(
+        base_url=base_url,
+        model=model_name,
+        temperature=0.1,
+    )
+    
+    # Initialize embeddings for semantic search (Performance optimization)
     embeddings = PatchedOpenAIEmbeddings(
         openai_api_key="sk-dummy",
         openai_api_base=base_url,
         model=embed_model,
     )
     
-    # Initialize memory store for long-term memory
-    store = InMemoryStore()
+    # Initialize persistent memory store
+    store = get_vector_store()
+    
+    # Pre-load tools once (Performance optimization)
+    tools = tool_loader.load_tools(llm)
     
     # Initialize checkpointer for short-term memory (conversation state)
     checkpointer = SqliteSaver("agent/memory/conversations.sqlite")
     
+    # Create closures that capture the shared instances
+    def plan_node_with_shared_llm(state, config, *, store):
+        return plan_node_optimized(state, config, store=store, llm=llm)
+    
+    def execute_node_with_shared_tools(state, config, *, store):
+        return execute_node_optimized(state, config, store=store, tools=tools)
+    
+    def reflect_node_with_shared_llm(state, config, *, store):
+        return reflect_node_optimized(state, config, store=store, llm=llm)
+    
     # Create state graph
     workflow = StateGraph(AgentState)
     
-    # Add nodes
+    # Add nodes with shared resources
     workflow.add_node("retrieve_memory", retrieve_long_term_memory)
-    workflow.add_node("agent_response", agent_response)
+    workflow.add_node("plan", plan_node_with_shared_llm)
+    workflow.add_node("execute", execute_node_with_shared_tools)
+    workflow.add_node("reflect", reflect_node_with_shared_llm)
     workflow.add_node("store_memory", store_long_term_memory)
     
     # Add edges
-    workflow.add_edge("retrieve_memory", "agent_response")
-    workflow.add_edge("agent_response", "store_memory")
+    workflow.add_edge("retrieve_memory", "plan")
+    workflow.add_edge("plan", "execute")
+    workflow.add_edge("execute", "reflect")
+    workflow.add_conditional_edges(
+        "reflect",
+        should_continue_planning,
+        {
+            "plan": "plan",
+            "store_memory": "store_memory"
+        }
+    )
     workflow.add_edge("store_memory", END)
     
     # Set entry point
@@ -336,10 +752,11 @@ def create_agent():
 if __name__ == "__main__":
     agent = create_agent()
     
-    print("🤖 Ikoma: Hello! I'm your AI assistant with enhanced memory capabilities.")
-    print("🤖 Ikoma: I can remember our conversations and help with math and file operations.")
+    print("🤖 Ikoma: Hello! I'm your AI assistant with enhanced plan-execute-reflect capabilities.")
+    print("🤖 Ikoma: I can break down complex tasks, execute them systematically, and learn from the results.")
+    print("🤖 Ikoma: I can help with math calculations and file operations in your sandbox.")
     print("🤖 Ikoma: Type 'quit' or 'exit' to end.")
-    print("-" * 50)
+    print("-" * 70)
     
     # Default user ID - in production, this would come from authentication
     user_id = "default_user"
@@ -348,14 +765,14 @@ if __name__ == "__main__":
     while True:
         user_input = input("🧑‍💻 You: ").strip()
         if user_input.lower() in {"quit", "exit", "q"}:
-            print("🤖 Ikoma: Goodbye!")
+            print("🤖 Ikoma: Goodbye! Thanks for using the enhanced planning system.")
             break
         
         if not user_input:
             continue
 
         try:
-            print("🤖 Ikoma: Let me think about that...")
+            print("🤖 Ikoma: Planning your request...")
             
             # Prepare config with user and thread identification
             config = {
@@ -365,12 +782,18 @@ if __name__ == "__main__":
                 }
             }
             
-            # Invoke agent with memory capabilities
+            # Invoke agent with plan-execute-reflect capabilities
             initial_state = {
                 "messages": [HumanMessage(content=user_input)],
                 "memory_context": None,
                 "user_profile": None,
-                "session_summary": None
+                "session_summary": None,
+                "current_plan": None,
+                "execution_results": None,
+                "reflection": None,
+                "continue_planning": False,
+                "max_iterations": 3,
+                "current_iteration": 0
             }
             
             result = agent.invoke(initial_state, config)
@@ -385,9 +808,9 @@ if __name__ == "__main__":
             
         except Exception as e:
             print(f"🤖 Ikoma: I encountered an issue: {e}")
-            print("🤖 Ikoma: Please check that your LM Studio server is running.")
+            print("🤖 Ikoma: Please check that your LM Studio server is running on the configured port.")
         
-        print("-" * 50)
+        print("-" * 70)
 
 # TODO: Add a cronable reflection job (reflect.py)
 #   Each night, summarise the day's (User, AI) pairs into "lessons learned"

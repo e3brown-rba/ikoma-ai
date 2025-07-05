@@ -1,0 +1,86 @@
+{
+  "tools": [
+    {
+      "name": "list_sandbox_files",
+      "description": "List all files in the sandbox directory. No input needed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Optional query parameter (not used)",
+            "default": ""
+          }
+        },
+        "required": []
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "create_text_file",
+      "description": "Create a NEW text file in the sandbox. Format: filename|||content",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filename_and_content": {
+            "type": "string",
+            "description": "Filename and content separated by '|||'. Format: filename|||content"
+          }
+        },
+        "required": ["filename_and_content"]
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "update_text_file",
+      "description": "Update/modify an existing text file in the sandbox. Format: filename|||new_content",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filename_and_content": {
+            "type": "string",
+            "description": "Filename and content separated by '|||'. Format: filename|||new_content"
+          }
+        },
+        "required": ["filename_and_content"]
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "read_text_file",
+      "description": "Read a text file from the sandbox. If no filename provided, list available files.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "The filename to read. If empty, lists available files."
+          }
+        },
+        "required": ["filename"]
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "llm-math",
+      "description": "Perform mathematical calculations and solve math problems",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "The mathematical question or expression to solve"
+          }
+        },
+        "required": ["question"]
+      },
+      "category": "math"
+    }
+  ],
+  "categories": {
+    "file_system": "Tools for file operations in the sandbox environment",
+    "math": "Tools for mathematical calculations"
+  },
+  "version": "1.0.0",
+  "description": "Tool schema for iKOMA agent Phase 1-B plan-execute-reflect architecture"
+} 
