@@ -280,7 +280,7 @@ Tests cover:
 - **Startup Time**: ~2-3 seconds (tools loaded once)
 - **Per-Turn Latency**: Reduced by 60% (shared LLM instances)
 - **Memory Usage**: Reduced by 40% (persistent storage)
-- ✅ **High test coverage (>90%)**  
+- ✅ **Test coverage: 50% (measured via pytest --cov)**  
 - ✅ **Performance optimizations verified (benchmarks pending CI)**  
 
 - **Tool Loading**: Up to 3× faster (eliminated per-turn instantiation)
@@ -374,7 +374,7 @@ retrieve_memory → plan → execute → reflect → {continue | store_memory �
 ## 🎯 Production Readiness
 
 ✅ **All Phase 1 & 1-B deliverables completed**  
-✅ **High test coverage (>90%)**  
+✅ **Test coverage: 50% (measured via pytest --cov)**  
 ✅ **Performance optimizations verified**  
 ✅ **Documentation complete and up-to-date**  
 ✅ **Safety features maintained and enhanced**  
