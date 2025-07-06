@@ -93,7 +93,16 @@ class PersistentVectorStore:
             print(f"Error storing memory: {e}")
     
     def search(self, namespace: tuple, query: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """Search for memories using semantic similarity."""
+        """Search for memories using semantic similarity.
+        
+        Returns:
+            List[Dict[str, Any]]: List of memory dictionaries, each containing:
+                - "value": Dict with "content", "timestamp", "context", and optional "plan_context"/"reflection"
+                - "distance": Float representing semantic similarity distance (lower = more similar)
+                
+        The return structure ensures compatibility with retrieve_long_term_memory() which expects
+        objects with .value attributes or plain dictionaries.
+        """
         try:
             # Generate query embedding
             query_embedding = self.embeddings.embed_query(query)

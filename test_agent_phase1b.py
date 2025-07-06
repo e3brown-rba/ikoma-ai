@@ -138,7 +138,7 @@ class TestAgentPhase1B:
         mock_store = Mock()
         
         # Execute plan_node
-        result = plan_node(mock_agent_state, mock_config, store=mock_store)
+        result = plan_node(mock_agent_state, mock_config, store=mock_store, llm=mock_llm)
         
         # Verify result
         assert "current_plan" in result
@@ -171,7 +171,7 @@ class TestAgentPhase1B:
         mock_store = Mock()
         
         # Execute execute_node
-        result = execute_node(mock_agent_state, mock_config, store=mock_store)
+        result = execute_node(mock_agent_state, mock_config, store=mock_store, tools=[mock_tool])
         
         # Verify result
         assert "execution_results" in result
@@ -210,7 +210,7 @@ class TestAgentPhase1B:
         mock_store = Mock()
         
         # Execute reflect_node
-        result = reflect_node(mock_agent_state, mock_config, store=mock_store)
+        result = reflect_node(mock_agent_state, mock_config, store=mock_store, llm=mock_llm)
         
         # Verify result
         assert result["continue_planning"] is False
@@ -296,7 +296,7 @@ class TestAgentPhase1B:
             }
             
             with patch('agent.agent.ChatOpenAI'):
-                result = execute_node(state, {}, store=Mock())
+                result = execute_node(state, {}, store=Mock(), tools=[mock_tool])
                 
                 # Verify error is handled
                 assert "execution_results" in result
