@@ -6,41 +6,25 @@ from pathlib import Path
 # Add the project root to Python path to ensure tools module can be imported
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import openai
+
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END
 # Checkpoint functionality temporarily disabled due to langgraph version changes
 # from langgraph_checkpoint.sqlite import SqliteSaver
-from langchain_openai import OpenAIEmbeddings
+
 from typing import List, Dict, Any, TypedDict, Annotated, Optional
 from langgraph.graph.message import add_messages
 import uuid
 from datetime import datetime
 from tools import tool_loader
-from tools import get_vector_store
 
 # Load environment variables from .env file
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = "sk-dummy"
 
-# --- Patched Embeddings Class ---
-class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
-    """
-    A patch to handle local servers that do not support batching. This patch
-    iterates through all documents and embeds them one by one.
-    """
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return [self.embed_query(text) for text in texts]
 
-    def embed_query(self, text: str) -> List[float]:
-        temp_client = openai.OpenAI(
-            api_key=self.openai_api_key,
-            base_url=self.openai_api_base
-        )
-        response = temp_client.embeddings.create(input=text, model=self.model)
-        return response.data[0].embedding
 
 # --- Enhanced State Definition ---
 class AgentState(TypedDict):
@@ -509,16 +493,23 @@ def create_agent():
         temperature=0.1,
     )
     
-    # Initialize persistent memory store
-    store = get_vector_store()
-    
-    # Pre-load tools once (Performance optimization)
+        # Pre-load tools once (Performance optimization)
     tools = tool_loader.load_tools(llm)
+    
+    # Import and initialize vector store for memory functions
+    from tools import get_vector_store
+    store = get_vector_store()
     
     # Initialize checkpointer for short-term memory (conversation state)
     # checkpointer = SqliteSaver("agent/memory/conversations.sqlite")  # Temporarily disabled
     
     # Create closures that capture the shared instances
+    def retrieve_memory_with_store(state, config):
+        return retrieve_long_term_memory(state, config, store=store)
+    
+    def store_memory_with_store(state, config):
+        return store_long_term_memory(state, config, store=store)
+    
     def plan_node_with_shared_llm(state, config, *, store):
         return plan_node(state, config, store=store, llm=llm)
     
@@ -532,11 +523,11 @@ def create_agent():
     workflow = StateGraph(AgentState)
     
     # Add nodes with shared resources
-    workflow.add_node("retrieve_memory", retrieve_long_term_memory)
+    workflow.add_node("retrieve_memory", retrieve_memory_with_store)
     workflow.add_node("plan", plan_node_with_shared_llm)
     workflow.add_node("execute", execute_node_with_shared_tools)
     workflow.add_node("reflect", reflect_node_with_shared_llm)
-    workflow.add_node("store_memory", store_long_term_memory)
+    workflow.add_node("store_memory", store_memory_with_store)
     
     # Add edges
     workflow.add_edge("retrieve_memory", "plan")
@@ -556,7 +547,7 @@ def create_agent():
     workflow.set_entry_point("retrieve_memory")
     
     # Compile the graph
-    app = workflow.compile(store=store)  # Removed checkpointer temporarily
+    app = workflow.compile()  # LangGraph 0.5.1+ doesn't need store parameter
     
     return app
 
