@@ -9,14 +9,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import openai
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_community.agent_toolkits.load_tools import load_tools
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END
 # Checkpoint functionality temporarily disabled due to langgraph version changes
 # from langgraph_checkpoint.sqlite import SqliteSaver
 from langchain_openai import OpenAIEmbeddings
-from typing import List, Dict, Any, TypedDict, Annotated, Optional, Union
+from typing import List, Dict, Any, TypedDict, Annotated, Optional
 from langgraph.graph.message import add_messages
 import uuid
 from datetime import datetime
