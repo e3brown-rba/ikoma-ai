@@ -1,14 +1,9 @@
 # LangChain - Pinned to minor series for stability
--langchain
--langchain-core
--langchain-openai
--langchain-community
--langchain-chroma
-+langchain>=0.3,<0.4
-+langchain-core>=0.3,<0.4
-+langchain-openai>=0.3,<0.4
-+langchain-community>=0.3,<0.4
-+langchain-chroma>=0.2,<0.3
+langchain>=0.3,<0.4
+langchain-core>=0.3,<0.4
+langchain-openai>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-chroma>=0.2,<0.3
 langgraph
 
 # Other Dependencies
@@ -17,6 +12,8 @@ openai==1.93.0
 chromadb==0.5.23
 sentence-transformers==3.3.1
 python-dotenv==1.0.1
+pydantic>=2.0,<3.0
+pydantic-core>=2.0,<3.0
 
 # Development Tools
 yamllint 

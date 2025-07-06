@@ -1,7 +1,12 @@
 import os
+import sys
 import re
 import json
 from pathlib import Path
+
+# Add the project root to Python path to ensure tools module can be imported
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import openai
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -9,15 +14,16 @@ from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.sqlite import SqliteSaver
+# Checkpoint functionality temporarily disabled due to langgraph version changes
+# from langgraph_checkpoint.sqlite import SqliteSaver
 from langchain_openai import OpenAIEmbeddings
 from typing import List, Dict, Any, TypedDict, Annotated, Optional, Union
 from langgraph.graph.message import add_messages
 import uuid
 from datetime import datetime
 import chromadb
-from tools.tool_loader import tool_loader
-from tools.vector_store import get_vector_store
+from tools import tool_loader
+from tools import get_vector_store
 
 # Load environment variables from .env file
 load_dotenv()
@@ -725,7 +731,7 @@ def create_agent():
     tools = tool_loader.load_tools(llm)
     
     # Initialize checkpointer for short-term memory (conversation state)
-    checkpointer = SqliteSaver("agent/memory/conversations.sqlite")
+    # checkpointer = SqliteSaver("agent/memory/conversations.sqlite")  # Temporarily disabled
     
     # Create closures that capture the shared instances
     def plan_node_with_shared_llm(state, config, *, store):
@@ -765,7 +771,7 @@ def create_agent():
     workflow.set_entry_point("retrieve_memory")
     
     # Compile the graph
-    app = workflow.compile(checkpointer=checkpointer, store=store)
+    app = workflow.compile(store=store)  # Removed checkpointer temporarily
     
     return app
 

@@ -9,7 +9,14 @@ from .fs_tools import FILE_TOOLS
 class ToolLoader:
     """Dynamic tool loader that reads MCP schema and loads tools once at startup."""
     
-    def __init__(self, schema_path: str = "tools/mcp_schema.json"):
+    def __init__(self, schema_path: str = None):
+        if schema_path is None:
+            # Try to find the schema file relative to the project root
+            current_dir = Path(__file__).parent
+            schema_path = current_dir / "mcp_schema.json"
+            if not schema_path.exists():
+                # Fallback to relative path
+                schema_path = Path("tools/mcp_schema.json")
         self.schema_path = Path(schema_path)
         self.schema = self._load_schema()
         self._loaded_tools = None
@@ -51,7 +58,6 @@ class ToolLoader:
                 tools.extend(math_tools)
             except Exception as e:
                 print(f"Warning: Could not load math tools: {e}")
-        
         self._loaded_tools = tools
         return tools
     
