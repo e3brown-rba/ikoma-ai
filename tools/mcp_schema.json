@@ -18,13 +18,13 @@
     },
     {
       "name": "create_text_file",
-      "description": "Create a NEW text file in the sandbox. Format: filename|||content",
+      "description": "Create a NEW text file in the sandbox. Use format: filename|||content",
       "parameters": {
         "type": "object",
         "properties": {
           "filename_and_content": {
             "type": "string",
-            "description": "Filename and content separated by '|||'. Format: filename|||content"
+            "description": "Filename and content separated by '|||'. Example: 'response.txt|||This is the content of the file'"
           }
         },
         "required": ["filename_and_content"]
@@ -62,7 +62,7 @@
       "category": "file_system"
     },
     {
-      "name": "llm-math",
+      "name": "Calculator",
       "description": "Perform mathematical calculations and solve math problems",
       "parameters": {
         "type": "object",
