@@ -114,7 +114,7 @@ jobs:
           pip-audit $IGNORE_FLAGS
       - run: bandit -r agent tools -ll
       - name: Secret scan
-        run: trufflehog filesystem --no-update .
+        run: trufflehog filesystem .
 
   build:
     needs: security
