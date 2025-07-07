@@ -96,8 +96,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-      - run: pip install pip-audit bandit trufflehog
+          python-version: '3.12'
+      - run: pip install "pip-audit>=2.9.0" bandit trufflehog
       - name: Security audit
         run: pip-audit -r requirements.txt --ignore-vuln-file .pip-audit-ignore
       - run: bandit -r agent tools -ll
