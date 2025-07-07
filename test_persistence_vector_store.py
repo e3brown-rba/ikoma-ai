@@ -38,17 +38,18 @@ def test_memory_wrapper_smoke_test(tmp_path):
     # Use a temporary directory so we don't touch the real store
     test_store_dir = tmp_path / "vector_store"
     os.environ["VECTOR_STORE_PATH"] = str(test_store_dir)
-    
+
     # Smoke test as specified
     from tools.vector_store import get_vector_store
+
     store = get_vector_store()
     ns = ("memories", "test")
     store.put(ns, "dummy", {"content": "hello"})
-    
+
     # Verify the search functionality works
     results = store.search(ns, "hello", 1)
     assert len(results) > 0, "Search should return at least one result"
     assert results[0], "First result should be truthy"
-    
+
     # Cleanup
-    shutil.rmtree(test_store_dir, ignore_errors=True) 
+    shutil.rmtree(test_store_dir, ignore_errors=True)
