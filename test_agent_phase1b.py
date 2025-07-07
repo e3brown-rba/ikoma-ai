@@ -83,16 +83,16 @@ class TestAgentPhase1B:
     def temp_vector_store(self):
         """Create a temporary vector store for testing."""
         temp_dir = tempfile.mkdtemp()
-        
+
         # Mock the embedding service to avoid connection errors
-        with patch('tools.vector_store.PatchedOpenAIEmbeddings') as mock_embeddings:
+        with patch("tools.vector_store.PatchedOpenAIEmbeddings") as mock_embeddings:
             mock_emb = Mock()
             mock_emb.embed_query.return_value = [0.1] * 384  # Mock embedding vector
             mock_embeddings.return_value = mock_emb
-            
+
             store = PersistentVectorStore(persist_directory=temp_dir)
             yield store
-            
+
         # Use ignore_errors to handle any remaining file locks
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -413,8 +413,10 @@ class TestToolIntegration:
         # Test that tools can be loaded (this will work if langchain.tools is available)
         try:
             tools = loader.load_tools(mock_llm)
-            assert len(tools) >= 0  # Should return a list (may be empty if langchain.tools not available)
-            
+            assert (
+                len(tools) >= 0
+            )  # Should return a list (may be empty if langchain.tools not available)
+
             # Verify tools are loaded only once (caching works)
             tools2 = loader.load_tools(mock_llm)
             assert tools == tools2  # Should return cached tools

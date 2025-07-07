@@ -14,7 +14,7 @@ def test_vector_store_persistence(tmp_path):
     os.environ["VECTOR_STORE_PATH"] = str(test_store_dir)
 
     # Mock the embedding service to avoid connection errors
-    with patch('tools.vector_store.PatchedOpenAIEmbeddings') as mock_embeddings:
+    with patch("tools.vector_store.PatchedOpenAIEmbeddings") as mock_embeddings:
         mock_emb = Mock()
         mock_emb.embed_query.return_value = [0.1] * 384  # Mock embedding vector
         mock_embeddings.return_value = mock_emb
@@ -23,7 +23,10 @@ def test_vector_store_persistence(tmp_path):
         store1 = get_vector_store()
         ns = ("tests", str(uuid.uuid4()))
         key = "persistence_check"
-        value = {"content": "persistent memory", "timestamp": datetime.now().isoformat()}
+        value = {
+            "content": "persistent memory",
+            "timestamp": datetime.now().isoformat(),
+        }
         store1.put(ns, key, value)
 
         # Simulate process exit by discarding store1
@@ -47,7 +50,7 @@ def test_memory_wrapper_smoke_test(tmp_path):
     os.environ["VECTOR_STORE_PATH"] = str(test_store_dir)
 
     # Mock the embedding service to avoid connection errors
-    with patch('tools.vector_store.PatchedOpenAIEmbeddings') as mock_embeddings:
+    with patch("tools.vector_store.PatchedOpenAIEmbeddings") as mock_embeddings:
         mock_emb = Mock()
         mock_emb.embed_query.return_value = [0.1] * 384  # Mock embedding vector
         mock_embeddings.return_value = mock_emb
