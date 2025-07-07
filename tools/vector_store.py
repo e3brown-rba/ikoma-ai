@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 import uuid
 from datetime import datetime
 import chromadb
@@ -133,7 +133,7 @@ class PersistentVectorStore:
                     if metadata.get("plan_context"):
                         try:
                             memory["value"]["plan_context"] = json.loads(metadata["plan_context"])
-                        except:
+                        except (json.JSONDecodeError, TypeError):
                             pass
                     if metadata.get("reflection"):
                         memory["value"]["reflection"] = metadata["reflection"]
@@ -280,7 +280,8 @@ def example_persist():
     return store.get(test_ns, test_key)
 
 if __name__ == "__main__":
-    import argparse, shutil
+    import argparse
+    import shutil
 
     parser = argparse.ArgumentParser(description="PersistentVectorStore utility helper")
     parser.add_argument("--reset", action="store_true", help="Delete the entire persistent vector store (irreversible)")

@@ -8,16 +8,14 @@ import pytest
 import json
 import tempfile
 import shutil
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
+from unittest.mock import Mock, patch
 from datetime import datetime
 import os
-import sys
 
 # Import the agent modules
-from agent.agent import AgentState, create_agent, plan_node, execute_node, reflect_node
+from agent.agent import AgentState, plan_node, execute_node, reflect_node
 from tools.tool_loader import ToolLoader
-from tools.vector_store import PersistentVectorStore, get_vector_store
+from tools.vector_store import PersistentVectorStore
 from tools.fs_tools import FILE_TOOLS
 
 class TestAgentPhase1B:
@@ -350,7 +348,6 @@ class TestToolIntegration:
     
     def test_file_tools_availability(self):
         """Test that file tools are properly available."""
-        from tools.fs_tools import FILE_TOOLS
         
         expected_tools = [
             "list_sandbox_files",

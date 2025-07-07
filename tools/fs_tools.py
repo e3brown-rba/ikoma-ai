@@ -15,7 +15,7 @@ SANDBOX = Path(os.getenv("SANDBOX_PATH", "agent/ikoma_sandbox")).expanduser()
 
 def confirm_destructive_action(action_description: str, filename: str) -> bool:
     """Ask user for confirmation before performing destructive file operations."""
-    print(f"\n⚠️  CONFIRMATION REQUIRED:")
+    print("\n⚠️  CONFIRMATION REQUIRED:")
     print(f"   Action: {action_description}")
     print(f"   File: {filename}")
     

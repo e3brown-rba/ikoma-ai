@@ -51,4 +51,7 @@ Thumbs.db
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# Project retrospectives (local only)
+RETRO_PHASE_1B.md 

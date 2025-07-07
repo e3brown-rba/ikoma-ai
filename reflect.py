@@ -20,13 +20,12 @@ import json
 import argparse
 from datetime import datetime, timedelta, date
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-import uuid
+from typing import List, Dict, Any
 
 # LangChain imports
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 from tools.vector_store import get_vector_store
 from langchain_openai import OpenAIEmbeddings
 
@@ -397,17 +396,17 @@ def main():
             print(f"\nSummary: {summary['summary']}")
             
             if summary.get('key_topics'):
-                print(f"\nKey Topics:")
+                print("\nKey Topics:")
                 for topic in summary['key_topics']:
                     print(f"  • {topic}")
             
             if summary.get('lessons_learned'):
-                print(f"\nLessons Learned:")
+                print("\nLessons Learned:")
                 for lesson in summary['lessons_learned']:
                     print(f"  • {lesson}")
             
             if summary.get('improvement_suggestions'):
-                print(f"\nImprovement Suggestions:")
+                print("\nImprovement Suggestions:")
                 for suggestion in summary['improvement_suggestions']:
                     print(f"  • {suggestion}")
         
