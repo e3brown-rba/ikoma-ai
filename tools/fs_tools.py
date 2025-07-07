@@ -8,6 +8,7 @@ except ImportError:
         from langchain_core.tools import tool  # type: ignore # New location
     except ImportError:
         from .tool_fallback import tool_callable as _tool_fallback
+
         tool = _tool_fallback
 
 # Sandbox configuration
