@@ -12,10 +12,16 @@ langgraph-checkpoint-sqlite==2.0.10
 numexpr==2.11.0
 openai==1.93.0
 chromadb==0.5.23
-sentence-transformers==3.3.1
+sentence-transformers==5.0.0
+transformers==4.50.0
 python-dotenv==1.0.1
 pydantic==2.11.7
 pydantic-core==2.33.2
+
+# Security Notes:
+# - sentence-transformers 5.0.0 requires transformers<5.0.0,>=4.41.0 (4.50.0 satisfies)
+# - torch 2.7.1 is the latest available, but has a known vulnerability (GHSA-887c-mr87-cxwp)
+#   An ignore file is provided for pip-audit until an upstream fix is released.
 
 # Development Tools
 yamllint 

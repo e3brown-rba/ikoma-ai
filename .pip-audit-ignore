@@ -1,0 +1,3 @@
+# pip-audit ignore list
+# Suppress known torch vulnerability (no fixed version yet)
+GHSA-887c-mr87-cxwp 
