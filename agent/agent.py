@@ -221,11 +221,25 @@ Remember: Return ONLY valid JSON, no other text."""
             
             if any(word in user_request for word in ["meaning", "life", "philosophy", "existential", "purpose"]):
                 # For philosophical questions, acknowledge the limitation
+                # Check if the file already exists to make this idempotent
+                import os
+                sandbox_path = Path("agent/ikoma_sandbox")
+                philosophical_file = sandbox_path / "philosophical_response.txt"
+                
+                if philosophical_file.exists():
+                    # File exists, use update_text_file
+                    tool_name = "update_text_file"
+                    description = "Update existing philosophical response with additional thoughts"
+                else:
+                    # File doesn't exist, use create_text_file
+                    tool_name = "create_text_file"
+                    description = "Create a thoughtful response acknowledging the limitation of available tools for philosophical questions"
+                
                 state["current_plan"] = [{
                     "step": 1,
-                    "tool_name": "create_text_file",
+                    "tool_name": tool_name,
                     "args": {"filename_and_content": "philosophical_response.txt|||I understand you're asking about the meaning of life, which is a profound philosophical question that has been contemplated by thinkers throughout history. While I can help with practical tasks using available tools, I cannot provide definitive answers to such existential questions. I'd be happy to help you with concrete tasks, calculations, or file operations instead."},
-                    "description": "Create a thoughtful response acknowledging the limitation of available tools for philosophical questions"
+                    "description": description
                 }]
             else:
                 # For other requests, try to list files as starting point

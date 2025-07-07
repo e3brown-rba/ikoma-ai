@@ -1,5 +1,7 @@
 # iKOMA - Intelligent AI Assistant with Plan-Execute-Reflect Architecture
 
+[![Test Coverage](https://img.shields.io/badge/coverage-37%25-yellow.svg)](https://github.com/your-repo/iKOMA)
+
 A sophisticated local AI assistant powered by LangGraph with advanced **plan-execute-reflect** capabilities, persistent memory, and continuous learning. Transform complex tasks into intelligent, multi-step execution plans.
 
 ## ✨ Key Features
@@ -151,12 +153,28 @@ iKOMA/
 ├── cursor/
 │   └── ikoma.cursor.yaml     # Cursor AI integration config
 ├── reflect.py               # Nightly reflection and learning script
-├── test_agent_modern.py     # Original comprehensive test suite
 ├── test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
 ├── requirements.txt         # Python dependencies (inc. langgraph, chromadb)
 ├── PHASE_1B_SUMMARY.md      # Detailed Phase 1-B implementation guide
 ├── TODO.md                  # ✅ All development tasks completed
 └── README.md               # This file
+```
+
+## 🧪 Testing & Coverage
+
+The project includes comprehensive tests for the Phase 1-B plan-execute-reflect architecture:
+
+- **Test Coverage: 37%** (606 statements, 379 missed)
+- **15 tests passing** with 1 failure (legacy test cleanup)
+- **Key modules covered**:
+  - `agent/agent.py`: 35% coverage
+  - `tools/tool_loader.py`: 43% coverage  
+  - `tools/vector_store.py`: 50% coverage
+  - `tools/fs_tools.py`: 16% coverage
+
+Run tests with coverage:
+```bash
+python -m pytest test_agent_phase1b.py --cov=agent --cov=tools --cov-report=term
 ```
 
 ## ⚙️ Configuration
