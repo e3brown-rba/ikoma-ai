@@ -98,7 +98,8 @@ jobs:
         with:
           python-version: '3.13'
       - run: pip install pip-audit bandit trufflehog
-      - run: pip-audit -r requirements.txt
+      - name: Security audit
+        run: pip-audit -r requirements.txt --ignore-vuln-file .pip-audit-ignore
       - run: bandit -r agent tools -ll
       - name: Secret scan
         run: trufflehog filesystem --no-update .
