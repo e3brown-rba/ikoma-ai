@@ -14,9 +14,6 @@ from datetime import datetime
 import os
 import sys
 
-# Add the project root to the path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 # Import the agent modules
 from agent.agent import AgentState, create_agent, plan_node, execute_node, reflect_node
 from tools.tool_loader import ToolLoader

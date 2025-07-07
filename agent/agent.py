@@ -3,10 +3,6 @@ import sys
 import json
 from pathlib import Path
 
-# Add the project root to Python path to ensure tools module can be imported
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
@@ -193,6 +189,10 @@ Remember: Return ONLY valid JSON, no other text."""
         
         # Get plan from LLM
         response = llm.invoke([HumanMessage(content=planning_prompt)])
+        
+        # Guard against empty response
+        if not response.content.strip():
+            raise ValueError("Empty response from LLM")
         
         # Parse the plan
         try:
@@ -399,6 +399,10 @@ Return only the JSON, no other text."""
         
         # Get reflection from LLM
         response = llm.invoke([HumanMessage(content=reflection_prompt)])
+        
+        # Guard against empty response
+        if not response.content.strip():
+            raise ValueError("Empty response from LLM")
         
         # Parse reflection
         try:
