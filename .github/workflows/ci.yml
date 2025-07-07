@@ -1,11 +1,12 @@
+---
 name: CI
 
 # ────────── Trigger on pushes & PRs to main ──────────
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 # Cancel superseded runs (saves minutes on fast commits)
 concurrency:
