@@ -1,4 +1,6 @@
-# iKOMA - Intelligent AI Assistant with Plan-Execute-Reflect Architecture
+# iKOMA: Local AI Assistant with Plan-Execute-Reflect Intelligence
+
+**iKOMA is an intelligent local AI assistant that uses a plan-execute-reflect architecture, persistent memory, and dynamic tool integration to automate complex multi-step tasks with reliability and learning.**
 
 [![Test Coverage](https://img.shields.io/badge/coverage-37%25-yellow.svg)](https://github.com/your-repo/iKOMA)
 
@@ -23,24 +25,36 @@ A sophisticated local AI assistant powered by LangGraph with advanced **plan-exe
 The iKOMA agent uses a sophisticated **plan-execute-reflect** workflow:
 
 ```
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│ retrieve_memory │───▶│    plan      │───▶│    execute      │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-                                                     │
-                                                     ▼
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│  store_memory   │◀───│   reflect    │◀───│                 │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-         │                      │
-         ▼                      │
-       ┌─────┐         ┌────────▼────────┐
-       │ END │         │ continue_planning?│
-       └─────┘         └─────────────────┘
-                              │
-                              ▼
-                       ┌─────────────┐
-                       │ back to plan│
-                       └─────────────┘
+           ┌──────────────┐
+           │retrieve_memory│
+           └──────┬───────┘
+                  │
+                  ▼
+           ┌──────────────┐
+           │    plan      │
+           └──────┬───────┘
+                  │
+                  ▼
+           ┌──────────────┐
+           │   execute    │
+           └──────┬───────┘
+                  │
+                  ▼
+           ┌──────────────┐
+           │   reflect    │
+           └──────┬───────┘
+                  │
+        ┌─────────┴─────────┐
+        │                   │
+        ▼                   ▼
+   ┌────────────┐     ┌───────────────┐
+   │store_memory│     │back to plan?  │
+   └─────┬──────┘     └──────┬────────┘
+         │                   │
+         ▼                   │
+       ┌────┐                │
+       │END │◀───────────────┘
+       └────┘
 ```
 
 ### How It Works
