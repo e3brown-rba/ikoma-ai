@@ -1,0 +1,17 @@
+extends: default
+
+rules:
+  # GitHub Actions uses 'on:' as a top-level key, which conflicts
+  # with yamllint's default 'truthy' check. This is a known issue.
+  # We disable the check for keys to resolve this without disabling
+  # the rule entirely.
+  truthy:
+    check-keys: false
+
+  # The --- is good practice but not strictly required by GitHub Actions.
+  # Disabling for cleaner logs.
+  document-start:
+    present: false
+
+  # Enforce a newline at the end of the file.
+  new-line-at-end-of-file: enable 

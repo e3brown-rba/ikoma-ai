@@ -1,0 +1,10 @@
+# pip-audit ignore list
+# Suppress known torch vulnerability (no fixed version yet)
+GHSA-887c-mr87-cxwp
+# Suppress transformers vulnerabilities until dependency chain updates
+GHSA-6rvg-6v2m-4j46
+GHSA-fpwr-67px-3qhx
+PYSEC-2024-227
+PYSEC-2024-228
+PYSEC-2024-229
+PYSEC-2025-40 

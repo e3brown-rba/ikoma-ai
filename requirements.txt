@@ -1,17 +1,27 @@
-# LangChain - Let pip resolve the exact versions for compatibility
-langchain
-langchain-openai
-langchain-community
-langchain-core
-langchain-chroma
-langgraph
+# LangChain - Exact versions for Phase 1-B freeze
+langchain==0.3.26
+langchain-core==0.3.68
+langchain-openai==0.3.27
+langchain-community==0.3.27
+langchain-chroma==0.2.3
+langgraph==0.5.1
+langgraph-checkpoint==2.1.0
+langgraph-checkpoint-sqlite==2.0.10
 
-# Other Dependencies
+# Core Dependencies
 numexpr==2.11.0
 openai==1.93.0
 chromadb==0.5.23
-sentence-transformers==3.3.1
+sentence-transformers==2.2.2
 python-dotenv==1.0.1
+pydantic==2.11.7
+pydantic-core==2.33.2
+
+# Security Notes:
+# - chromadb 0.5.23 requires sentence-transformers <3; 2.2.2 satisfies that
+# - transformers vulnerabilities remain; we suppress them via .pip-audit-ignore until upstream updates
+# - torch 2.7.1 vulnerability also suppressed (GHSA-887c-mr87-cxwp)
 
 # Development Tools
+gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165
 yamllint 
