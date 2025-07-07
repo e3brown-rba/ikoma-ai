@@ -114,7 +114,7 @@
 - **Startup Time**: ~2-3 seconds (tools loaded once)
 - **Per-Turn Latency**: Reduced by 60% (shared LLM instances)
 - **Memory Usage**: Reduced by 40% (persistent storage)
-- **Test Coverage**: 95% with comprehensive scenarios
+- **Test Coverage**: 37% with comprehensive scenarios
 
 ## ✅ Phase 1-B Cleanup - Pre-Freeze Optimization (COMPLETED)
 

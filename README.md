@@ -164,7 +164,7 @@ iKOMA/
 
 The project includes comprehensive tests for the Phase 1-B plan-execute-reflect architecture:
 
-- **Test Coverage: 37%** (606 statements, 379 missed)
+- **Test Coverage: 37%** (604 statements, 378 missed - comprehensive plan-execute-reflect testing)
 - **15 tests passing** with 1 failure (legacy test cleanup)
 - **Key modules covered**:
   - `agent/agent.py`: 35% coverage
@@ -181,7 +181,7 @@ python -m pytest test_agent_phase1b.py --cov=agent --cov=tools --cov-report=term
 
 ### Environment Variables
 
-Create a `.env` file or set these environment variables:
+Copy `.env.example` to `.env` and configure these environment variables:
 
 ```bash
 # LM Studio Configuration (Phase 1-B Unified Settings)
@@ -210,7 +210,7 @@ LOG_LEVEL=INFO
 
 The agent automatically manages a sophisticated dual memory system:
 
-1. **Short-term Memory**: Conversation state persisted via SQLite checkpointer
+1. **Short-term Memory**: Conversation state (SQLite checkpointer coming in Phase 2)
 2. **Long-term Memory**: Persistent Chromadb vector storage with semantic search
 3. **Plan Context**: Enhanced memory includes execution plans and reflection data
 
