@@ -2,7 +2,7 @@
 
 **iKOMA is an intelligent local AI assistant that uses a plan-execute-reflect architecture, persistent memory, and dynamic tool integration to automate complex multi-step tasks with reliability and learning.**
 
-[![Test Coverage](https://img.shields.io/badge/coverage-37%25-yellow.svg)](https://github.com/your-repo/iKOMA)
+[![Test Coverage](https://img.shields.io/badge/coverage-39%25-yellow.svg)](https://github.com/your-repo/iKOMA)
 
 A sophisticated local AI assistant powered by LangGraph with advanced **plan-execute-reflect** capabilities, persistent memory, and continuous learning. Transform complex tasks into intelligent, multi-step execution plans.
 
@@ -155,21 +155,28 @@ iKOMA/
 ├── agent/
 │   ├── agent.py              # Main LangGraph agent with plan-execute-reflect
 │   ├── memory/
-│   │   ├── conversations.sqlite  # Short-term memory (checkpoints)
-│   │   └── vector_store/         # Persistent Chromadb vector storage
+│   │   ├── chroma.sqlite3    # Chromadb persistent database
+│   │   └── vector_store/     # Persistent Chromadb vector storage
 │   └── ikoma_sandbox/        # Secure file operations area
 ├── tools/                    # Phase 1-B: Modular tool system
 │   ├── __init__.py          # Tool package initialization
 │   ├── fs_tools.py          # File system operations
 │   ├── mcp_schema.json      # Tool definitions and parameters
 │   ├── tool_loader.py       # Dynamic tool loading system
+│   ├── tool_fallback.py     # Import compatibility fallbacks
 │   └── vector_store.py      # Persistent memory implementation
 ├── cursor/
-│   └── ikoma.cursor.yaml     # Cursor AI integration config
+│   ├── ikoma.cursor.yaml     # Cursor AI integration config
+│   └── snippets/             # Cursor code snippets
 ├── reflect.py               # Nightly reflection and learning script
+├── run_agent.py             # Main agent execution script
 ├── test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
+├── test_persistence_vector_store.py  # Memory persistence tests
 ├── requirements.txt         # Python dependencies (inc. langgraph, chromadb)
+├── config.env.template      # Environment configuration template
+├── pyproject.toml           # Project configuration and metadata
 ├── PHASE_1B_SUMMARY.md      # Detailed Phase 1-B implementation guide
+├── CHROMA_MEMORY_SETUP.md   # Memory system setup guide
 ├── TODO.md                  # ✅ All development tasks completed
 └── README.md               # This file
 ```
@@ -178,12 +185,12 @@ iKOMA/
 
 The project includes comprehensive tests for the Phase 1-B plan-execute-reflect architecture:
 
-- **Test Coverage: 37%** (604 statements, 378 missed - comprehensive plan-execute-reflect testing)
-- **15 tests passing** with 1 failure (legacy test cleanup)
+- **Test Coverage: 39%** (652 statements, 398 missed - comprehensive plan-execute-reflect testing)
+- **16 tests passing** with 0 failures
 - **Key modules covered**:
   - `agent/agent.py`: 35% coverage
-  - `tools/tool_loader.py`: 43% coverage  
-  - `tools/vector_store.py`: 50% coverage
+  - `tools/tool_loader.py`: 53% coverage  
+  - `tools/vector_store.py`: 49% coverage
   - `tools/fs_tools.py`: 16% coverage
 
 Run tests with coverage:
