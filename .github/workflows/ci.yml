@@ -1,0 +1,116 @@
+name: CI
+
+# ────────── Trigger on pushes & PRs to main ──────────
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Cancel superseded runs (saves minutes on fast commits)
+concurrency:
+  group: ci-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # ────────── Matrix builds (3.10-3.13) ──────────
+  lint:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e .
+      - run: pip install ruff
+      - run: ruff check .
+      - run: ruff format --check --diff .
+
+  yaml-json:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install yamllint jsonschema
+      - run: yamllint .github/workflows/ci.yml
+      - name: Validate MCP schema
+        run: |
+          python - <<'PY'
+          import json, sys, jsonschema, pathlib
+          schema = json.load(open('tools/mcp_schema.json'))
+          for key in ('tools', 'categories'):
+              if key not in schema:
+                  sys.exit(f"❌ key '{key}' missing in MCP schema")
+          print("✅ MCP schema validation passed")
+          PY
+
+  typecheck:
+    needs: yaml-json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -e .
+      - run: pip install mypy
+      - run: mypy agent/ tools/
+
+  test:
+    needs: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      # Cache both pip downloads & .venv for speed
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .venv
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
+      - run: pip install -e .
+      - run: pip install pytest pytest-cov
+      - name: Run tests & enforce 50 %+ coverage
+        run: |
+          pytest --cov --cov-report=xml
+          coverage xml -o coverage.xml --fail-under=50
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  security:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install pip-audit bandit trufflehog
+      - run: pip-audit -r requirements.txt
+      - run: bandit -r agent tools -ll
+      - name: Secret scan
+        run: trufflehog filesystem --no-update .
+
+  build:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -e .
+      - run: pip install build
+      - run: python -m build --sdist --wheel --outdir dist/
