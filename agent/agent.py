@@ -3,6 +3,11 @@ import sys
 import json
 from pathlib import Path
 
+# Ensure tools module can be imported when running from agent/ directory
+if __name__ == "__main__":
+    # Add parent directory to path when running as script
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
