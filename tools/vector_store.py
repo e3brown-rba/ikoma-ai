@@ -143,9 +143,9 @@ class PersistentVectorStore:
                                 if isinstance(memory["value"], dict)
                                 else {}
                             )
-                            value_dict["plan_context"] = json.loads(
-                                metadata["plan_context"]
-                            )  # type: ignore
+                            plan_context = metadata["plan_context"]
+                            if isinstance(plan_context, str):
+                                value_dict["plan_context"] = json.loads(plan_context)
                             memory["value"] = value_dict
                         except (json.JSONDecodeError, TypeError):
                             pass
