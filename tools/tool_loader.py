@@ -82,7 +82,7 @@ class ToolLoader:
                     def _safe_eval(self, expr: str) -> float:
                         """Safely evaluate basic math expressions."""
                         # Parse the expression into an AST
-                        node = ast.parse(expr, mode='eval')
+                        node = ast.parse(expr, mode="eval")
                         return self._eval_node(node.body)
 
                     def _eval_node(self, node) -> float:
@@ -101,11 +101,13 @@ class ToolLoader:
                             elif isinstance(node.op, ast.Div):
                                 return left / right
                             elif isinstance(node.op, ast.Pow):
-                                return left ** right
+                                return left**right
                             elif isinstance(node.op, ast.Mod):
                                 return left % right
                             else:
-                                raise ValueError(f"Unsupported operation: {type(node.op)}")
+                                raise ValueError(
+                                    f"Unsupported operation: {type(node.op)}"
+                                )
                         elif isinstance(node, ast.UnaryOp):
                             operand = self._eval_node(node.operand)
                             if isinstance(node.op, ast.UAdd):
@@ -113,7 +115,9 @@ class ToolLoader:
                             elif isinstance(node.op, ast.USub):
                                 return -operand
                             else:
-                                raise ValueError(f"Unsupported unary operation: {type(node.op)}")
+                                raise ValueError(
+                                    f"Unsupported unary operation: {type(node.op)}"
+                                )
                         else:
                             raise ValueError(f"Unsupported node type: {type(node)}")
 
