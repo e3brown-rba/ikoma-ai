@@ -2,6 +2,7 @@ import os
 import shutil
 import uuid
 from datetime import datetime
+from unittest.mock import patch, Mock
 
 from tools.vector_store import get_vector_store
 
@@ -12,22 +13,28 @@ def test_vector_store_persistence(tmp_path):
     test_store_dir = tmp_path / "vector_store"
     os.environ["VECTOR_STORE_PATH"] = str(test_store_dir)
 
-    # FIRST RUN: put a memory
-    store1 = get_vector_store()
-    ns = ("tests", str(uuid.uuid4()))
-    key = "persistence_check"
-    value = {"content": "persistent memory", "timestamp": datetime.now().isoformat()}
-    store1.put(ns, key, value)
+    # Mock the embedding service to avoid connection errors
+    with patch('tools.vector_store.PatchedOpenAIEmbeddings') as mock_embeddings:
+        mock_emb = Mock()
+        mock_emb.embed_query.return_value = [0.1] * 384  # Mock embedding vector
+        mock_embeddings.return_value = mock_emb
 
-    # Simulate process exit by discarding store1
-    del store1
+        # FIRST RUN: put a memory
+        store1 = get_vector_store()
+        ns = ("tests", str(uuid.uuid4()))
+        key = "persistence_check"
+        value = {"content": "persistent memory", "timestamp": datetime.now().isoformat()}
+        store1.put(ns, key, value)
 
-    # SECOND RUN: new process -> new store instance
-    store2 = get_vector_store()
-    retrieved = store2.get(ns, key)
+        # Simulate process exit by discarding store1
+        del store1
 
-    assert retrieved is not None, "Memory was not retrieved after restart"
-    assert retrieved["content"] == "persistent memory"
+        # SECOND RUN: new process -> new store instance
+        store2 = get_vector_store()
+        retrieved = store2.get(ns, key)
+
+        assert retrieved is not None, "Memory was not retrieved after restart"
+        assert retrieved["content"] == "persistent memory"
 
     # Cleanup
     shutil.rmtree(test_store_dir, ignore_errors=True)
@@ -39,17 +46,23 @@ def test_memory_wrapper_smoke_test(tmp_path):
     test_store_dir = tmp_path / "vector_store"
     os.environ["VECTOR_STORE_PATH"] = str(test_store_dir)
 
-    # Smoke test as specified
-    from tools.vector_store import get_vector_store
+    # Mock the embedding service to avoid connection errors
+    with patch('tools.vector_store.PatchedOpenAIEmbeddings') as mock_embeddings:
+        mock_emb = Mock()
+        mock_emb.embed_query.return_value = [0.1] * 384  # Mock embedding vector
+        mock_embeddings.return_value = mock_emb
 
-    store = get_vector_store()
-    ns = ("memories", "test")
-    store.put(ns, "dummy", {"content": "hello"})
+        # Smoke test as specified
+        from tools.vector_store import get_vector_store
 
-    # Verify the search functionality works
-    results = store.search(ns, "hello", 1)
-    assert len(results) > 0, "Search should return at least one result"
-    assert results[0], "First result should be truthy"
+        store = get_vector_store()
+        ns = ("memories", "test")
+        store.put(ns, "dummy", {"content": "hello"})
+
+        # Verify the search functionality works
+        results = store.search(ns, "hello", 1)
+        assert len(results) > 0, "Search should return at least one result"
+        assert results[0], "First result should be truthy"
 
     # Cleanup
     shutil.rmtree(test_store_dir, ignore_errors=True)
