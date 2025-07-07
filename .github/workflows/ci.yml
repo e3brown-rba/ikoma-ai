@@ -98,6 +98,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install "pip-audit>=2.9.0" bandit trufflehog
+      - run: pip install "gitpython>=3.1.41"  # Ensure secure version
       - name: Security audit
         run: |
           # Convert .pip-audit-ignore to individual --ignore-vuln flags
