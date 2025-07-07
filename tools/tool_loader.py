@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 from typing import List, Dict, Any
-from langchain_community.agent_toolkits.load_tools import load_tools
 from langchain_openai import ChatOpenAI
 from .fs_tools import FILE_TOOLS
 
@@ -54,10 +53,25 @@ class ToolLoader:
                           if tool["category"] == "math"]
         if math_tool_names:
             try:
-                math_tools = load_tools(["llm-math"], llm=llm)
-                tools.extend(math_tools)
+                # Create a simple Calculator tool instead of using langchain's load_tools
+                from langchain.tools import BaseTool
+                
+                class Calculator(BaseTool):
+                    name: str = "Calculator"
+                    description: str = "Perform mathematical calculations and solve math problems"
+                    
+                    def _run(self, question: str) -> str:
+                        try:
+                            # Simple eval for basic math - in production, use a safer approach
+                            result = eval(question)
+                            return f"The result of {question} is {result}"
+                        except Exception as e:
+                            return f"Error calculating {question}: {str(e)}"
+                
+                calculator = Calculator()
+                tools.append(calculator)
             except Exception as e:
-                print(f"Warning: Could not load math tools: {e}")
+                print(f"Warning: Could not create Calculator tool: {e}")
         self._loaded_tools = tools
         return tools
     

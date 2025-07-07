@@ -174,6 +174,7 @@ LMSTUDIO_EMBED_MODEL=nomic-ai/nomic-embed-text-v1.5-GGUF
 # Vector Store Configuration
 VECTOR_STORE_PATH=agent/memory/vector_store
 VECTOR_STORE_TYPE=chromadb
+CHROMA_TELEMETRY=false  # Disable Chroma telemetry to avoid spam
 
 # Sandbox Configuration
 SANDBOX_PATH=agent/ikoma_sandbox

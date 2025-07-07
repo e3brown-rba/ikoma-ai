@@ -3,11 +3,6 @@ import sys
 import json
 from pathlib import Path
 
-# Ensure tools module can be imported when running from agent/ directory
-if __name__ == "__main__":
-    # Add parent directory to path when running as script
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
@@ -19,7 +14,7 @@ from typing import List, Dict, Any, TypedDict, Annotated, Optional
 from langgraph.graph.message import add_messages
 import uuid
 from datetime import datetime
-from tools import tool_loader
+from tools.tool_loader import tool_loader
 
 # Load environment variables from .env file
 load_dotenv()
@@ -506,7 +501,7 @@ def create_agent():
     tools = tool_loader.load_tools(llm)
     
     # Import and initialize vector store for memory functions
-    from tools import get_vector_store
+    from tools.vector_store import get_vector_store
     store = get_vector_store()
     
     # Initialize checkpointer for short-term memory (conversation state)
