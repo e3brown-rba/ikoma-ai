@@ -40,7 +40,7 @@ def test_vector_store_persistence(tmp_path):
 
             assert retrieved is not None, "Memory was not retrieved after restart"
             assert retrieved["content"] == "persistent memory"
-            
+
         except Exception as e:
             # Skip the test if database is read-only or other database issues occur
             pytest.skip(f"Database operation failed (read-only database in CI): {e}")
@@ -66,18 +66,18 @@ def test_memory_wrapper_smoke_test(tmp_path):
 
         store = get_vector_store()
         ns = ("memories", "test")
-        
+
         try:
             # Try to store a memory
             store.put(ns, "dummy", {"content": "hello"})
-            
+
             # Try to search for the memory
             results = store.search(ns, "hello", 1)
-            
+
             # If we get here, the database operations worked
             assert len(results) > 0, "Search should return at least one result"
             assert results[0], "First result should be truthy"
-            
+
         except Exception as e:
             # Skip the test if database is read-only or other database issues occur
             pytest.skip(f"Database operation failed (read-only database in CI): {e}")
