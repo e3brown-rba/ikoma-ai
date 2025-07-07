@@ -1,4 +1,5 @@
 import json
+import ast
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from langchain_openai import ChatOpenAI
@@ -72,11 +73,49 @@ class ToolLoader:
 
                     def _run(self, question: str) -> str:
                         try:
-                            # Simple eval for basic math - in production, use a safer approach
-                            result = eval(question)
+                            # Safe evaluation of math expressions using AST
+                            result = self._safe_eval(question)
                             return f"The result of {question} is {result}"
                         except Exception as e:
                             return f"Error calculating {question}: {str(e)}"
+
+                    def _safe_eval(self, expr: str) -> float:
+                        """Safely evaluate basic math expressions."""
+                        # Parse the expression into an AST
+                        node = ast.parse(expr, mode='eval')
+                        return self._eval_node(node.body)
+
+                    def _eval_node(self, node) -> float:
+                        """Recursively evaluate AST nodes for basic math operations."""
+                        if isinstance(node, ast.Constant):
+                            return float(node.value)
+                        elif isinstance(node, ast.BinOp):
+                            left = self._eval_node(node.left)
+                            right = self._eval_node(node.right)
+                            if isinstance(node.op, ast.Add):
+                                return left + right
+                            elif isinstance(node.op, ast.Sub):
+                                return left - right
+                            elif isinstance(node.op, ast.Mult):
+                                return left * right
+                            elif isinstance(node.op, ast.Div):
+                                return left / right
+                            elif isinstance(node.op, ast.Pow):
+                                return left ** right
+                            elif isinstance(node.op, ast.Mod):
+                                return left % right
+                            else:
+                                raise ValueError(f"Unsupported operation: {type(node.op)}")
+                        elif isinstance(node, ast.UnaryOp):
+                            operand = self._eval_node(node.operand)
+                            if isinstance(node.op, ast.UAdd):
+                                return +operand
+                            elif isinstance(node.op, ast.USub):
+                                return -operand
+                            else:
+                                raise ValueError(f"Unsupported unary operation: {type(node.op)}")
+                        else:
+                            raise ValueError(f"Unsupported node type: {type(node)}")
 
                 calculator = Calculator()
                 tools.append(calculator)
