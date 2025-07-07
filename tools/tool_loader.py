@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from langchain_openai import ChatOpenAI
 from .fs_tools import FILE_TOOLS
 
@@ -8,17 +8,20 @@ from .fs_tools import FILE_TOOLS
 class ToolLoader:
     """Dynamic tool loader that reads MCP schema and loads tools once at startup."""
 
-    def __init__(self, schema_path: str = None):
+    def __init__(self, schema_path: Optional[str] = None):
         if schema_path is None:
             # Try to find the schema file relative to the project root
             current_dir = Path(__file__).parent
-            schema_path = current_dir / "mcp_schema.json"
-            if not schema_path.exists():
-                # Fallback to relative path
-                schema_path = Path("tools/mcp_schema.json")
-        self.schema_path = Path(schema_path)
+            candidate = current_dir / "mcp_schema.json"
+            if candidate.exists():
+                schema_path_obj = candidate
+            else:
+                schema_path_obj = Path("tools/mcp_schema.json")
+        else:
+            schema_path_obj = Path(schema_path)
+        self.schema_path = schema_path_obj
         self.schema = self._load_schema()
-        self._loaded_tools = None
+        self._loaded_tools: Optional[List[Any]] = None
 
     def _load_schema(self) -> Dict[str, Any]:
         """Load the MCP schema from JSON file."""
@@ -59,7 +62,7 @@ class ToolLoader:
         if math_tool_names:
             try:
                 # Create a simple Calculator tool instead of using langchain's load_tools
-                from langchain.tools import BaseTool
+                from langchain.tools import BaseTool  # type: ignore
 
                 class Calculator(BaseTool):
                     name: str = "Calculator"

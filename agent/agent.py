@@ -120,7 +120,7 @@ def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentSt
 
         # Also store successful execution patterns
         if state.get("execution_results"):
-            for result in state["execution_results"]:
+            for result in state["execution_results"]:  # type: ignore
                 if result.get("status") == "success":
                     memorable_content.append(
                         f"Successful execution: {result.get('tool_name')} with {result.get('args')}"
@@ -298,7 +298,7 @@ def execute_node(state: AgentState, config: dict, *, store, tools) -> AgentState
         # Execute each step in the plan
         execution_results = []
 
-        for step in state.get("current_plan", []):
+        for step in state.get("current_plan", []):  # type: ignore
             tool_name = step["tool_name"]
             args = step["args"]
             description = step["description"]
@@ -429,7 +429,7 @@ def reflect_node(state: AgentState, config: dict, *, store, llm) -> AgentState:
 
         # Format execution results for reflection
         results_summary = []
-        for result in state.get("execution_results", []):
+        for result in state.get("execution_results", []):  # type: ignore
             status = "✓" if result["status"] == "success" else "✗"
             results_summary.append(
                 f"{status} Step {result['step']}: {result['description']} -> {result['result']}"

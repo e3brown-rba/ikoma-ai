@@ -47,7 +47,10 @@ class PersistentVectorStore:
 
         # Initialize embeddings
         self.embeddings = PatchedOpenAIEmbeddings(
-            openai_api_key="sk-dummy", openai_api_base=base_url, model=embedding_model
+            openai_api_key="sk-dummy", 
+            openai_api_base=base_url, 
+            model=embedding_model,
+            chunk_size=1000  # Add chunk_size parameter
         )
 
     def put(self, namespace: tuple, key: str, value: Dict[str, Any]) -> None:
@@ -81,7 +84,7 @@ class PersistentVectorStore:
             # Store in collection
             self.collection.add(
                 documents=[content],
-                embeddings=[embedding],
+                embeddings=[embedding],  # type: ignore
                 metadatas=[metadata],
                 ids=[doc_id],
             )
@@ -108,7 +111,7 @@ class PersistentVectorStore:
 
             # Search collection
             results = self.collection.query(
-                query_embeddings=[query_embedding],
+                query_embeddings=[query_embedding],  # type: ignore
                 n_results=limit,
                 where={"namespace": "-".join(namespace)},
             )
@@ -135,13 +138,15 @@ class PersistentVectorStore:
                     # Add custom metadata
                     if metadata.get("plan_context"):
                         try:
-                            memory["value"]["plan_context"] = json.loads(
-                                metadata["plan_context"]
-                            )
+                            value_dict = memory["value"] if isinstance(memory["value"], dict) else {}
+                            value_dict["plan_context"] = json.loads(metadata["plan_context"])  # type: ignore
+                            memory["value"] = value_dict
                         except (json.JSONDecodeError, TypeError):
                             pass
                     if metadata.get("reflection"):
-                        memory["value"]["reflection"] = metadata["reflection"]
+                        value_dict = memory["value"] if isinstance(memory["value"], dict) else {}
+                        value_dict["reflection"] = metadata["reflection"]  # type: ignore
+                        memory["value"] = value_dict
 
                     memories.append(memory)
 
@@ -248,13 +253,18 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
     """
     A patch to handle local servers that do not support batching.
     """
+    def __init__(self, *args, openai_api_key=None, openai_api_base=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.openai_api_key = openai_api_key
+        self.openai_api_base = openai_api_base
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: List[str], chunk_size: Optional[int] = None, **kwargs: Any) -> List[List[float]]:
         return [self.embed_query(text) for text in texts]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str, **kwargs: Any) -> List[float]:
         temp_client = openai.OpenAI(
-            api_key=self.openai_api_key, base_url=self.openai_api_base
+            api_key=str(self.openai_api_key) if self.openai_api_key else None, 
+            base_url=self.openai_api_base
         )
         response = temp_client.embeddings.create(input=text, model=self.model)
         return response.data[0].embedding
