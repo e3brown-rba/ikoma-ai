@@ -1,117 +1,162 @@
-# iKOMA Scripts
+# iKOMA Utilities & Workflow Guide
 
-This directory contains utility scripts for the iKOMA project.
+> **Scope** – This README replaces the previous *scripts* README and folds in the Phase‑2 operating rules, label conventions and the new one‑stop **bulk issue creator**. If you already cloned the repo simply `git pull` to get this file.
 
-## Available Scripts
+---
 
-### `create_github_issues.py`
+## 1 Resource Model
 
-A general-purpose script to create GitHub issues from markdown templates.
+| Tag                                   | Capability                     | Pushes Code?                   |
+| ------------------------------------- | ------------------------------ | ------------------------------ |
+| **owner**\*\*:ca-auto\*\*             | Cursor Auto Worker (local IDE) | **Yes** – the *only* committer |
+| **thinker**\*\*:ca-sonnet4\*\*        | Cursor Sonnet‑4 (reasoning)    | No                             |
+| **thinker**\*\*:ca-o3\*\*             | Cursor o3 (planner)            | No                             |
+| **thinker**\*\*:claude-opus\*\*       | Claude Opus (safety/metrics)   | No                             |
+| **thinker**\*\*:gpt-o3\*\*            | ChatGPT o3 (brainstorm)        | No                             |
+| **thinker**\*\*:claude-sonnet-web\*\* | Claude Sonnet web (UX copy)    | No                             |
 
-#### Usage
+*We use ****labels**** – not GitHub accounts – to track who thinks vs. who codes.*
+
+---
+
+## 2 Label Conventions
+
+```text
+# Epic buckets
+  epic:E-01 .. epic:E-06
+# Functional tags
+  internet, parsing, safety, memory, autonomy, planning, ux, backend, frontend,
+  devops, metrics, security, docs, qa, carryover
+# Resourcing tags
+  owner:ca-auto           # single pusher
+  thinker:<agent>         # advisory model
+```
+
+Create the labels once (Settings ▸ Labels) or run `scripts/create_labels.sh`.
+
+---
+
+## 3 Bulk Issue Creator
+
+`scripts/bulk_create_phase2.py` migrates the earlier Bash script into a **parameterised Python CLI** that:
+
+- reads an **issue manifest** (YAML or JSON) – default `issues/phase2.yml`
+- adds `owner:` / `thinker:` labels automatically
+- supports dry‑run and multi‑repo modes
+
+### 3.1 Install deps (one‑off)
 
 ```bash
-# Create issues from default file (issues.md)
-python scripts/create_github_issues.py
-
-# Create issues from specific file
-python scripts/create_github_issues.py my_issues.md
-
-# Create issues from setup issues (if you have setup_issues.md)
-python scripts/create_github_issues.py setup_issues.md
+pip install -r requirements.txt   # installs PyYAML & GitPython via dev extra
 ```
 
-#### Input Format
+### 3.2 Usage
 
-Create a markdown file with issue templates in this format:
+```bash
+# dry‑run – prints gh commands only
+python scripts/bulk_create_phase2.py --dry-run  
+# tip: pipe to a file if you want a standalone bash script
+python scripts/bulk_create_phase2.py --dry-run > bulk_gh_commands.sh
 
-```markdown
-## Issue 1: Brief Description
+# live create against current repo\python scripts/bulk_create_phase2.py
 
-```markdown
----
-name: Issue Name
-about: Brief description
-title: '[TYPE] Issue title'
-labels: ['label1', 'label2', 'label3']
-assignees: ''
----
-
-## Problem Description
-Detailed description of the problem...
-
-## Steps to Reproduce
-1. Step 1
-2. Step 2
-
-## Expected Behavior
-What should happen...
-
-## Actual Behavior
-What actually happens...
-
-## Proposed Solution
-How to fix it...
+# create against a fork
+GITHUB_REPO=me/ikoma-fork python scripts/bulk_create_phase2.py
 ```
 
-## Issue 2: Another Issue
+*The script requires **``** if set.*
 
-```markdown
----
-name: Another Issue
-about: Another description
-title: '[TYPE] Another title'
-labels: ['label1', 'label2']
-assignees: ''
----
+#### 3.3 Issue manifest example (`issues/phase2.yml`)
 
-## Problem Description
-...
+```yaml
+- title: Spike — integrate SerpAPI search tool
+  body: |
+    - Install SerpAPI client
+    - Prototype `search_web(query)` returning top‑5 JSON
+    - Demo prints titles & URLs
+  labels: [epic:E-01, internet, owner:ca-auto, thinker:ca-sonnet4]
+
+- title: SQLite conversation state backend
+  body: |
+    - `checkpointer.py` save/load
+    - Schema: run_id, step, tool_calls, memory
+  labels: [epic:E-03, memory, owner:ca-auto, thinker:ca-o3]
 ```
 
-#### Output
+---
 
-The script will:
-1. Extract all issue templates from the markdown file
-2. Generate GitHub CLI commands for each issue
-3. Create a summary file with all commands
-4. Provide manual instructions if GitHub CLI is not available
+## 4 Phase‑2 Operating Manual (TL;DR)
 
-#### Requirements
+The full manual lives in \`\` (also visible in the canvas). Key points:
 
-- Python 3.6+
-- GitHub CLI (optional, for automated creation)
-- Valid GitHub authentication (if using GitHub CLI)
+1. **Pick a ticket** → consult its `thinker:` label in Cursor.
+2. Code & commit on a branch – you push as *your* Git account.
+3. Open PR; CI must be green; merge closes issue.
 
-#### Example Workflow
+---
 
-1. **Create issue templates:**
-   ```bash
-   # Create issues.md with your issue templates
-   vim issues.md
-   ```
+## 5 Script Source
 
-2. **Generate commands:**
-   ```bash
-   python scripts/create_github_issues.py issues.md
-   ```
+```python
+#!/usr/bin/env python3
+"""Bulk‑create Phase‑2 issues with owner / thinker labels.
+   Usage: python scripts/bulk_create_phase2.py [--dry-run]
+"""
+from __future__ import annotations
+import os, sys, json, subprocess, textwrap, pathlib, argparse
+from typing import List, Dict, Any
+try:
+    import yaml  # PyYAML (dev extra)
+except ImportError:
+    print("PyYAML missing – run `pip install pyyaml` or install dev extras")
+    sys.exit(1)
 
-3. **Create issues:**
-   ```bash
-   # Copy and run the generated commands
-   gh issue create --title "..." --body "..." --label "..."
-   ```
+REPO = os.getenv("GITHUB_REPO", subprocess.check_output(["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"]).decode().strip())
+MANIFEST_PATH = pathlib.Path("issues/phase2.yml")
 
-4. **Clean up:**
-   ```bash
-   # Delete the template file once issues are created
-   rm issues.md
-   ```
+parser = argparse.ArgumentParser(description="Create GitHub issues from manifest")
+parser.add_argument("--dry-run", action="store_true", help="Print gh commands instead of executing")
+args = parser.parse_args()
 
-## Future Scripts
+def read_manifest(path: pathlib.Path) -> List[Dict[str, Any]]:
+    if not path.exists():
+        sys.exit(f"Manifest file {path} not found")
+    with path.open() as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, list):
+        sys.exit("Manifest must be a YAML list of issues")
+    return data
 
-This directory can be expanded with other utility scripts such as:
-- Release automation
-- Documentation generation
-- Testing utilities
-- Deployment scripts 
+def gh(cmd: List[str]):
+    if args.dry_run:
+        print("gh", " ".join(cmd))
+    else:
+        subprocess.run(["gh"] + cmd, check=True)
+
+def main():
+    issues = read_manifest(MANIFEST_PATH)
+    for item in issues:
+        title = item["title"]
+        body  = textwrap.dedent(item.get("body", "")).strip()
+        labels = item.get("labels", [])
+        cmd = [
+            "issue", "create",
+            "--repo", REPO,
+            "--title", title,
+            "--label", ",".join(labels),
+            "--body", body or "(no description)"
+        ]
+        gh(cmd)
+    print("✅  Done – issues processed.")
+
+if __name__ == "__main__":
+    main()
+```
+
+### Why switch to Python?
+
+- Safer quoting than Bash for multi‑line bodies.
+- Dry‑run flag shows exactly what will be executed.
+- Easier to extend (e.g. multi‑repo, milestones, assignees).
+
+---
