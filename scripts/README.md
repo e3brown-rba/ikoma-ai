@@ -87,7 +87,7 @@ GITHUB_REPO=me/ikoma-fork python scripts/bulk_create_phase2.py
 
 ## 4 Phase‑2 Operating Manual (TL;DR)
 
-The full manual lives in \`\` (also visible in the canvas). Key points:
+Key points:
 
 1. **Pick a ticket** → consult its `thinker:` label in Cursor.
 2. Code & commit on a branch – you push as *your* Git account.
