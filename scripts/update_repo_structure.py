@@ -3,7 +3,6 @@
 Update repo_structure.jsonl to reflect current repository state
 """
 
-import os
 import json
 from pathlib import Path
 from datetime import datetime
@@ -115,7 +114,7 @@ def update_repo_structure():
             return len(
                 file_path.read_text(encoding="utf-8", errors="ignore").splitlines()
             )
-        except:
+        except Exception:
             return 0
 
     current_structure_entry = {
