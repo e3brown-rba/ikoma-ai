@@ -4,7 +4,6 @@ General GitHub Issue Creator for iKOMA
 This script helps create GitHub issues from markdown templates.
 """
 
-import json
 import os
 import re
 import sys
@@ -123,10 +122,10 @@ def create_summary_file(issues, output_file):
             # Escape quotes in body for shell command
             body_escaped = body.replace('"', '\\"').replace("'", "\\'")
             
-            f.write(f"**GitHub CLI Command:**\n")
-            f.write(f"```bash\n")
+            f.write("**GitHub CLI Command:**\n")
+            f.write("```bash\n")
             f.write(f'gh issue create --title "{issue["title"]}" --body "{body_escaped}" --label "{labels_str}"\n')
-            f.write(f"```\n\n")
+            f.write("```\n\n")
 
 def main():
     """Main function."""
@@ -142,8 +141,8 @@ def main():
     # Check if input file exists
     if not Path(input_file).exists():
         print(f"❌ {input_file} not found!")
-        print(f"Usage: python scripts/create_github_issues.py [input_file.md]")
-        print(f"Default: looks for 'issues.md' in current directory")
+        print("Usage: python scripts/create_github_issues.py [input_file.md]")
+        print("Default: looks for 'issues.md' in current directory")
         sys.exit(1)
     
     # Extract issues
@@ -192,7 +191,7 @@ def main():
     print(f"3. Delete {input_file} once all issues are created")
     print()
     print("💡 Tip: You can also run this script on any markdown file:")
-    print(f"   python scripts/create_github_issues.py your_issues_file.md")
+    print("   python scripts/create_github_issues.py your_issues_file.md")
 
 if __name__ == "__main__":
     main() 
