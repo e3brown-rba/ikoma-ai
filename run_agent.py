@@ -13,13 +13,13 @@ from pathlib import Path
 def main():
     # Get the project root directory
     project_root = Path(__file__).parent
-    venv_path = project_root / "ikoma" / ".venv"
+    venv_path = project_root / "venv"
     agent_path = project_root / "agent" / "agent.py"
 
     # Check if virtual environment exists
     if not venv_path.exists():
         print("❌ Virtual environment not found at:", venv_path)
-        print("Please run: python -m venv ikoma/.venv")
+        print("Please run: ./setup.sh to create the virtual environment")
         return 1
 
     # Check if agent file exists
@@ -42,9 +42,13 @@ def main():
     print(f"Running: {agent_path}")
     print("-" * 50)
 
+    # Set up environment variables for the subprocess
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(project_root)
+
     # Run the agent
     try:
-        subprocess.run([str(python_exe), str(agent_path)], check=True)
+        subprocess.run([str(python_exe), str(agent_path)], check=True, env=env)
     except subprocess.CalledProcessError as e:
         print(f"❌ Agent failed with exit code: {e.returncode}")
         return e.returncode
