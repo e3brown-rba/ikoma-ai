@@ -4,9 +4,7 @@ iKOMA Setup Verification Script
 Checks the current state of your iKOMA installation and provides guidance.
 """
 
-import os
 import sys
-import subprocess
 import importlib.util
 from pathlib import Path
 
