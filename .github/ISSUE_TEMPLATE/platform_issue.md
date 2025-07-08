@@ -1,20 +1,20 @@
 ---
-name: Platform Compatibility Issue
-about: Report issues specific to a particular platform
+name: Platform Issue
+about: Report platform-specific problems or compatibility issues
 title: '[PLATFORM] '
-labels: ['platform', 'needs-triage']
+labels: ['needs-triage']
 assignees: ''
 ---
 
 ## Platform Information
-- **Platform**: [Windows/macOS/Linux]
+- **OS**: [e.g., macOS 14.0, Windows 11, Ubuntu 22.04]
 - **OS Version**: 
-- **Architecture**: [x86_64/ARM64]
-- **Python Version**: 
-- **Package Manager**: [pip/conda/brew/apt]
+- **Architecture**: [e.g., x86_64, ARM64]
+- **Python Version**: [e.g., 3.11.0]
+- **iKOMA Version**: [e.g., 0.1.0]
 
 ## Issue Description
-<!-- Describe the platform-specific issue -->
+<!-- A clear and concise description of the platform-specific issue. -->
 
 ## Steps to Reproduce
 1. 
@@ -22,10 +22,40 @@ assignees: ''
 3. 
 
 ## Expected Behavior
-<!-- What should happen on this platform -->
+<!-- A clear and concise description of what you expected to happen. -->
 
 ## Actual Behavior
-<!-- What actually happens on this platform -->
+<!-- A clear and concise description of what actually happened. -->
+
+## Error Messages/Logs
+<!-- Include any error messages, stack traces, or relevant logs. -->
+
+## Additional Context
+<!-- Add any other context about the problem here, such as system configuration, dependencies, etc. -->
+
+## Priority
+<!-- Select the appropriate priority level -->
+- [ ] **Critical** - System completely broken on this platform
+- [ ] **High** - Major functionality affected
+- [ ] **Medium** - Moderate impact
+- [ ] **Low** - Minor compatibility issue
+
+## Component
+<!-- Select the affected component(s) -->
+- [ ] **Agent** - Core agent functionality
+- [ ] **Memory** - Memory/vector store issues
+- [ ] **Tools** - Tool system issues
+- [ ] **Setup** - Installation/setup issues
+- [ ] **UI/UX** - User interface issues
+- [ ] **Backend** - Backend system issues
+- [ ] **Frontend** - Frontend system issues
+
+## Platform Labels
+<!-- The template will automatically add the appropriate platform label based on your selection below -->
+- [ ] **Windows** - Windows-specific issues
+- [ ] **macOS** - macOS-specific issues  
+- [ ] **Linux** - Linux-specific issues
+- [ ] **Cross-platform** - Affects multiple platforms
 
 ## Comparison with Other Platforms
 <!-- How does this behavior differ from other platforms? -->
