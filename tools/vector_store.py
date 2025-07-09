@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import uuid
 from datetime import datetime
 import chromadb
@@ -53,7 +53,7 @@ class PersistentVectorStore:
             chunk_size=1000,  # Add chunk_size parameter
         )
 
-    def put(self, namespace: tuple, key: str, value: Dict[str, Any]) -> None:
+    def put(self, namespace: Tuple[str, str], key: str, value: Dict[str, Any]) -> None:
         """Store a memory entry with namespace and key."""
         try:
             # Create document ID from namespace and key
@@ -84,7 +84,7 @@ class PersistentVectorStore:
             # Store in collection
             self.collection.add(
                 documents=[content],
-                embeddings=[embedding],
+                embeddings=[embedding],  # type: ignore[arg-type]
                 metadatas=[metadata],
                 ids=[doc_id],
             )
@@ -93,7 +93,7 @@ class PersistentVectorStore:
             print(f"Error storing memory: {e}")
 
     def search(
-        self, namespace: tuple, query: str, limit: int = 5
+        self, namespace: Tuple[str, str], query: str, limit: int = 5
     ) -> List[Dict[str, Any]]:
         """Search for memories using semantic similarity.
 
@@ -164,7 +164,7 @@ class PersistentVectorStore:
             print(f"Error searching memories: {e}")
             return []
 
-    def get(self, namespace: tuple, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, namespace: Tuple[str, str], key: str) -> Optional[Dict[str, Any]]:
         """Get a specific memory by namespace and key."""
         try:
             doc_id = f"{'-'.join(namespace)}-{key}"
@@ -187,7 +187,7 @@ class PersistentVectorStore:
             print(f"Error getting memory: {e}")
             return None
 
-    def delete(self, namespace: tuple, key: str) -> bool:
+    def delete(self, namespace: Tuple[str, str], key: str) -> bool:
         """Delete a specific memory."""
         try:
             doc_id = f"{'-'.join(namespace)}-{key}"
@@ -198,7 +198,7 @@ class PersistentVectorStore:
             print(f"Error deleting memory: {e}")
             return False
 
-    def list_memories(self, namespace: tuple, limit: int = 10) -> List[Dict[str, Any]]:
+    def list_memories(self, namespace: Tuple[str, str], limit: int = 10) -> List[Dict[str, Any]]:
         """List all memories in a namespace."""
         try:
             results = self.collection.get(
@@ -237,7 +237,7 @@ class PersistentVectorStore:
             print(f"Error getting stats: {e}")
             return {"error": str(e)}
 
-    def migrate_from_memory_store(self, old_memories: List[Dict[str, Any]]) -> int:  # type: ignore[no-untyped-def]
+    def migrate_from_memory_store(self, old_memories: Any) -> int:
         """Migrate memories from old InMemoryStore format."""
         migrated = 0
 
@@ -262,7 +262,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
     A patch to handle local servers that do not support batching.
     """
 
-    def __init__(self, *args, openai_api_key=None, openai_api_base=None, **kwargs):
+    def __init__(self, *args: Any, openai_api_key: Any = None, openai_api_base: Optional[str] = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.openai_api_key = openai_api_key
         self.openai_api_base = openai_api_base
