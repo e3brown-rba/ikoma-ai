@@ -65,15 +65,15 @@ phishing.org
         )
 
         # Test allowed domains
-        assert filter_instance.is_domain_allowed("example.com")[0] == True
-        assert filter_instance.is_domain_allowed("github.com")[0] == True
+        assert filter_instance.is_domain_allowed("example.com")[0]
+        assert filter_instance.is_domain_allowed("github.com")[0]
 
         # Test denied domains
-        assert filter_instance.is_domain_allowed("malware.com")[0] == False
-        assert filter_instance.is_domain_allowed("phishing.org")[0] == False
+        assert not filter_instance.is_domain_allowed("malware.com")[0]
+        assert not filter_instance.is_domain_allowed("phishing.org")[0]
 
         # Test unknown domains (deny by default)
-        assert filter_instance.is_domain_allowed("unknown.com")[0] == False
+        assert not filter_instance.is_domain_allowed("unknown.com")[0]
 
     def test_wildcard_domain_matching(self):
         """Test wildcard subdomain matching."""
@@ -82,13 +82,13 @@ phishing.org
         )
 
         # Test allowed wildcards
-        assert filter_instance.is_domain_allowed("en.wikipedia.org")[0] == True
-        assert filter_instance.is_domain_allowed("fr.wikipedia.org")[0] == True
-        assert filter_instance.is_domain_allowed("wikipedia.org")[0] == True
+        assert filter_instance.is_domain_allowed("en.wikipedia.org")[0]
+        assert filter_instance.is_domain_allowed("fr.wikipedia.org")[0]
+        assert filter_instance.is_domain_allowed("wikipedia.org")[0]
 
         # Test denied wildcards
-        assert filter_instance.is_domain_allowed("evil.suspicious.net")[0] == False
-        assert filter_instance.is_domain_allowed("malware.suspicious.net")[0] == False
+        assert not filter_instance.is_domain_allowed("evil.suspicious.net")[0]
+        assert not filter_instance.is_domain_allowed("malware.suspicious.net")[0]
 
     def test_domain_normalization(self):
         """Test domain normalization (lowercase, www removal)."""
@@ -97,12 +97,12 @@ phishing.org
         )
 
         # Test case insensitivity
-        assert filter_instance.is_domain_allowed("EXAMPLE.COM")[0] == True
-        assert filter_instance.is_domain_allowed("Example.Com")[0] == True
+        assert filter_instance.is_domain_allowed("EXAMPLE.COM")[0]
+        assert filter_instance.is_domain_allowed("Example.Com")[0]
 
         # Test www removal
-        assert filter_instance.is_domain_allowed("www.example.com")[0] == True
-        assert filter_instance.is_domain_allowed("www.github.com")[0] == True
+        assert filter_instance.is_domain_allowed("www.example.com")[0]
+        assert filter_instance.is_domain_allowed("www.github.com")[0]
 
     def test_domain_validation(self):
         """Test domain format validation."""
@@ -111,15 +111,15 @@ phishing.org
         )
 
         # Valid domains
-        assert filter_instance._is_valid_domain("example.com") == True
-        assert filter_instance._is_valid_domain("sub.example.com") == True
-        assert filter_instance._is_valid_domain("*.example.com") == True
+        assert filter_instance._is_valid_domain("example.com")
+        assert filter_instance._is_valid_domain("sub.example.com")
+        assert filter_instance._is_valid_domain("*.example.com")
 
         # Invalid domains
-        assert filter_instance._is_valid_domain("") == False
-        assert filter_instance._is_valid_domain("invalid..domain") == False
-        assert filter_instance._is_valid_domain("domain-with-dash.com") == True
-        assert filter_instance._is_valid_domain("domain_with_underscore.com") == False
+        assert not filter_instance._is_valid_domain("")
+        assert not filter_instance._is_valid_domain("invalid..domain")
+        assert filter_instance._is_valid_domain("domain-with-dash.com")
+        assert not filter_instance._is_valid_domain("domain_with_underscore.com")
 
     def test_deny_precedence(self):
         """Test that deny list takes precedence over allow list."""
@@ -135,7 +135,7 @@ phishing.org
         )
 
         # Deny should take precedence
-        assert filter_instance.is_domain_allowed("conflict.com")[0] == False
+        assert not filter_instance.is_domain_allowed("conflict.com")[0]
 
     def test_default_policy_allow(self):
         """Test allow-by-default policy."""
@@ -146,7 +146,7 @@ phishing.org
         )
 
         # Unknown domains should be allowed
-        assert filter_instance.is_domain_allowed("unknown.com")[0] == True
+        assert filter_instance.is_domain_allowed("unknown.com")[0]
 
     def test_missing_files(self):
         """Test behavior when configuration files are missing."""
@@ -158,7 +158,7 @@ phishing.org
         )
 
         # Should use default policy
-        assert filter_instance.is_domain_allowed("any.com")[0] == False
+        assert not filter_instance.is_domain_allowed("any.com")[0]
 
     def test_malformed_domain_files(self):
         """Test handling of malformed domain files."""
@@ -196,7 +196,7 @@ domain_with_underscore.com
         filter_instance.reload_config()
 
         # New domain should be allowed
-        assert filter_instance.is_domain_allowed("newdomain.com")[0] == True
+        assert filter_instance.is_domain_allowed("newdomain.com")[0]
 
     def test_cache_functionality(self):
         """Test caching functionality."""
@@ -224,8 +224,8 @@ domain_with_underscore.com
         assert "deny_domains_count" in status
         assert "default_policy" in status
         assert status["default_policy"] == "deny"
-        assert status["allow_file_exists"] == True
-        assert status["deny_file_exists"] == True
+        assert status["allow_file_exists"]
+        assert status["deny_file_exists"]
 
 
 class TestDomainFilterFunctions:
@@ -293,16 +293,16 @@ suspicious.net
             filter_instance = DomainFilter(allow_file=allow_path, deny_file=deny_path)
 
             # Test allowed domains
-            assert filter_instance.is_domain_allowed("wikipedia.org")[0] == True
-            assert filter_instance.is_domain_allowed("en.wikipedia.org")[0] == True
-            assert filter_instance.is_domain_allowed("github.com")[0] == True
+            assert filter_instance.is_domain_allowed("wikipedia.org")[0]
+            assert filter_instance.is_domain_allowed("en.wikipedia.org")[0]
+            assert filter_instance.is_domain_allowed("github.com")[0]
 
             # Test denied domains
-            assert filter_instance.is_domain_allowed("evil.malware.com")[0] == False
-            assert filter_instance.is_domain_allowed("phishing-site.org")[0] == False
+            assert not filter_instance.is_domain_allowed("evil.malware.com")[0]
+            assert not filter_instance.is_domain_allowed("phishing-site.org")[0]
 
             # Test unknown domains
-            assert filter_instance.is_domain_allowed("unknown.com")[0] == False
+            assert not filter_instance.is_domain_allowed("unknown.com")[0]
 
         finally:
             os.unlink(allow_path)
