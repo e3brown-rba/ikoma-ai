@@ -3,13 +3,21 @@ name = "ikoma"
 version = "0.2.0"
 description = "iKOMA AI Agent - Plan-Execute-Reflect Architecture"
 dependencies = [
-    "langchain-openai",
-    "langgraph",
-    "chromadb",
-    "python-dotenv",
-    "openai",
-    "pathlib",
-    "uuid",
+    "langchain==0.3.26",
+    "langchain-core==0.3.68",
+    "langchain-openai==0.3.27",
+    "langchain-community==0.3.27",
+    "langchain-chroma==0.2.3",
+    "langgraph==0.5.1",
+    "langgraph-checkpoint==2.1.0",
+    "langgraph-checkpoint-sqlite==2.0.10",
+    "chromadb==0.5.23",
+    "sentence-transformers==2.2.2",
+    "python-dotenv==1.0.1",
+    "openai==1.93.0",
+    "pydantic==2.11.7",
+    "pydantic-core==2.33.2",
+    "numexpr==2.11.0",
 ]
 
 [build-system]
@@ -41,4 +49,18 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "langchain_core.*"
-ignore_missing_imports = true 
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=agent",
+    "--cov=tools",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+] 
