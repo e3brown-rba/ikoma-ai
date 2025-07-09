@@ -6,9 +6,6 @@ Tests the rate-limited HTTP client wrapper with domain filtering and caching.
 """
 
 import pytest
-import time
-import json
-from pathlib import Path
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 

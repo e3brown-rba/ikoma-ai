@@ -5,7 +5,7 @@ Provides rate-limited HTTP request tools with domain filtering integration.
 Part of Epic E-01: Internet Tooling - Issue #5.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Optional
 from langchain.tools import tool
 from .http_client import get_http_client, RateLimitConfig
 
@@ -44,7 +44,7 @@ def make_http_request(url: str, method: str = "GET", headers: str = "", use_cach
         
         # Format response
         if response["success"]:
-            result = f"✅ Request successful\n"
+            result = "✅ Request successful\n"
             result += f"URL: {response['url']}\n"
             result += f"Method: {response['method']}\n"
             result += f"Status: {response['status_code']}\n"

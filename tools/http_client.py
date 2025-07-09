@@ -13,11 +13,10 @@ Features:
 - Timeout and retry logic
 """
 
-import time
 import logging
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Dict, List, Optional, Tuple, Any
 from urllib.parse import urlparse
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
