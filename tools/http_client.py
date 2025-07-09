@@ -31,7 +31,9 @@ logger = logging.getLogger(__name__)
 class RateLimitConfig:
     """Configuration for token bucket rate limiting per domain."""
 
-    requests_per_second: float = 5.0  # Token bucket refill rate (5 req/s as per requirements)
+    requests_per_second: float = (
+        5.0  # Token bucket refill rate (5 req/s as per requirements)
+    )
     bucket_capacity: int = 10  # Maximum tokens in bucket (burst capacity)
     backoff_base: float = 1.0  # Base backoff time in seconds for 429/503
     backoff_max: float = 60.0  # Maximum backoff time in seconds
@@ -103,11 +105,14 @@ class RequestStats:
         # Calculate backoff time with exponential increase
         backoff_time = min(
             config.backoff_max,
-            config.backoff_base * (config.backoff_multiplier ** (self.backoff_attempts - 1))
+            config.backoff_base
+            * (config.backoff_multiplier ** (self.backoff_attempts - 1)),
         )
 
         self.backoff_until = now + timedelta(seconds=backoff_time)
-        logger.warning(f"HTTP {status_code} response for {self.domain}, backing off for {backoff_time:.1f}s")
+        logger.warning(
+            f"HTTP {status_code} response for {self.domain}, backing off for {backoff_time:.1f}s"
+        )
 
     def get_stats(self) -> dict[str, Any]:
         """Get current statistics for this domain."""
@@ -117,8 +122,12 @@ class RequestStats:
             "current_tokens": round(self.tokens, 2),
             "rate_limit_hits": self.rate_limit_hits,
             "backoff_attempts": self.backoff_attempts,
-            "backoff_until": self.backoff_until.isoformat() if self.backoff_until else None,
-            "last_request": self.last_request.isoformat() if self.last_request else None,
+            "backoff_until": self.backoff_until.isoformat()
+            if self.backoff_until
+            else None,
+            "last_request": self.last_request.isoformat()
+            if self.last_request
+            else None,
         }
 
 
@@ -177,10 +186,14 @@ class RateLimitedHTTPClient:
         # Import domain filter
         try:
             from .domain_filter import is_domain_allowed
+
             self.is_domain_allowed = is_domain_allowed
         except ImportError:
             logger.warning("Domain filter not available, allowing all domains")
-            self.is_domain_allowed = lambda domain: (True, "Domain filter not available")
+            self.is_domain_allowed = lambda domain: (
+                True,
+                "Domain filter not available",
+            )
 
     def set_domain_rate_limit(self, domain: str, config: RateLimitConfig) -> None:
         """Set custom rate limit configuration for a specific domain."""
@@ -194,16 +207,21 @@ class RateLimitedHTTPClient:
     def _get_next_user_agent(self) -> str:
         """Get next User-Agent from rotation."""
         user_agent = self.user_agents[self.current_user_agent_index]
-        self.current_user_agent_index = (self.current_user_agent_index + 1) % len(self.user_agents)
+        self.current_user_agent_index = (self.current_user_agent_index + 1) % len(
+            self.user_agents
+        )
         return user_agent
 
     def _get_cache_key(self, url: str, method: str = "GET") -> str:
         """Generate cache key for URL and method."""
         import hashlib
+
         key_data = f"{method}:{url}".encode()
         return hashlib.md5(key_data).hexdigest()
 
-    def _get_cached_response(self, url: str, method: str = "GET") -> dict[str, Any] | None:
+    def _get_cached_response(
+        self, url: str, method: str = "GET"
+    ) -> dict[str, Any] | None:
         """Get cached response if available and not expired."""
         try:
             cache_key = self._get_cache_key(url, method)
@@ -216,7 +234,7 @@ class RateLimitedHTTPClient:
                 cached = json.load(f)
 
             # Check if cache is expired (1 hour default)
-            cache_time = datetime.fromisoformat(cached['timestamp'])
+            cache_time = datetime.fromisoformat(cached["timestamp"])
             if datetime.now() - cache_time > timedelta(hours=1):
                 cache_file.unlink()  # Remove expired cache
                 return None
@@ -226,17 +244,19 @@ class RateLimitedHTTPClient:
             logger.warning(f"Error reading cache for {url}: {e}")
             return None
 
-    def _cache_response(self, url: str, method: str, response_data: dict[str, Any]) -> None:
+    def _cache_response(
+        self, url: str, method: str, response_data: dict[str, Any]
+    ) -> None:
         """Cache response data."""
         try:
             cache_key = self._get_cache_key(url, method)
             cache_file = self.cache_dir / f"{cache_key}.json"
 
-            response_data['timestamp'] = datetime.now().isoformat()
-            response_data['url'] = url
-            response_data['method'] = method
+            response_data["timestamp"] = datetime.now().isoformat()
+            response_data["url"] = url
+            response_data["method"] = method
 
-            with open(cache_file, 'w') as f:
+            with open(cache_file, "w") as f:
                 json.dump(response_data, f, indent=2)
         except Exception as e:
             logger.warning(f"Error caching response for {url}: {e}")
@@ -247,8 +267,8 @@ class RateLimitedHTTPClient:
         domain = parsed.netloc.lower()
 
         # Remove port if present
-        if ':' in domain:
-            domain = domain.split(':')[0]
+        if ":" in domain:
+            domain = domain.split(":")[0]
 
         return domain
 
@@ -278,7 +298,9 @@ class RateLimitedHTTPClient:
             config = self.get_domain_config(domain)
             return self.request_stats[domain].consume_token(config)
 
-    def get(self, url: str, headers: dict[str, str] | None = None, use_cache: bool = True) -> dict[str, Any]:
+    def get(
+        self, url: str, headers: dict[str, str] | None = None, use_cache: bool = True
+    ) -> dict[str, Any]:
         """
         Make a rate-limited GET request.
 
@@ -292,7 +314,12 @@ class RateLimitedHTTPClient:
         """
         return self._make_request(url, "GET", headers=headers, use_cache=use_cache)
 
-    def post(self, url: str, data: dict[str, Any] | None = None, headers: dict[str, str] | None = None) -> dict[str, Any]:
+    def post(
+        self,
+        url: str,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """
         Make a rate-limited POST request.
 
@@ -304,7 +331,9 @@ class RateLimitedHTTPClient:
         Returns:
             Dictionary with response data and metadata
         """
-        return self._make_request(url, "POST", data=data, headers=headers, use_cache=False)
+        return self._make_request(
+            url, "POST", data=data, headers=headers, use_cache=False
+        )
 
     def _make_request(
         self,
@@ -312,7 +341,7 @@ class RateLimitedHTTPClient:
         method: str = "GET",
         data: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-        use_cache: bool = True
+        use_cache: bool = True,
     ) -> dict[str, Any]:
         """
         Make a rate-limited HTTP request.
@@ -402,7 +431,9 @@ class RateLimitedHTTPClient:
                 with self._lock:
                     if domain in self.request_stats:
                         config = self.get_domain_config(domain)
-                        self.request_stats[domain].trigger_backoff(config, response.status_code)
+                        self.request_stats[domain].trigger_backoff(
+                            config, response.status_code
+                        )
 
                 return {
                     "success": False,
@@ -477,8 +508,14 @@ class RateLimitedHTTPClient:
         with self._lock:
             stats = {
                 "total_domains": len(self.request_stats),
-                "total_requests": sum(domain_stats.total_requests for domain_stats in self.request_stats.values()),
-                "rate_limit_hits": sum(domain_stats.rate_limit_hits for domain_stats in self.request_stats.values()),
+                "total_requests": sum(
+                    domain_stats.total_requests
+                    for domain_stats in self.request_stats.values()
+                ),
+                "rate_limit_hits": sum(
+                    domain_stats.rate_limit_hits
+                    for domain_stats in self.request_stats.values()
+                ),
                 "domains": {},
                 "cache_info": {
                     "cache_dir": str(self.cache_dir),

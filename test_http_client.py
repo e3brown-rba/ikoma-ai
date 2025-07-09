@@ -43,7 +43,7 @@ class TestRateLimitConfig:
             bucket_capacity=5,
             backoff_base=2.0,
             backoff_max=120.0,
-            backoff_multiplier=1.5
+            backoff_multiplier=1.5,
         )
         assert config.requests_per_second == 3.0
         assert config.bucket_capacity == 5
@@ -145,7 +145,10 @@ class TestRateLimitedHTTPClient:
         client = RateLimitedHTTPClient()
 
         assert client._extract_domain("https://example.com/page") == "example.com"
-        assert client._extract_domain("http://api.example.com:8080/v1") == "api.example.com"
+        assert (
+            client._extract_domain("http://api.example.com:8080/v1")
+            == "api.example.com"
+        )
         assert client._extract_domain("https://www.example.com") == "www.example.com"
 
     def test_set_domain_rate_limit(self):
@@ -171,7 +174,7 @@ class TestRateLimitedHTTPClient:
         # Should have multiple different user agents
         assert len(user_agents) > 1
 
-    @patch('tools.http_client.requests.request')
+    @patch("tools.http_client.requests.request")
     def test_successful_request(self, mock_request):
         """Test successful HTTP request."""
         # Mock successful response
@@ -186,7 +189,7 @@ class TestRateLimitedHTTPClient:
         client = RateLimitedHTTPClient()
 
         # Mock domain filtering to allow the request
-        with patch.object(client, 'is_domain_allowed', return_value=(True, "Allowed")):
+        with patch.object(client, "is_domain_allowed", return_value=(True, "Allowed")):
             response = client.get("https://example.com/test")
 
         assert response["success"] is True
@@ -194,20 +197,22 @@ class TestRateLimitedHTTPClient:
         assert response["content"] == "Hello, World!"
         assert response["domain"] == "example.com"
 
-    @patch('tools.http_client.requests.request')
+    @patch("tools.http_client.requests.request")
     def test_domain_filtered_request(self, mock_request):
         """Test request blocked by domain filtering."""
         client = RateLimitedHTTPClient()
 
         # Mock domain filtering to deny the request
-        with patch.object(client, 'is_domain_allowed', return_value=(False, "Domain not allowed")):
+        with patch.object(
+            client, "is_domain_allowed", return_value=(False, "Domain not allowed")
+        ):
             response = client.get("https://blocked.com/test")
 
         assert response["success"] is False
         assert "Domain not allowed" in response["error"]
         mock_request.assert_not_called()
 
-    @patch('tools.http_client.requests.request')
+    @patch("tools.http_client.requests.request")
     def test_rate_limited_request(self, mock_request):
         """Test request blocked by rate limiting."""
         # Mock successful response
@@ -220,10 +225,12 @@ class TestRateLimitedHTTPClient:
         mock_request.return_value = mock_response
 
         # Create client with small bucket capacity
-        client = RateLimitedHTTPClient(default_rate_limit=RateLimitConfig(bucket_capacity=2))
+        client = RateLimitedHTTPClient(
+            default_rate_limit=RateLimitConfig(bucket_capacity=2)
+        )
 
         # Mock domain filtering to allow the request
-        with patch.object(client, 'is_domain_allowed', return_value=(True, "Allowed")):
+        with patch.object(client, "is_domain_allowed", return_value=(True, "Allowed")):
             # Make requests to exhaust token bucket
             response1 = client.get("https://example.com/test1")
             assert response1["success"] is True
@@ -236,7 +243,7 @@ class TestRateLimitedHTTPClient:
             assert response3["success"] is False
             assert "Rate limited" in response3["error"]
 
-    @patch('tools.http_client.requests.request')
+    @patch("tools.http_client.requests.request")
     def test_429_503_backoff(self, mock_request):
         """Test exponential backoff for 429/503 responses."""
         # Mock 429 response
@@ -248,7 +255,7 @@ class TestRateLimitedHTTPClient:
         client = RateLimitedHTTPClient()
 
         # Mock domain filtering to allow the request
-        with patch.object(client, 'is_domain_allowed', return_value=(True, "Allowed")):
+        with patch.object(client, "is_domain_allowed", return_value=(True, "Allowed")):
             # First request should get 429 and trigger backoff
             response = client.get("https://example.com/test")
             assert response["success"] is False
@@ -290,7 +297,7 @@ class TestHTTPTools:
 
     def test_make_http_request_success(self):
         """Test successful HTTP request tool."""
-        with patch('tools.http_tools.get_http_client') as mock_get_client:
+        with patch("tools.http_tools.get_http_client") as mock_get_client:
             mock_client = MagicMock()
             mock_client.get.return_value = {
                 "success": True,
@@ -312,7 +319,7 @@ class TestHTTPTools:
 
     def test_make_http_request_failure(self):
         """Test failed HTTP request tool."""
-        with patch('tools.http_tools.get_http_client') as mock_get_client:
+        with patch("tools.http_tools.get_http_client") as mock_get_client:
             mock_client = MagicMock()
             mock_client.get.return_value = {
                 "success": False,
@@ -329,7 +336,7 @@ class TestHTTPTools:
 
     def test_get_http_client_stats(self):
         """Test getting HTTP client statistics tool."""
-        with patch('tools.http_tools.get_http_client') as mock_get_client:
+        with patch("tools.http_tools.get_http_client") as mock_get_client:
             mock_client = MagicMock()
             mock_client.get_stats.return_value = {
                 "total_domains": 2,
@@ -359,7 +366,7 @@ class TestHTTPTools:
 
     def test_test_http_connection_success(self):
         """Test HTTP connection test tool success."""
-        with patch('tools.http_tools.get_http_client') as mock_get_client:
+        with patch("tools.http_tools.get_http_client") as mock_get_client:
             mock_client = MagicMock()
             mock_client.get.return_value = {
                 "success": True,
@@ -377,7 +384,7 @@ class TestHTTPTools:
 
     def test_test_http_connection_failure(self):
         """Test HTTP connection test tool failure."""
-        with patch('tools.http_tools.get_http_client') as mock_get_client:
+        with patch("tools.http_tools.get_http_client") as mock_get_client:
             mock_client = MagicMock()
             mock_client.get.return_value = {
                 "success": False,

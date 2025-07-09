@@ -5,7 +5,6 @@ Provides safe internet access tools with domain filtering integration.
 Part of Epic E-01: Internet Tooling.
 """
 
-
 from langchain.tools import tool
 
 from .domain_filter import get_domain_filter, is_domain_allowed, reload_domain_config

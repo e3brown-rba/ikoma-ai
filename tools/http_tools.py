@@ -5,14 +5,15 @@ Provides rate-limited HTTP request tools with domain filtering integration.
 Part of Epic E-01: Internet Tooling - Issue #5.
 """
 
-
 from langchain.tools import tool
 
 from .http_client import RateLimitConfig, get_http_client
 
 
 @tool
-def make_http_request(url: str, method: str = "GET", headers: str = "", use_cache: bool = True) -> str:
+def make_http_request(
+    url: str, method: str = "GET", headers: str = "", use_cache: bool = True
+) -> str:
     """
     Make a rate-limited HTTP request with domain filtering and safety checks.
 
@@ -30,6 +31,7 @@ def make_http_request(url: str, method: str = "GET", headers: str = "", use_cach
         request_headers: dict[str, str] | None = None
         if headers.strip():
             import json
+
             request_headers = json.loads(headers)
 
         # Get HTTP client
@@ -55,7 +57,7 @@ def make_http_request(url: str, method: str = "GET", headers: str = "", use_cach
             result += f"Timestamp: {response['timestamp']}\n\n"
 
             # Include content (truncated if too long)
-            content = response['content']
+            content = response["content"]
             if len(content) > 2000:
                 result += f"Content (truncated):\n{content[:2000]}...\n[Content truncated - {len(content)} total characters]"
             else:
@@ -89,7 +91,7 @@ def get_http_client_stats() -> str:
         result += f"Cache Directory: {stats['cache_info']['cache_dir']}\n\n"
 
         # Configuration
-        config = stats['config']
+        config = stats["config"]
         result += "⚙️ Configuration:\n"
         result += f"- Requests per second: {config['default_rate_limit']['requests_per_second']}\n"
         result += f"- Bucket capacity: {config['default_rate_limit']['bucket_capacity']} tokens\n"
@@ -99,17 +101,17 @@ def get_http_client_stats() -> str:
         result += f"- User agents: {config['user_agents_count']}\n\n"
 
         # Per-domain statistics
-        if stats['domains']:
+        if stats["domains"]:
             result += "🌐 Domain Statistics:\n"
-            for domain, domain_stats in stats['domains'].items():
+            for domain, domain_stats in stats["domains"].items():
                 result += f"\n{domain}:\n"
                 result += f"  - Total requests: {domain_stats['total_requests']}\n"
                 result += f"  - Current tokens: {domain_stats['current_tokens']}\n"
                 result += f"  - Rate limit hits: {domain_stats['rate_limit_hits']}\n"
                 result += f"  - Backoff attempts: {domain_stats['backoff_attempts']}\n"
-                if domain_stats['backoff_until']:
+                if domain_stats["backoff_until"]:
                     result += f"  - Backoff until: {domain_stats['backoff_until']}\n"
-                if domain_stats['last_request']:
+                if domain_stats["last_request"]:
                     result += f"  - Last request: {domain_stats['last_request']}\n"
         else:
             result += "🌐 No domain statistics available\n"
@@ -121,7 +123,12 @@ def get_http_client_stats() -> str:
 
 
 @tool
-def set_domain_rate_limit(domain: str, requests_per_second: float = 5.0, bucket_capacity: int = 10, backoff_base: float = 1.0) -> str:
+def set_domain_rate_limit(
+    domain: str,
+    requests_per_second: float = 5.0,
+    bucket_capacity: int = 10,
+    backoff_base: float = 1.0,
+) -> str:
     """
     Set custom rate limit configuration for a specific domain using token bucket algorithm.
 
@@ -141,16 +148,18 @@ def set_domain_rate_limit(domain: str, requests_per_second: float = 5.0, bucket_
         config = RateLimitConfig(
             requests_per_second=requests_per_second,
             bucket_capacity=bucket_capacity,
-            backoff_base=backoff_base
+            backoff_base=backoff_base,
         )
 
         # Set the configuration
         client.set_domain_rate_limit(domain, config)
 
-        return f"✅ Rate limit configured for '{domain}':\n" \
-               f"- Requests per second: {requests_per_second}\n" \
-               f"- Bucket capacity: {bucket_capacity} tokens\n" \
-               f"- Backoff base: {backoff_base} seconds"
+        return (
+            f"✅ Rate limit configured for '{domain}':\n"
+            f"- Requests per second: {requests_per_second}\n"
+            f"- Bucket capacity: {bucket_capacity} tokens\n"
+            f"- Backoff base: {backoff_base} seconds"
+        )
 
     except Exception as e:
         return f"❌ Error setting rate limit for '{domain}': {str(e)}"
@@ -204,15 +213,19 @@ def test_http_connection(url: str = "https://httpbin.org/get") -> str:
         response = client.get(url, use_cache=False)
 
         if response["success"]:
-            return f"✅ HTTP connection test successful\n" \
-                   f"URL: {response['url']}\n" \
-                   f"Status: {response['status_code']}\n" \
-                   f"Content Length: {response['content_length']} bytes\n" \
-                   f"Domain: {response['domain']}"
+            return (
+                f"✅ HTTP connection test successful\n"
+                f"URL: {response['url']}\n"
+                f"Status: {response['status_code']}\n"
+                f"Content Length: {response['content_length']} bytes\n"
+                f"Domain: {response['domain']}"
+            )
         else:
-            return f"❌ HTTP connection test failed\n" \
-                   f"URL: {response['url']}\n" \
-                   f"Error: {response['error']}"
+            return (
+                f"❌ HTTP connection test failed\n"
+                f"URL: {response['url']}\n"
+                f"Error: {response['error']}"
+            )
 
     except Exception as e:
         return f"❌ HTTP connection test error: {str(e)}"
