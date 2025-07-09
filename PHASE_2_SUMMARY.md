@@ -16,10 +16,15 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Security-first design with deny-by-default policy
   - File-based configuration with automatic reloading
   - Integration with MCP tool system
+- ✅ **Issue #5: Rate-limited HTTP client wrapper** - COMPLETED
+  - Token bucket algorithm with 5 req/s default rate
+  - Exponential backoff for 429/503 responses
+  - Shared singleton pattern with thread-safe implementation
+  - Domain filtering integration for security
+  - Comprehensive test suite and MCP tool integration
 
 #### **In Progress:**
-- 🔄 **Issue #5: Rate-limited HTTP client wrapper** - Next implementation target
-- ⏳ **Issue #2: SerpAPI search tool** - Foundation for web search
+- 🔄 **Issue #2: SerpAPI search tool** - Next implementation target
 - ⏳ **Issue #3: HTML→Text extractor utility** - Content parsing
 - ⏳ **Issue #6: Ingest fetched text into vector store** - Memory integration
 - ⏳ **Issue #7: Prompt template — add citation tokens** - Source attribution
@@ -170,8 +175,8 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 
 ### **Current Sprint (Week 1-2):**
 - ✅ **Domain Filter Implementation** (Issue #4) - COMPLETED
-- 🔄 **HTTP Client Wrapper** (Issue #5) - NEXT
-- ⏳ **SerpAPI Integration** (Issue #2) - PLANNED
+- ✅ **HTTP Client Wrapper** (Issue #5) - COMPLETED
+- 🔄 **SerpAPI Integration** (Issue #2) - NEXT
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -185,6 +190,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 
 ### **Technical Deliverables:**
 - ✅ **Internet Safety**: Domain filtering and rate limiting
+- ✅ **HTTP Client**: Rate-limited wrapper with token bucket and backoff
 - ⏳ **Web Integration**: SerpAPI search and HTML extraction
 - ⏳ **Continuous Mode**: Unattended execution capabilities
 - ⏳ **Enhanced Planning**: JSON schema validation
