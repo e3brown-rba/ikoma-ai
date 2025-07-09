@@ -198,7 +198,9 @@ class PersistentVectorStore:
             print(f"Error deleting memory: {e}")
             return False
 
-    def list_memories(self, namespace: Tuple[str, str], limit: int = 10) -> List[Dict[str, Any]]:
+    def list_memories(
+        self, namespace: Tuple[str, str], limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """List all memories in a namespace."""
         try:
             results = self.collection.get(
@@ -262,7 +264,13 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
     A patch to handle local servers that do not support batching.
     """
 
-    def __init__(self, *args: Any, openai_api_key: Any = None, openai_api_base: Optional[str] = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        openai_api_key: Any = None,
+        openai_api_base: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.openai_api_key = openai_api_key
         self.openai_api_base = openai_api_base
