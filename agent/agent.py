@@ -41,7 +41,9 @@ class AgentState(TypedDict):
 
 
 # --- Memory Management Functions ---
-def retrieve_long_term_memory(state: AgentState, config: dict, *, store: Any) -> AgentState:
+def retrieve_long_term_memory(
+    state: AgentState, config: dict, *, store: Any
+) -> AgentState:
     """Retrieve relevant long-term memories based on current context."""
     try:
         # Extract user ID from config
@@ -86,7 +88,9 @@ def retrieve_long_term_memory(state: AgentState, config: dict, *, store: Any) ->
     return state
 
 
-def store_long_term_memory(state: AgentState, config: dict, *, store: Any) -> AgentState:
+def store_long_term_memory(
+    state: AgentState, config: dict, *, store: Any
+) -> AgentState:
     """Store important information to long-term memory."""
     try:
         # Extract user ID from config
@@ -292,7 +296,9 @@ Remember: Return ONLY valid JSON, no other text."""
     return state
 
 
-def execute_node(state: AgentState, config: dict, *, store: Any, tools: Any) -> AgentState:
+def execute_node(
+    state: AgentState, config: dict, *, store: Any, tools: Any
+) -> AgentState:
     """Optimized execute_node that uses shared tools."""
     try:
         # Execute each step in the plan
@@ -421,7 +427,9 @@ def execute_node(state: AgentState, config: dict, *, store: Any, tools: Any) -> 
     return state
 
 
-def reflect_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> AgentState:
+def reflect_node(
+    state: AgentState, config: dict, *, store: Any, llm: Any
+) -> AgentState:
     """Optimized reflect_node that uses shared LLM instance."""
     try:
         # Increment iteration counter
