@@ -219,7 +219,7 @@ class RateLimitedHTTPClient:
         import hashlib
 
         key_data = f"{method}:{url}".encode()
-        return hashlib.md5(key_data).hexdigest()
+        return hashlib.md5(key_data, usedforsecurity=False).hexdigest()
 
     def _get_cached_response(
         self, url: str, method: str = "GET"
