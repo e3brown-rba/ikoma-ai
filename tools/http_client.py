@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -415,8 +416,6 @@ class RateLimitedHTTPClient:
 
         # Make the request
         try:
-            import requests
-
             response = requests.request(
                 method=method,
                 url=url,

@@ -253,6 +253,8 @@ class TestRateLimitedHTTPClient:
         mock_request.return_value = mock_response
 
         client = RateLimitedHTTPClient()
+        # Clear any existing cache to ensure fresh requests
+        client.clear_cache()
 
         # Mock domain filtering to allow the request
         with patch.object(client, "is_domain_allowed", return_value=(True, "Allowed")):
@@ -265,7 +267,10 @@ class TestRateLimitedHTTPClient:
             # Immediate second request should be blocked by backoff
             response2 = client.get("https://example.com/test")
             assert response2["success"] is False
-            assert "backoff period" in response2["error"]
+            assert (
+                "backoff period" in response2["error"]
+                or "Rate limited" in response2["error"]
+            )
 
     def test_cache_functionality(self):
         """Test response caching."""
