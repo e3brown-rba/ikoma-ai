@@ -56,6 +56,9 @@ Thumbs.db
 # Project retrospectives (local only)
 RETRO_PHASE_1B.md
 
+# Release notes storage (local only)
+releases/
+
 # Memory and database files (local runtime artifacts)
 agent/memory/vector_store/*/
 agent/memory/vector_store/*.sqlite3

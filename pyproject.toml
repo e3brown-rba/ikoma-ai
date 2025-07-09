@@ -1,7 +1,7 @@
 [project]
 name = "ikoma"
-version = "0.1.0"
-description = "iKOMA AI Agent - Phase 1-B"
+version = "0.2.0"
+description = "iKOMA AI Agent - Plan-Execute-Reflect Architecture"
 dependencies = [
     "langchain-openai",
     "langgraph",
