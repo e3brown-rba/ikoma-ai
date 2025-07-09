@@ -231,7 +231,7 @@ class RateLimitedHTTPClient:
                 return None
 
             with open(cache_file) as f:
-                cached = json.load(f)
+                cached: dict[str, Any] = json.load(f)
 
             # Check if cache is expired (1 hour default)
             cache_time = datetime.fromisoformat(cached["timestamp"])
@@ -506,7 +506,7 @@ class RateLimitedHTTPClient:
     def get_stats(self) -> dict[str, Any]:
         """Get comprehensive statistics about HTTP client usage."""
         with self._lock:
-            stats = {
+            stats: dict[str, Any] = {
                 "total_domains": len(self.request_stats),
                 "total_requests": sum(
                     domain_stats.total_requests
