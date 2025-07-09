@@ -32,7 +32,7 @@ class ToolLoader:
         self.schema = self._load_schema()
         self._loaded_tools: Optional[List[Any]] = None
 
-    def _load_schema(self) -> Dict[str, Any]:
+    def _load_schema(self) -> Any:
         """Load the MCP schema from JSON file."""
         try:
             with open(self.schema_path, "r") as f:
@@ -87,7 +87,7 @@ class ToolLoader:
         if math_tool_names:
             try:
                 # Create a simple Calculator tool instead of using langchain's load_tools
-                from langchain.tools import BaseTool  # type: ignore
+                from langchain.tools import BaseTool
 
                 class Calculator(BaseTool):
                     name: str = "Calculator"
@@ -109,7 +109,7 @@ class ToolLoader:
                         node = ast.parse(expr, mode="eval")
                         return self._eval_node(node.body)
 
-                    def _eval_node(self, node) -> float:
+                    def _eval_node(self, node: ast.AST) -> float:
                         """Recursively evaluate AST nodes for basic math operations."""
                         if isinstance(node, ast.Constant):
                             return float(node.value)
@@ -117,17 +117,17 @@ class ToolLoader:
                             left = self._eval_node(node.left)
                             right = self._eval_node(node.right)
                             if isinstance(node.op, ast.Add):
-                                return left + right
+                                return float(left + right)
                             elif isinstance(node.op, ast.Sub):
-                                return left - right
+                                return float(left - right)
                             elif isinstance(node.op, ast.Mult):
-                                return left * right
+                                return float(left * right)
                             elif isinstance(node.op, ast.Div):
-                                return left / right
+                                return float(left / right)
                             elif isinstance(node.op, ast.Pow):
-                                return left**right
+                                return float(left**right)
                             elif isinstance(node.op, ast.Mod):
-                                return left % right
+                                return float(left % right)
                             else:
                                 raise ValueError(
                                     f"Unsupported operation: {type(node.op)}"
@@ -135,9 +135,9 @@ class ToolLoader:
                         elif isinstance(node, ast.UnaryOp):
                             operand = self._eval_node(node.operand)
                             if isinstance(node.op, ast.UAdd):
-                                return +operand
+                                return float(+operand)
                             elif isinstance(node.op, ast.USub):
-                                return -operand
+                                return float(-operand)
                             else:
                                 raise ValueError(
                                     f"Unsupported unary operation: {type(node.op)}"
@@ -171,7 +171,7 @@ class ToolLoader:
 
         return "\n".join(descriptions)
 
-    def get_tool_by_name(self, name: str) -> Any:
+    def get_tool_by_name(self, name: str) -> Optional[Any]:
         """Get a specific tool by name."""
         if self._loaded_tools is None:
             return None
@@ -183,7 +183,7 @@ class ToolLoader:
 
     def get_schema_version(self) -> str:
         """Get the schema version."""
-        return self.schema.get("version", "unknown")
+        return str(self.schema.get("version", "unknown"))
 
 
 # Global instance for single loading

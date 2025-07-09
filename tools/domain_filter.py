@@ -55,7 +55,7 @@ class DomainFilter:
         self.deny_wildcards: Set[str] = set()
 
         # Cache for performance
-        self.last_reload = 0
+        self.last_reload: float = 0.0
         self._cache: Dict[str, Tuple[bool, str]] = {}
 
         # Validation
@@ -232,8 +232,8 @@ class DomainFilter:
 
     def _parse_domain_file(self, filepath: Path) -> Tuple[Set[str], Set[str]]:
         """Parse domain file and return (exact_domains, wildcard_domains)."""
-        exact_domains = set()
-        wildcard_domains = set()
+        exact_domains: Set[str] = set()
+        wildcard_domains: Set[str] = set()
 
         if not filepath.exists():
             logger.warning(f"Domain file not found: {filepath}")

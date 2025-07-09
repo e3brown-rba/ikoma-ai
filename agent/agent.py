@@ -41,7 +41,7 @@ class AgentState(TypedDict):
 
 
 # --- Memory Management Functions ---
-def retrieve_long_term_memory(state: AgentState, config: dict, *, store) -> AgentState:
+def retrieve_long_term_memory(state: AgentState, config: dict, *, store: Any) -> AgentState:
     """Retrieve relevant long-term memories based on current context."""
     try:
         # Extract user ID from config
@@ -86,7 +86,7 @@ def retrieve_long_term_memory(state: AgentState, config: dict, *, store) -> Agen
     return state
 
 
-def store_long_term_memory(state: AgentState, config: dict, *, store) -> AgentState:
+def store_long_term_memory(state: AgentState, config: dict, *, store: Any) -> AgentState:
     """Store important information to long-term memory."""
     try:
         # Extract user ID from config
@@ -157,7 +157,7 @@ def should_continue_planning(state: AgentState) -> str:
 
 
 # --- Plan-Execute-Reflect Nodes ---
-def plan_node(state: AgentState, config: dict, *, store, llm) -> AgentState:
+def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> AgentState:
     """Optimized plan_node that uses shared LLM instance."""
     try:
         # Get tool descriptions
@@ -292,7 +292,7 @@ Remember: Return ONLY valid JSON, no other text."""
     return state
 
 
-def execute_node(state: AgentState, config: dict, *, store, tools) -> AgentState:
+def execute_node(state: AgentState, config: dict, *, store: Any, tools: Any) -> AgentState:
     """Optimized execute_node that uses shared tools."""
     try:
         # Execute each step in the plan
@@ -421,7 +421,7 @@ def execute_node(state: AgentState, config: dict, *, store, tools) -> AgentState
     return state
 
 
-def reflect_node(state: AgentState, config: dict, *, store, llm) -> AgentState:
+def reflect_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> AgentState:
     """Optimized reflect_node that uses shared LLM instance."""
     try:
         # Increment iteration counter
@@ -556,7 +556,7 @@ def check_env() -> None:
 
 
 # --- Agent Setup ---
-def create_agent():
+def create_agent() -> Any:
     """Create and configure the enhanced plan-execute-reflect agent."""
     # Perform environment sanity check once at startup
     check_env()
@@ -584,19 +584,19 @@ def create_agent():
     # checkpointer = SqliteSaver("agent/memory/conversations.sqlite")  # Temporarily disabled
 
     # Create closures that capture the shared instances
-    def retrieve_memory_with_store(state, config):
+    def retrieve_memory_with_store(state, config):  # type: ignore[no-untyped-def]
         return retrieve_long_term_memory(state, config, store=store)
 
-    def store_memory_with_store(state, config):
+    def store_memory_with_store(state, config):  # type: ignore[no-untyped-def]
         return store_long_term_memory(state, config, store=store)
 
-    def plan_node_with_shared_llm(state, config, *, store):
+    def plan_node_with_shared_llm(state, config, *, store):  # type: ignore[no-untyped-def]
         return plan_node(state, config, store=store, llm=llm)
 
-    def execute_node_with_shared_tools(state, config, *, store):
+    def execute_node_with_shared_tools(state, config, *, store):  # type: ignore[no-untyped-def]
         return execute_node(state, config, store=store, tools=tools)
 
-    def reflect_node_with_shared_llm(state, config, *, store):
+    def reflect_node_with_shared_llm(state, config, *, store):  # type: ignore[no-untyped-def]
         return reflect_node(state, config, store=store, llm=llm)
 
     # Create state graph

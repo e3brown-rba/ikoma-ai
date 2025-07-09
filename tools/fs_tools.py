@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 
 try:
-    from langchain.tools import tool  # type: ignore # LangChain <=0.1.x
+    from langchain.tools import tool  # LangChain <=0.1.x
 except ImportError:
     try:
-        from langchain_core.tools import tool  # type: ignore # New location
+        from langchain_core.tools import tool  # New location
     except ImportError:
         from .tool_fallback import tool_callable as _tool_fallback
 

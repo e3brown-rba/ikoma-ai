@@ -84,7 +84,7 @@ class PersistentVectorStore:
             # Store in collection
             self.collection.add(
                 documents=[content],
-                embeddings=[embedding],  # type: ignore
+                embeddings=[embedding],  # type: ignore[arg-type]
                 metadatas=[metadata],
                 ids=[doc_id],
             )
@@ -111,7 +111,7 @@ class PersistentVectorStore:
 
             # Search collection
             results = self.collection.query(
-                query_embeddings=[query_embedding],  # type: ignore
+                query_embeddings=[query_embedding],  # type: ignore[arg-type]
                 n_results=limit,
                 where={"namespace": "-".join(namespace)},
             )
@@ -153,7 +153,7 @@ class PersistentVectorStore:
                         value_dict = (
                             memory["value"] if isinstance(memory["value"], dict) else {}
                         )
-                        value_dict["reflection"] = metadata["reflection"]  # type: ignore
+                        value_dict["reflection"] = metadata["reflection"]
                         memory["value"] = value_dict
 
                     memories.append(memory)
@@ -237,7 +237,7 @@ class PersistentVectorStore:
             print(f"Error getting stats: {e}")
             return {"error": str(e)}
 
-    def migrate_from_memory_store(self, old_memories: List[Dict[str, Any]]) -> int:
+    def migrate_from_memory_store(self, old_memories: List[Dict[str, Any]]) -> int:  # type: ignore
         """Migrate memories from old InMemoryStore format."""
         migrated = 0
 
@@ -282,7 +282,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
 
 
 # Global instance for easy access
-vector_store = None
+vector_store: Optional[PersistentVectorStore] = None
 
 
 def get_vector_store() -> PersistentVectorStore:
@@ -301,7 +301,7 @@ def get_vector_store() -> PersistentVectorStore:
     return vector_store
 
 
-def example_persist():
+def example_persist() -> Optional[Dict[str, Any]]:
     """Minimal example to verify persistence in regression tests."""
     store = get_vector_store()
     test_ns = ("tests", "persistence")
