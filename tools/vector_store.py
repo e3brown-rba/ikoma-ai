@@ -84,7 +84,7 @@ class PersistentVectorStore:
             # Store in collection
             self.collection.add(
                 documents=[content],
-                embeddings=[embedding],  # type: ignore[arg-type]
+                embeddings=[embedding],
                 metadatas=[metadata],
                 ids=[doc_id],
             )
@@ -237,7 +237,7 @@ class PersistentVectorStore:
             print(f"Error getting stats: {e}")
             return {"error": str(e)}
 
-    def migrate_from_memory_store(self, old_memories: List[Dict[str, Any]]) -> int:  # type: ignore
+    def migrate_from_memory_store(self, old_memories: List[Dict[str, Any]]) -> int:  # type: ignore[no-untyped-def]
         """Migrate memories from old InMemoryStore format."""
         migrated = 0
 
