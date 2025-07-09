@@ -14,20 +14,20 @@ Schedule with cron:
     0 2 * * * /usr/bin/python3 /path/to/reflect.py >> /var/log/ikoma_reflect.log 2>&1
 """
 
+import argparse
+import json
 import os
 import sqlite3
-import json
-import argparse
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # LangChain imports
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+
 from tools.vector_store import get_vector_store
-from langchain_openai import OpenAIEmbeddings
 
 # Load environment variables
 load_dotenv()
@@ -36,10 +36,10 @@ load_dotenv()
 class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
     """Patched embeddings for local LM Studio compatibility."""
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
         return [self.embed_query(text) for text in texts]
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(self, text: str) -> list[float]:
         import openai
 
         temp_client = openai.OpenAI(
@@ -80,7 +80,7 @@ class ReflectionEngine:
         # Database path
         self.db_path = Path("agent/memory/conversations.sqlite")
 
-    def get_daily_conversations(self, target_date: date) -> List[Dict[str, Any]]:
+    def get_daily_conversations(self, target_date: date) -> list[dict[str, Any]]:
         """Retrieve conversations from the specified date."""
         if not self.db_path.exists():
             print(f"Warning: Database not found at {self.db_path}")
@@ -100,9 +100,9 @@ class ReflectionEngine:
                 # Query conversations within the date range
                 # Note: This is a simplified query - actual LangGraph schema may differ
                 query = """
-                SELECT thread_id, checkpoint_ns, checkpoint_id, parent_checkpoint_id, 
+                SELECT thread_id, checkpoint_ns, checkpoint_id, parent_checkpoint_id,
                        type, checkpoint, metadata, created_at
-                FROM checkpoints 
+                FROM checkpoints
                 WHERE created_at >= ? AND created_at < ?
                 ORDER BY thread_id, created_at
                 """
@@ -141,8 +141,8 @@ class ReflectionEngine:
         return conversations
 
     def extract_meaningful_exchanges(
-        self, conversations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, conversations: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Extract meaningful conversation exchanges from raw database data."""
         exchanges = []
 
@@ -189,8 +189,8 @@ class ReflectionEngine:
         return exchanges
 
     def generate_daily_summary(
-        self, exchanges: List[Dict[str, Any]], target_date: date
-    ) -> Dict[str, Any]:
+        self, exchanges: list[dict[str, Any]], target_date: date
+    ) -> dict[str, Any]:
         """Generate a comprehensive summary of the day's conversations."""
         if not exchanges:
             return {
@@ -261,7 +261,7 @@ class ReflectionEngine:
                 "total_exchanges": len(exchanges),
             }
 
-    def _parse_analysis_response(self, analysis_text: str) -> Dict[str, Any]:
+    def _parse_analysis_response(self, analysis_text: str) -> dict[str, Any]:
         """Parse the LLM's structured analysis response."""
         sections = {
             "summary": "",
@@ -309,7 +309,7 @@ class ReflectionEngine:
         return sections
 
     def store_insights_to_memory(
-        self, summary: Dict[str, Any], dry_run: bool = False
+        self, summary: dict[str, Any], dry_run: bool = False
     ) -> None:
         """Store the daily insights to the memory system."""
         if dry_run:
@@ -365,7 +365,7 @@ class ReflectionEngine:
 
     def run_reflection(
         self, target_date: date = None, dry_run: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run the complete reflection process for a given date."""
         if target_date is None:
             target_date = date.today() - timedelta(days=1)  # Yesterday by default
