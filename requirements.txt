@@ -24,6 +24,7 @@ pydantic-core==2.33.2
 
 # HTTP Client Dependencies
 requests==2.31.0  # For rate-limited HTTP client wrapper
+types-requests==2.32.4.20250611  # Type stubs for requests library
 
 # Development Tools
 gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165
