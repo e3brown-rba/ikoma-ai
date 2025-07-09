@@ -75,11 +75,82 @@
         "required": ["question"]
       },
       "category": "math"
+    },
+    {
+      "name": "check_domain_allowed",
+      "description": "Check if a domain is allowed based on the current domain filter configuration",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The domain to check (e.g., 'example.com', 'blog.example.com')"
+          }
+        },
+        "required": ["domain"]
+      },
+      "category": "internet"
+    },
+    {
+      "name": "get_domain_filter_status",
+      "description": "Get the current status and statistics of the domain filter",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "internet"
+    },
+    {
+      "name": "list_allowed_domains",
+      "description": "List all explicitly allowed domains from the domain filter",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "internet"
+    },
+    {
+      "name": "list_denied_domains",
+      "description": "List all explicitly denied domains from the domain filter",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "internet"
+    },
+    {
+      "name": "reload_domain_filter_config",
+      "description": "Reload the domain filter configuration from files",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "internet"
+    },
+    {
+      "name": "validate_url_for_access",
+      "description": "Validate a URL to check if its domain is allowed for internet access",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to validate (e.g., 'https://example.com/page')"
+          }
+        },
+        "required": ["url"]
+      },
+      "category": "internet"
     }
   ],
   "categories": {
     "file_system": "Tools for file operations in the sandbox environment",
-    "math": "Tools for mathematical calculations"
+    "math": "Tools for mathematical calculations",
+    "internet": "Tools for safe internet access and web operations"
   },
   "version": "1.0.0",
   "description": "Tool schema for iKOMA agent Phase 1-B plan-execute-reflect architecture"

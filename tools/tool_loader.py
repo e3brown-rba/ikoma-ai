@@ -4,6 +4,14 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from langchain_openai import ChatOpenAI
 from .fs_tools import FILE_TOOLS
+from .internet_tools import (
+    check_domain_allowed,
+    get_domain_filter_status,
+    list_allowed_domains,
+    list_denied_domains,
+    reload_domain_filter_config,
+    validate_url_for_access,
+)
 
 
 class ToolLoader:
@@ -53,6 +61,22 @@ class ToolLoader:
                     if file_tool.name == tool_info["name"]:
                         tools.append(file_tool)
                         break
+
+        # Load internet tools
+        internet_tools = {
+            "check_domain_allowed": check_domain_allowed,
+            "get_domain_filter_status": get_domain_filter_status,
+            "list_allowed_domains": list_allowed_domains,
+            "list_denied_domains": list_denied_domains,
+            "reload_domain_filter_config": reload_domain_filter_config,
+            "validate_url_for_access": validate_url_for_access,
+        }
+
+        for tool_info in self.schema.get("tools", []):
+            if tool_info["category"] == "internet":
+                tool_name = tool_info["name"]
+                if tool_name in internet_tools:
+                    tools.append(internet_tools[tool_name])
 
         # Load math tools
         math_tool_names = [

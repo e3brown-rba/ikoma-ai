@@ -1,0 +1,23 @@
+# iKOMA Domain Deny List
+# Add domains you want to explicitly block from internet access
+# One domain per line, comments start with #
+# Supports wildcards: *.malware-domain.com
+
+# Example dangerous patterns (uncomment and modify as needed)
+# *.malware-domain.com
+# suspicious-site.net
+# phishing-example.org
+
+# Social media (uncomment if you want to block)
+# facebook.com
+# twitter.com
+# instagram.com
+
+# Adult content (uncomment if needed)
+# *.adult-content.com
+
+# Gambling sites (uncomment if needed)
+# *.gambling-site.com
+
+# File sharing (uncomment if needed)
+# *.torrent-site.com 

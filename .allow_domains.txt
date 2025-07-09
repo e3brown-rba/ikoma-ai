@@ -1,0 +1,33 @@
+# iKOMA Domain Allow List
+# Add domains you want to explicitly allow for internet access
+# One domain per line, comments start with #
+# Supports wildcards: *.example.com
+
+# Educational and Reference Sites
+wikipedia.org
+*.wikipedia.org
+stackoverflow.com
+github.com
+docs.python.org
+python.org
+readthedocs.io
+
+# News and Information
+reuters.com
+bbc.com
+npr.org
+
+# Technical Documentation
+developer.mozilla.org
+w3schools.com
+realpython.com
+
+# Academic and Research
+arxiv.org
+scholar.google.com
+researchgate.net
+
+# Safe Content Sites
+medium.com
+dev.to
+hashnode.dev 

@@ -1,4 +1,4 @@
-# TODOs & Development Status for Ikoma Agent ✅ ALL COMPLETED
+# TODOs & Development Status for Ikoma Agent ✅ Phase 1-B Complete - Phase 2 Active
 
 ## ✅ Phase 1 - Core Modernization (COMPLETED)
 
@@ -167,4 +167,50 @@
 
 **Architecture Evolution**: Complete migration from deprecated patterns to modern LangGraph-based plan-execute-reflect system with persistent memory, performance optimizations, and comprehensive code cleanup.
 
-**Ready for**: Production deployment, advanced planning algorithms, multi-agent coordination, and continued enhancement. 
+**Ready for**: Phase 2 development with enhanced autonomy and internet integration capabilities.
+
+## 🚧 Phase 2 - Enhanced Autonomy & Internet Integration (ACTIVE)
+
+### 🚧 Epic E-01: Internet Tooling (In Progress)
+- ✅ **Issue #4: Domain allow/deny filter** - COMPLETED
+  - Security-first design with deny-by-default policy
+  - Wildcard subdomain matching support
+  - File-based configuration with automatic reloading
+  - Integration with MCP tool system
+- 🔄 **Issue #5: Rate-limited HTTP client wrapper** - NEXT
+- ⏳ **Issue #2: SerpAPI search tool** - PLANNED
+- ⏳ **Issue #3: HTML→Text extractor utility** - PLANNED
+- ⏳ **Issue #6: Ingest fetched text into vector store** - PLANNED
+- ⏳ **Issue #7: Prompt template — add citation tokens** - PLANNED
+- ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - PLANNED
+
+### 📋 Epic E-02: Continuous Mode (Planned)
+- **Issue #9**: Add `--continuous` CLI flag (autonomy)
+- **Issue #10**: Termination heuristic — iteration-count (autonomy)
+- **Issue #11**: Termination heuristic — goal-satisfaction (autonomy)
+- **Issue #12**: Termination heuristic — time-limit (autonomy)
+- **Issue #13**: Human checkpoint — confirm continuation (ux)
+
+### 📋 Epic E-03: Short-term Checkpointer (Planned)
+- **Issue #14**: Schema & backend (memory)
+- **Issue #15**: CRUD API tests (testing)
+- **Issue #16**: `.env` toggle & docs (configuration)
+
+### 📋 Epic E-04: Planner Enhancements (Planned)
+- **Issue #17**: JSON schema + validator (planning)
+- **Issue #18**: Reflection hook (planning)
+
+### 📋 Epic E-05: UI/UX (Planned)
+- **Issue #19**: TUI refactor (ux)
+- **Issue #20**: Dashboard PoC (ux)
+
+### 📋 Epic E-06: Dev & Safety Hardening (Planned)
+- **Issue #21**: Perf bench CI (metrics)
+- **Issue #22**: Coverage ≥ 50% (testing)
+- **Issue #23**: Security scanners (safety)
+
+### 📊 Phase 2 Quality Targets
+- **Test Coverage**: ≥ 50% (currently 39%)
+- **Performance**: Benchmarks in CI
+- **Security**: Rate limiting and domain filtering
+- **Reliability**: Structured logging and error handling 
