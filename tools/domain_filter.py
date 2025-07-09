@@ -5,11 +5,11 @@ Provides domain allow/deny filtering functionality with file-based configuration
 Implements security-first design with deny-by-default and deny precedence.
 """
 
-import re
 import logging
-from pathlib import Path
-from typing import Set, Tuple, Optional, Dict, Any
+import re
 import time
+from pathlib import Path
+from typing import Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,14 +49,14 @@ class DomainFilter:
         self.reload_interval = reload_interval
 
         # Domain storage
-        self.allow_domains: Set[str] = set()
-        self.deny_domains: Set[str] = set()
-        self.allow_wildcards: Set[str] = set()
-        self.deny_wildcards: Set[str] = set()
+        self.allow_domains: set[str] = set()
+        self.deny_domains: set[str] = set()
+        self.allow_wildcards: set[str] = set()
+        self.deny_wildcards: set[str] = set()
 
         # Cache for performance
         self.last_reload: float = 0.0
-        self._cache: Dict[str, Tuple[bool, str]] = {}
+        self._cache: dict[str, tuple[bool, str]] = {}
 
         # Validation
         if self.default_policy not in ["allow", "deny"]:
@@ -65,7 +65,7 @@ class DomainFilter:
         # Load initial configuration
         self.reload_config()
 
-    def is_domain_allowed(self, domain: str) -> Tuple[bool, str]:
+    def is_domain_allowed(self, domain: str) -> tuple[bool, str]:
         """
         Check if a domain is allowed based on current configuration.
 
@@ -140,7 +140,7 @@ class DomainFilter:
             logger.error(f"Error reloading domain configuration: {e}")
             # Keep existing configuration on error
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current filter status and statistics."""
         return {
             "allow_domains_count": len(self.allow_domains),
@@ -154,11 +154,11 @@ class DomainFilter:
             "deny_file_exists": self.deny_file.exists(),
         }
 
-    def list_allowed_domains(self) -> Set[str]:
+    def list_allowed_domains(self) -> set[str]:
         """Get set of explicitly allowed domains."""
         return self.allow_domains.copy()
 
-    def list_denied_domains(self) -> Set[str]:
+    def list_denied_domains(self) -> set[str]:
         """Get set of explicitly denied domains."""
         return self.deny_domains.copy()
 
@@ -230,17 +230,17 @@ class DomainFilter:
 
         return False
 
-    def _parse_domain_file(self, filepath: Path) -> Tuple[Set[str], Set[str]]:
+    def _parse_domain_file(self, filepath: Path) -> tuple[set[str], set[str]]:
         """Parse domain file and return (exact_domains, wildcard_domains)."""
-        exact_domains: Set[str] = set()
-        wildcard_domains: Set[str] = set()
+        exact_domains: set[str] = set()
+        wildcard_domains: set[str] = set()
 
         if not filepath.exists():
             logger.warning(f"Domain file not found: {filepath}")
             return exact_domains, wildcard_domains
 
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
 
@@ -273,7 +273,7 @@ class DomainFilter:
 
 
 # Global instance for singleton pattern
-_domain_filter: Optional[DomainFilter] = None
+_domain_filter: DomainFilter | None = None
 
 
 def get_domain_filter() -> DomainFilter:
@@ -284,7 +284,7 @@ def get_domain_filter() -> DomainFilter:
     return _domain_filter
 
 
-def is_domain_allowed(domain: str) -> Tuple[bool, str]:
+def is_domain_allowed(domain: str) -> tuple[bool, str]:
     """Convenience function to check if domain is allowed."""
     return get_domain_filter().is_domain_allowed(domain)
 

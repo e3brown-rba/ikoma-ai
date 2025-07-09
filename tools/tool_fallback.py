@@ -3,7 +3,8 @@ Fallback tool decorator for when langchain tools are not available.
 This module provides a no-op decorator that can be imported when the main langchain imports fail.
 """
 
-from typing import Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import TypeVar, cast
 
 T = TypeVar("T")
 

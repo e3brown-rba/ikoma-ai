@@ -119,7 +119,7 @@ def read_text_file(filename: str) -> str:
         if not os.path.exists(filepath):
             files = os.listdir(SANDBOX)
             return f"File '{filename}' not found. Available: {', '.join(files) if files else 'none'}"
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             return f.read()
     except Exception as e:
         return f"Error reading file: {e}"

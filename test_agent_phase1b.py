@@ -4,19 +4,20 @@ Comprehensive test suite for iKOMA Agent Phase 1-B plan-execute-reflect architec
 Tests the new planning system, tool execution, and reflection capabilities.
 """
 
-import pytest
 import json
-import tempfile
-import shutil
-from unittest.mock import Mock, patch
-from datetime import datetime
 import os
+import shutil
+import tempfile
+from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Import the agent modules
-from agent.agent import AgentState, plan_node, execute_node, reflect_node
+from agent.agent import AgentState, execute_node, plan_node, reflect_node
+from tools.fs_tools import FILE_TOOLS
 from tools.tool_loader import ToolLoader
 from tools.vector_store import PersistentVectorStore
-from tools.fs_tools import FILE_TOOLS
 
 
 class TestAgentPhase1B:

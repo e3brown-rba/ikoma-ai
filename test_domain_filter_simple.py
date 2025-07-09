@@ -4,12 +4,12 @@ Simple test script for domain filter functionality.
 Run with: python3 test_domain_filter_simple.py
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from tools.domain_filter import DomainFilter, is_domain_allowed, get_domain_filter
+from tools.domain_filter import DomainFilter, get_domain_filter, is_domain_allowed
 
 
 def test_domain_filter():

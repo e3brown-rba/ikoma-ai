@@ -4,8 +4,8 @@ iKOMA Setup Verification Script
 Checks the current state of your iKOMA installation and provides guidance.
 """
 
-import sys
 import importlib.util
+import sys
 from pathlib import Path
 
 
@@ -107,7 +107,7 @@ def check_environment_file():
         print_status("✅ .env file exists", "SUCCESS")
 
         # Check key configurations
-        with open(env_file, "r") as f:
+        with open(env_file) as f:
             content = f.read()
 
         key_configs = [

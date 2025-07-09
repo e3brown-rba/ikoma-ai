@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""iKOMA utility — bulk‑create GitHub issues from a YAML/JSON manifest.
+r"""iKOMA utility — bulk‑create GitHub issues from a YAML/JSON manifest.
 
 Features
 ========
@@ -43,7 +43,7 @@ import pathlib
 import subprocess
 import sys
 import textwrap
-from typing import Any, List, Dict
+from typing import Any
 
 try:
     import yaml  # Provided via dev‑extra in requirements.txt
@@ -91,7 +91,7 @@ def detect_repo() -> str:
         sys.exit(e.returncode)
 
 
-def read_manifest(path: pathlib.Path) -> List[Dict[str, Any]]:
+def read_manifest(path: pathlib.Path) -> list[dict[str, Any]]:
     if not path.exists():
         sys.stderr.write(f"Manifest file {path} not found.\n")
         sys.exit(1)
@@ -112,7 +112,7 @@ def read_manifest(path: pathlib.Path) -> List[Dict[str, Any]]:
     return data
 
 
-def gh(cmd: List[str]):
+def gh(cmd: list[str]):
     if args.dry_run:
         print("gh", " ".join(cmd))
     else:

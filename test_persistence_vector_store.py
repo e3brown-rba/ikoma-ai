@@ -2,7 +2,8 @@ import os
 import shutil
 import uuid
 from datetime import datetime
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
+
 import pytest
 
 from tools.vector_store import get_vector_store

@@ -5,12 +5,14 @@ Comprehensive test suite for domain filtering functionality.
 Tests exact matching, wildcard matching, validation, and error handling.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
-from tools.domain_filter import DomainFilter, is_domain_allowed, get_domain_filter
+
+import pytest
+
+from tools.domain_filter import DomainFilter, get_domain_filter, is_domain_allowed
 
 
 class TestDomainFilter:

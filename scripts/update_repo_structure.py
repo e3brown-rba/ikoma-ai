@@ -4,8 +4,8 @@ Update repo_structure.jsonl to reflect current repository state
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def get_file_info(file_path):
@@ -23,7 +23,7 @@ def update_repo_structure():
     # Read existing structure
     repo_structure_file = Path("repo_structure.jsonl")
     if repo_structure_file.exists():
-        with open(repo_structure_file, "r") as f:
+        with open(repo_structure_file) as f:
             existing_entries = [json.loads(line) for line in f if line.strip()]
     else:
         existing_entries = []

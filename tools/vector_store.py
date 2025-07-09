@@ -1,13 +1,14 @@
-import os
 import json
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
+import os
 import uuid
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import chromadb
+import openai
 from chromadb.config import Settings
 from langchain_openai import OpenAIEmbeddings
-import openai
 
 
 class PersistentVectorStore:
@@ -53,7 +54,7 @@ class PersistentVectorStore:
             chunk_size=1000,  # Add chunk_size parameter
         )
 
-    def put(self, namespace: Tuple[str, str], key: str, value: Dict[str, Any]) -> None:
+    def put(self, namespace: tuple[str, str], key: str, value: dict[str, Any]) -> None:
         """Store a memory entry with namespace and key."""
         try:
             # Create document ID from namespace and key
@@ -93,8 +94,8 @@ class PersistentVectorStore:
             print(f"Error storing memory: {e}")
 
     def search(
-        self, namespace: Tuple[str, str], query: str, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, namespace: tuple[str, str], query: str, limit: int = 5
+    ) -> list[dict[str, Any]]:
         """Search for memories using semantic similarity.
 
         Returns:
@@ -164,7 +165,7 @@ class PersistentVectorStore:
             print(f"Error searching memories: {e}")
             return []
 
-    def get(self, namespace: Tuple[str, str], key: str) -> Optional[Dict[str, Any]]:
+    def get(self, namespace: tuple[str, str], key: str) -> dict[str, Any] | None:
         """Get a specific memory by namespace and key."""
         try:
             doc_id = f"{'-'.join(namespace)}-{key}"
@@ -187,7 +188,7 @@ class PersistentVectorStore:
             print(f"Error getting memory: {e}")
             return None
 
-    def delete(self, namespace: Tuple[str, str], key: str) -> bool:
+    def delete(self, namespace: tuple[str, str], key: str) -> bool:
         """Delete a specific memory."""
         try:
             doc_id = f"{'-'.join(namespace)}-{key}"
@@ -199,8 +200,8 @@ class PersistentVectorStore:
             return False
 
     def list_memories(
-        self, namespace: Tuple[str, str], limit: int = 10
-    ) -> List[Dict[str, Any]]:
+        self, namespace: tuple[str, str], limit: int = 10
+    ) -> list[dict[str, Any]]:
         """List all memories in a namespace."""
         try:
             results = self.collection.get(
@@ -226,7 +227,7 @@ class PersistentVectorStore:
             print(f"Error listing memories: {e}")
             return []
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics about the memory store."""
         try:
             count = self.collection.count()
@@ -268,7 +269,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
         self,
         *args: Any,
         openai_api_key: Any = None,
-        openai_api_base: Optional[str] = None,
+        openai_api_base: str | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -276,11 +277,11 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
         self.openai_api_base = openai_api_base
 
     def embed_documents(
-        self, texts: List[str], chunk_size: Optional[int] = None, **kwargs: Any
-    ) -> List[List[float]]:
+        self, texts: list[str], chunk_size: int | None = None, **kwargs: Any
+    ) -> list[list[float]]:
         return [self.embed_query(text) for text in texts]
 
-    def embed_query(self, text: str, **kwargs: Any) -> List[float]:
+    def embed_query(self, text: str, **kwargs: Any) -> list[float]:
         temp_client = openai.OpenAI(
             api_key=str(self.openai_api_key) if self.openai_api_key else None,
             base_url=self.openai_api_base,
@@ -290,7 +291,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
 
 
 # Global instance for easy access
-vector_store: Optional[PersistentVectorStore] = None
+vector_store: PersistentVectorStore | None = None
 
 
 def get_vector_store() -> PersistentVectorStore:
@@ -309,7 +310,7 @@ def get_vector_store() -> PersistentVectorStore:
     return vector_store
 
 
-def example_persist() -> Optional[Dict[str, Any]]:
+def example_persist() -> dict[str, Any] | None:
     """Minimal example to verify persistence in regression tests."""
     store = get_vector_store()
     test_ns = ("tests", "persistence")

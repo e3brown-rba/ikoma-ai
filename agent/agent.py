@@ -1,18 +1,19 @@
-import os
 import json
-from pathlib import Path
-
-from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage
-from langgraph.graph import StateGraph, END
-# Checkpoint functionality temporarily disabled due to langgraph version changes
-# from langgraph_checkpoint.sqlite import SqliteSaver
-
-from typing import List, Dict, Any, TypedDict, Annotated, Optional
-from langgraph.graph.message import add_messages
+import os
 import uuid
 from datetime import datetime
+from pathlib import Path
+
+# Checkpoint functionality temporarily disabled due to langgraph version changes
+# from langgraph_checkpoint.sqlite import SqliteSaver
+from typing import Annotated, Any, TypedDict
+
+from dotenv import load_dotenv
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_openai import ChatOpenAI
+from langgraph.graph import END, StateGraph
+from langgraph.graph.message import add_messages
+
 from tools.tool_loader import tool_loader
 
 # Load environment variables from .env file
@@ -24,13 +25,13 @@ os.environ["OPENAI_API_KEY"] = "sk-dummy"
 class AgentState(TypedDict):
     """Enhanced state schema for plan-execute-reflect architecture."""
 
-    messages: Annotated[List[Any], add_messages]
-    memory_context: Optional[str]
-    user_profile: Optional[Dict[str, Any]]
-    session_summary: Optional[str]
-    current_plan: Optional[List[Dict[str, Any]]]
-    execution_results: Optional[List[Dict[str, Any]]]
-    reflection: Optional[str]
+    messages: Annotated[list[Any], add_messages]
+    memory_context: str | None
+    user_profile: dict[str, Any] | None
+    session_summary: str | None
+    current_plan: list[dict[str, Any]] | None
+    execution_results: list[dict[str, Any]] | None
+    reflection: str | None
     continue_planning: bool
     max_iterations: int
     current_iteration: int

@@ -5,8 +5,8 @@ Provides safe internet access tools with domain filtering integration.
 Part of Epic E-01: Internet Tooling.
 """
 
-from typing import Tuple
 from langchain.tools import tool
+
 from .domain_filter import get_domain_filter, is_domain_allowed, reload_domain_config
 
 
@@ -150,7 +150,7 @@ def validate_url_for_access(url: str) -> str:
 
 
 # Utility function for other modules to use
-def is_url_allowed(url: str) -> Tuple[bool, str]:
+def is_url_allowed(url: str) -> tuple[bool, str]:
     """
     Check if a URL's domain is allowed (for use by other modules).
 

@@ -1,8 +1,10 @@
-import json
 import ast
+import json
 from pathlib import Path
-from typing import List, Any, Optional
+from typing import Any
+
 from langchain_openai import ChatOpenAI
+
 from .fs_tools import FILE_TOOLS
 from .internet_tools import (
     check_domain_allowed,
@@ -17,7 +19,7 @@ from .internet_tools import (
 class ToolLoader:
     """Dynamic tool loader that reads MCP schema and loads tools once at startup."""
 
-    def __init__(self, schema_path: Optional[str] = None):
+    def __init__(self, schema_path: str | None = None):
         if schema_path is None:
             # Try to find the schema file relative to the project root
             current_dir = Path(__file__).parent
@@ -30,12 +32,12 @@ class ToolLoader:
             schema_path_obj = Path(schema_path)
         self.schema_path = schema_path_obj
         self.schema = self._load_schema()
-        self._loaded_tools: Optional[List[Any]] = None
+        self._loaded_tools: list[Any] | None = None
 
     def _load_schema(self) -> Any:
         """Load the MCP schema from JSON file."""
         try:
-            with open(self.schema_path, "r") as f:
+            with open(self.schema_path) as f:
                 return json.load(f)
         except FileNotFoundError:
             print(
@@ -46,7 +48,7 @@ class ToolLoader:
             print(f"Error parsing schema file: {e}")
             return {"tools": [], "categories": {}}
 
-    def load_tools(self, llm: ChatOpenAI) -> List[Any]:
+    def load_tools(self, llm: ChatOpenAI) -> list[Any]:
         """Load all tools based on the schema. Called once at startup."""
         if self._loaded_tools is not None:
             return self._loaded_tools
@@ -171,7 +173,7 @@ class ToolLoader:
 
         return "\n".join(descriptions)
 
-    def get_tool_by_name(self, name: str) -> Optional[Any]:
+    def get_tool_by_name(self, name: str) -> Any | None:
         """Get a specific tool by name."""
         if self._loaded_tools is None:
             return None
