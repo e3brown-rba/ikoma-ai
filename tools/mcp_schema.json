@@ -145,12 +145,119 @@
         "required": ["url"]
       },
       "category": "internet"
+    },
+    {
+      "name": "make_http_request",
+      "description": "Make a rate-limited HTTP request with domain filtering and safety checks",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to request (e.g., 'https://example.com/api/data')"
+          },
+          "method": {
+            "type": "string",
+            "description": "HTTP method (GET, POST, etc.) - defaults to GET",
+            "default": "GET"
+          },
+          "headers": {
+            "type": "string",
+            "description": "Optional JSON string of headers to include",
+            "default": ""
+          },
+          "use_cache": {
+            "type": "boolean",
+            "description": "Whether to use cached responses (default: True)",
+            "default": true
+          }
+        },
+        "required": ["url"]
+      },
+      "category": "http"
+    },
+    {
+      "name": "get_http_client_stats",
+      "description": "Get comprehensive statistics about HTTP client usage and rate limiting",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "http"
+    },
+    {
+      "name": "set_domain_rate_limit",
+      "description": "Set custom rate limit configuration for a specific domain using token bucket algorithm",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "The domain to configure (e.g., 'api.example.com')"
+          },
+          "requests_per_second": {
+            "type": "number",
+            "description": "Token bucket refill rate (default: 5.0 req/s)",
+            "default": 5.0
+          },
+          "bucket_capacity": {
+            "type": "integer",
+            "description": "Maximum tokens in bucket (default: 10)",
+            "default": 10
+          },
+          "backoff_base": {
+            "type": "number",
+            "description": "Base backoff time for 429/503 responses (default: 1.0 seconds)",
+            "default": 1.0
+          }
+        },
+        "required": ["domain"]
+      },
+      "category": "http"
+    },
+    {
+      "name": "clear_http_cache",
+      "description": "Clear all cached HTTP responses",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "http"
+    },
+    {
+      "name": "reset_http_stats",
+      "description": "Reset all HTTP client request statistics",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "http"
+    },
+    {
+      "name": "test_http_connection",
+      "description": "Test HTTP connectivity with a simple request to verify the client is working",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL to test (default: httpbin.org)",
+            "default": "https://httpbin.org/get"
+          }
+        },
+        "required": []
+      },
+      "category": "http"
     }
   ],
   "categories": {
     "file_system": "Tools for file operations in the sandbox environment",
     "math": "Tools for mathematical calculations",
-    "internet": "Tools for safe internet access and web operations"
+    "internet": "Tools for safe internet access and web operations",
+    "http": "Tools for rate-limited HTTP requests with domain filtering"
   },
   "version": "1.0.0",
   "description": "Tool schema for iKOMA agent Phase 1-B plan-execute-reflect architecture"

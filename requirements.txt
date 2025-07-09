@@ -22,6 +22,9 @@ pydantic-core==2.33.2
 # - transformers vulnerabilities remain; we suppress them via .pip-audit-ignore until upstream updates
 # - torch 2.7.1 vulnerability also suppressed (GHSA-887c-mr87-cxwp)
 
+# HTTP Client Dependencies
+requests==2.31.0  # For rate-limited HTTP client wrapper
+
 # Development Tools
 gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165
 yamllint 

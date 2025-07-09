@@ -12,6 +12,14 @@ from .internet_tools import (
     reload_domain_filter_config,
     validate_url_for_access,
 )
+from .http_tools import (
+    make_http_request,
+    get_http_client_stats,
+    set_domain_rate_limit,
+    clear_http_cache,
+    reset_http_stats,
+    test_http_connection,
+)
 
 
 class ToolLoader:
