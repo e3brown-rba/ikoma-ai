@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4 import BeautifulSoup  # type: ignore
+from bs4.element import Tag  # type: ignore
 
 try:
     import trafilatura  # type: ignore
