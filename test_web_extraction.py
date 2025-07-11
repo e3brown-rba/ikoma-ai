@@ -274,8 +274,8 @@ class TestWebContentExtractor:
         """
 
         # Test complexity detection logic
-        assert extractor._is_simple_content(simple_html) == True
-        assert extractor._is_simple_content(complex_html) == False
+        assert extractor._is_simple_content(simple_html)
+        assert not extractor._is_simple_content(complex_html)
 
     def test_header_extraction(self, extractor):
         """Test that headers are properly extracted and structured."""
