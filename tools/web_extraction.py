@@ -5,8 +5,13 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup  # type: ignore
-from bs4.element import Tag  # type: ignore
+BeautifulSoup = None
+Tag = None
+try:
+    from bs4 import BeautifulSoup  # type: ignore
+    from bs4.element import Tag  # type: ignore
+except ImportError:
+    pass
 
 try:
     import trafilatura  # type: ignore
@@ -49,6 +54,7 @@ class WebContentExtractor:
         self.prefer_speed = prefer_speed
         self.trafilatura_available = trafilatura is not None
         self.selectolax_available = HTMLParser is not None
+        self.beautifulsoup_available = BeautifulSoup is not None
 
         # Configure trafilatura for optimal extraction
         if self.trafilatura_available:
@@ -97,6 +103,8 @@ class WebContentExtractor:
     def _extract_with_trafilatura(self, html: str, url: str) -> ExtractedContent:
         """Primary extraction method using trafilatura."""
         try:
+            if not self.trafilatura_available or trafilatura is None:
+                raise RuntimeError("trafilatura is not available")
             # Extract main content
             content = trafilatura.extract(
                 html,
@@ -111,7 +119,7 @@ class WebContentExtractor:
                 raise ValueError("No content extracted by trafilatura")
 
             # Extract metadata
-            metadata_obj = extract_metadata(html, fast=False, url=url)
+            metadata_obj = extract_metadata(html, fast=False, url=url)  # type: ignore
 
             # Extract headers for structure
             headers = self._extract_headers_from_html(html)
@@ -206,35 +214,56 @@ class WebContentExtractor:
 
     def _extract_with_beautifulsoup(self, html: str, url: str) -> ExtractedContent:
         """Fallback extraction using BeautifulSoup."""
-        soup = BeautifulSoup(html, "html.parser")
+        try:
+            if not self.beautifulsoup_available or BeautifulSoup is None:
+                raise RuntimeError("BeautifulSoup is not available")
+            soup = BeautifulSoup(html, "html.parser")
 
-        # Remove unwanted elements
-        for element in soup(["script", "style", "nav", "footer", "aside"]):
-            element.decompose()
+            # Remove unwanted elements
+            for element in soup(["script", "style", "nav", "footer", "aside"]):
+                element.decompose()
 
-        title = self._extract_title_fallback(html)
-        headers = self._extract_headers_bs4(soup)
-        content = soup.get_text(separator="\n", strip=True)
+            title = self._extract_title_fallback(html)
+            headers = self._extract_headers_bs4(soup)
+            content = soup.get_text(separator="\n", strip=True)
 
-        return ExtractedContent(
-            title=title,
-            content=self._clean_text(content),
-            url=url,
-            headers=headers,
-            metadata={
-                "extraction_timestamp": datetime.now().isoformat(),
-                "domain": urlparse(url).netloc,
-            },
-            extraction_method="beautifulsoup",
-            word_count=len(content.split()) if content else 0,
-        )
+            return ExtractedContent(
+                title=title,
+                content=self._clean_text(content),
+                url=url,
+                headers=headers,
+                metadata={
+                    "extraction_timestamp": datetime.now().isoformat(),
+                    "domain": urlparse(url).netloc,
+                },
+                extraction_method="beautifulsoup",
+                word_count=len(content.split()) if content else 0,
+            )
+        except Exception as e:
+            self.logger.error(f"BeautifulSoup extraction failed for {url}: {e}")
+            # Last resort: return minimal content
+            return ExtractedContent(
+                title="",
+                content="",
+                url=url,
+                headers={"h1": [], "h2": [], "h3": []},
+                metadata={
+                    "extraction_timestamp": datetime.now().isoformat(),
+                    "domain": urlparse(url).netloc,
+                    "error": str(e),
+                },
+                extraction_method="fallback",
+                word_count=0,
+            )
 
     def _extract_headers_from_html(self, html: str) -> dict[str, list[str]]:
         """Extract headers using BeautifulSoup for structure analysis."""
+        if not self.beautifulsoup_available or BeautifulSoup is None:
+            return {"h1": [], "h2": [], "h3": []}
         soup = BeautifulSoup(html, "html.parser")
         return self._extract_headers_bs4(soup)
 
-    def _extract_headers_bs4(self, soup: BeautifulSoup) -> dict[str, list[str]]:
+    def _extract_headers_bs4(self, soup: Any) -> dict[str, list[str]]:
         """Extract h1-h3 headers for content structure."""
         headers: dict[str, list[str]] = {"h1": [], "h2": [], "h3": []}
 
@@ -248,6 +277,8 @@ class WebContentExtractor:
 
     def _extract_title_fallback(self, html: str) -> str:
         """Extract page title using multiple strategies, prioritizing og:title."""
+        if not self.beautifulsoup_available or BeautifulSoup is None or Tag is None:
+            return "Untitled"
         soup = BeautifulSoup(html, "html.parser")
 
         # Try meta og:title first (robust extraction)
