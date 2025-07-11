@@ -276,13 +276,29 @@
         "required": []
       },
       "category": "internet"
+    },
+    {
+      "name": "extract_web_content",
+      "description": "Extract clean text content from HTML with comprehensive metadata, headers, and performance optimization",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "html_url_speed": {
+            "type": "string",
+            "description": "Format: 'html|||url|||prefer_speed' where prefer_speed is optional boolean for fast extraction"
+          }
+        },
+        "required": ["html_url_speed"]
+      },
+      "category": "web"
     }
   ],
   "categories": {
     "file_system": "Tools for file operations in the sandbox environment",
     "math": "Tools for mathematical calculations",
     "internet": "Tools for safe internet access and web operations",
-    "http": "Tools for rate-limited HTTP requests with domain filtering"
+    "http": "Tools for rate-limited HTTP requests with domain filtering",
+    "web": "Tools for web content extraction and processing"
   },
   "version": "1.0.0",
   "description": "Tool schema for iKOMA agent Phase 1-B plan-execute-reflect architecture"

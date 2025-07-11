@@ -29,6 +29,12 @@ types-requests==2.32.4.20250611  # Type stubs for requests library
 # Search API Dependencies
 google-search-results==2.4.2  # SerpAPI client for web search functionality
 
+# Web Content Extraction Dependencies (Phase 2 - Epic E-01)
+trafilatura==1.12.2        # Primary extraction engine with enterprise reliability
+selectolax==0.3.25         # High-performance HTML parsing for speed-critical scenarios  
+lxml>=4.6.5                # Security-patched XML/HTML processing (CVE fixes)
+requests>=2.32.0           # HTTP client with certificate verification fixes
+
 # Development Tools
 gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165
 yamllint

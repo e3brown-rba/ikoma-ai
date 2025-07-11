@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Any
 
 from langchain.tools import tool
+from .web_extraction import WebContentExtractor
 
 
 class SearchRateLimiter:
@@ -33,6 +34,9 @@ class SearchRateLimiter:
 
 # Global rate limiter instance
 _rate_limiter = SearchRateLimiter(int(os.getenv("SEARCH_RATE_LIMIT", "5")))
+
+# Initialize extractor once for performance
+_extractor = WebContentExtractor()
 
 
 @tool
@@ -113,6 +117,52 @@ def search_web(query: str) -> str:
 
     except Exception as e:
         return f"Search failed: {str(e)}"
+
+
+@tool
+def extract_web_content(html_url_speed: str) -> str:
+    """
+    Extract clean text content from HTML with comprehensive metadata.
+
+    Args:
+        html_url_speed: Format "html|||url|||prefer_speed" where prefer_speed is optional boolean
+
+    Returns:
+        JSON string with extracted content, metadata, and headers
+    """
+    try:
+        parts = html_url_speed.split("|||")
+        if len(parts) < 2:
+            return (
+                "Error: Required format is 'html|||url' or 'html|||url|||prefer_speed'"
+            )
+
+        html = parts[0]
+        url = parts[1]
+        prefer_speed = len(parts) > 2 and parts[2].lower() == "true"
+
+        # Configure extractor for this request
+        extractor = WebContentExtractor(prefer_speed=prefer_speed)
+        result = extractor.extract(html, url)
+
+        # Convert to JSON for agent consumption
+        output = {
+            "title": result.title,
+            "content": result.content[:2000] + "..."
+            if len(result.content) > 2000
+            else result.content,
+            "url": result.url,
+            "headers": result.headers,
+            "metadata": result.metadata,
+            "extraction_method": result.extraction_method,
+            "word_count": result.word_count,
+            "language": result.language,
+        }
+
+        return json.dumps(output, indent=2)
+
+    except Exception as e:
+        return f"Error extracting content: {e}"
 
 
 @tool
