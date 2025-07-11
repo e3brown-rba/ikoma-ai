@@ -6,16 +6,16 @@ from typing import Any
 from urllib.parse import urlparse
 
 try:
-    import trafilatura
-    from trafilatura.metadata import extract_metadata
-    from trafilatura.settings import use_config
+    import trafilatura  # type: ignore
+    from trafilatura.metadata import extract_metadata  # type: ignore
+    from trafilatura.settings import use_config  # type: ignore
 except ImportError:
     trafilatura = None
 
 try:
     from selectolax.parser import HTMLParser
 except ImportError:
-    HTMLParser = None
+    HTMLParser = None  # type: ignore
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
@@ -163,7 +163,7 @@ class WebContentExtractor:
             title = self._extract_title_fallback(html)
 
             # Extract headers
-            headers = {"h1": [], "h2": [], "h3": []}
+            headers: dict[str, list[str]] = {"h1": [], "h2": [], "h3": []}
             for level in ["h1", "h2", "h3"]:
                 for header in tree.css(level):
                     text = header.text().strip()
@@ -233,7 +233,7 @@ class WebContentExtractor:
 
     def _extract_headers_bs4(self, soup: BeautifulSoup) -> dict[str, list[str]]:
         """Extract h1-h3 headers for content structure."""
-        headers = {"h1": [], "h2": [], "h3": []}
+        headers: dict[str, list[str]] = {"h1": [], "h2": [], "h3": []}
 
         for level in ["h1", "h2", "h3"]:
             for header in soup.find_all(level):
@@ -257,12 +257,16 @@ class WebContentExtractor:
         # Try regular title tag
         title_tag = soup.find("title")
         if title_tag and title_tag.get_text():
-            return title_tag.get_text().strip()
+            title_text = title_tag.get_text().strip()
+            if title_text:
+                return title_text
 
         # Try first h1
         h1 = soup.find("h1")
         if h1 and h1.get_text():
-            return h1.get_text().strip()
+            h1_text = h1.get_text().strip()
+            if h1_text:
+                return h1_text
 
         return "Untitled"
 
