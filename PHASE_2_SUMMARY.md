@@ -31,14 +31,19 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
 
 #### **In Progress:**
 - ✅ **Issue #2: SerpAPI search tool** - COMPLETED
-- ⏳ **Issue #3: HTML→Text extractor utility** - Content parsing
+- ✅ **Issue #3: HTML→Text extractor utility** - COMPLETED
+  - Hybrid trafilatura/selectolax architecture for optimal performance
+  - Comprehensive metadata extraction with headers and structure
+  - Robust fallback strategies with og:title prioritization
+  - MCP tool integration with JSON output format
+  - 74% test coverage with 13 comprehensive test scenarios
 - ⏳ **Issue #6: Ingest fetched text into vector store** - Memory integration
 - ⏳ **Issue #7: Prompt template — add citation tokens** - Source attribution
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - User experience
 
 #### **Key Milestones:**
 - **10 Jul**: SerpAPI spike
-- **12 Jul**: HTML→text extractor
+- **12 Jul**: HTML→text extractor ✅ COMPLETED
 - **17 Jul**: Safety filters + ingest
 
 ---
@@ -183,6 +188,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Domain Filter Implementation** (Issue #4) - COMPLETED
 - ✅ **HTTP Client Wrapper** (Issue #5) - COMPLETED
 - ✅ **SerpAPI Integration** (Issue #2) - COMPLETED
+- ✅ **HTML→Text Extractor** (Issue #3) - COMPLETED
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -198,6 +204,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Internet Safety**: Domain filtering and rate limiting
 - ✅ **HTTP Client**: Rate-limited wrapper with token bucket and backoff
 - ✅ **Web Integration**: SerpAPI search with rate limiting and safety controls
+- ✅ **Content Extraction**: HTML→Text extractor with hybrid architecture
 - ⏳ **Continuous Mode**: Unattended execution capabilities
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
