@@ -60,11 +60,14 @@ def test_search_web_success():
     with patch.dict(
         "os.environ", {"SEARCH_ENABLED": "true", "SERPAPI_API_KEY": "test_key"}
     ):
-        with patch("serpapi.GoogleSearch") as mock_search:
-            mock_instance = MagicMock()
-            mock_instance.get_dict.return_value = mock_results
-            mock_search.return_value = mock_instance
+        mock_serpapi = MagicMock()
+        mock_search_class = MagicMock()
+        mock_instance = MagicMock()
+        mock_instance.get_dict.return_value = mock_results
+        mock_search_class.return_value = mock_instance
+        mock_serpapi.GoogleSearch = mock_search_class
 
+        with patch.dict(sys.modules, {"serpapi": mock_serpapi}):
             result = search_web.invoke("test query")
 
             # Verify the result contains expected data
@@ -81,11 +84,14 @@ def test_search_web_no_results():
     with patch.dict(
         "os.environ", {"SEARCH_ENABLED": "true", "SERPAPI_API_KEY": "test_key"}
     ):
-        with patch("serpapi.GoogleSearch") as mock_search:
-            mock_instance = MagicMock()
-            mock_instance.get_dict.return_value = mock_results
-            mock_search.return_value = mock_instance
+        mock_serpapi = MagicMock()
+        mock_search_class = MagicMock()
+        mock_instance = MagicMock()
+        mock_instance.get_dict.return_value = mock_results
+        mock_search_class.return_value = mock_instance
+        mock_serpapi.GoogleSearch = mock_search_class
 
+        with patch.dict(sys.modules, {"serpapi": mock_serpapi}):
             result = search_web.invoke("test query")
             assert "No search results found" in result
 
@@ -95,7 +101,11 @@ def test_search_web_exception():
     with patch.dict(
         "os.environ", {"SEARCH_ENABLED": "true", "SERPAPI_API_KEY": "test_key"}
     ):
-        with patch("serpapi.GoogleSearch", side_effect=Exception("API Error")):
+        mock_serpapi = MagicMock()
+        mock_search_class = MagicMock(side_effect=Exception("API Error"))
+        mock_serpapi.GoogleSearch = mock_search_class
+
+        with patch.dict(sys.modules, {"serpapi": mock_serpapi}):
             result = search_web.invoke("test query")
             assert "Search failed" in result
 
