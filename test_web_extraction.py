@@ -243,7 +243,11 @@ class TestWebContentExtractor:
         if result1.extraction_method == "fallback":
             # Dependencies not available, just verify basic structure
             assert result1.url == result2.url == url
-            assert result1.metadata["domain"] == result2.metadata["domain"] == f"{content_type}.com"
+            assert (
+                result1.metadata["domain"]
+                == result2.metadata["domain"]
+                == f"{content_type}.com"
+            )
             assert "error" in result1.metadata
             assert "error" in result2.metadata
             return

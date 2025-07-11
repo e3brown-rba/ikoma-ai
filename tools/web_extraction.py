@@ -77,14 +77,33 @@ class WebContentExtractor:
             ExtractedContent with structured data
         """
         # Strategy selection based on content complexity and preferences
-        if self.prefer_speed and self._is_simple_content(html):
+        if (
+            self.prefer_speed
+            and self._is_simple_content(html)
+            and self.selectolax_available
+        ):
             return self._extract_with_selectolax(html, url)
         elif self.trafilatura_available:
             return self._extract_with_trafilatura(html, url)
         elif self.selectolax_available:
             return self._extract_with_selectolax(html, url)
-        else:
+        elif self.beautifulsoup_available:
             return self._extract_with_beautifulsoup(html, url)
+        else:
+            # Last resort: return minimal content
+            return ExtractedContent(
+                title="",
+                content="",
+                url=url,
+                headers={"h1": [], "h2": [], "h3": []},
+                metadata={
+                    "extraction_timestamp": datetime.now().isoformat(),
+                    "domain": urlparse(url).netloc,
+                    "error": "No extraction libraries available",
+                },
+                extraction_method="fallback",
+                word_count=0,
+            )
 
     def _is_simple_content(self, html: str) -> bool:
         """Heuristic to determine if content is simple enough for fast extraction."""
@@ -151,11 +170,20 @@ class WebContentExtractor:
 
         except Exception as e:
             self.logger.warning(f"Trafilatura extraction failed for {url}: {e}")
-            # Fallback to selectolax or BeautifulSoup (they handle title extraction)
-            if self.selectolax_available:
-                return self._extract_with_selectolax(html, url)
-            else:
-                return self._extract_with_beautifulsoup(html, url)
+            # Return minimal content on failure
+            return ExtractedContent(
+                title="",
+                content="",
+                url=url,
+                headers={"h1": [], "h2": [], "h3": []},
+                metadata={
+                    "extraction_timestamp": datetime.now().isoformat(),
+                    "domain": urlparse(url).netloc,
+                    "error": str(e),
+                },
+                extraction_method="fallback",
+                word_count=0,
+            )
 
     def _extract_with_selectolax(self, html: str, url: str) -> ExtractedContent:
         """Fast extraction using selectolax for simple content."""
@@ -210,7 +238,20 @@ class WebContentExtractor:
 
         except Exception as e:
             self.logger.warning(f"Selectolax extraction failed for {url}: {e}")
-            return self._extract_with_beautifulsoup(html, url)
+            # Return minimal content on failure
+            return ExtractedContent(
+                title="",
+                content="",
+                url=url,
+                headers={"h1": [], "h2": [], "h3": []},
+                metadata={
+                    "extraction_timestamp": datetime.now().isoformat(),
+                    "domain": urlparse(url).netloc,
+                    "error": str(e),
+                },
+                extraction_method="fallback",
+                word_count=0,
+            )
 
     def _extract_with_beautifulsoup(self, html: str, url: str) -> ExtractedContent:
         """Fallback extraction using BeautifulSoup."""
@@ -277,13 +318,13 @@ class WebContentExtractor:
 
     def _extract_title_fallback(self, html: str) -> str:
         """Extract page title using multiple strategies, prioritizing og:title."""
-        if not self.beautifulsoup_available or BeautifulSoup is None or Tag is None:
+        if not self.beautifulsoup_available or BeautifulSoup is None:
             return "Untitled"
         soup = BeautifulSoup(html, "html.parser")
 
         # Try meta og:title first (robust extraction)
         og_title = soup.find("meta", attrs={"property": "og:title"})
-        if og_title and isinstance(og_title, Tag):
+        if og_title and Tag is not None and isinstance(og_title, Tag):
             og_content = og_title.attrs.get("content")
             if isinstance(og_content, str) and og_content.strip():
                 return og_content.strip()
