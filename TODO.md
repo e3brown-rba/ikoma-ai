@@ -183,7 +183,7 @@
   - Shared singleton pattern with thread-safe implementation
   - Domain filtering integration for security
   - Comprehensive test suite and MCP tool integration
-- 🔄 **Issue #2: SerpAPI search tool** - NEXT
+- ✅ **Issue #2: SerpAPI search tool** - COMPLETED
 - ⏳ **Issue #3: HTML→Text extractor utility** - PLANNED
 - ⏳ **Issue #6: Ingest fetched text into vector store** - PLANNED
 - ⏳ **Issue #7: Prompt template — add citation tokens** - PLANNED

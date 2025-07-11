@@ -251,6 +251,31 @@
         "required": []
       },
       "category": "http"
+    },
+    {
+      "name": "search_web",
+      "description": "Search the web using SerpAPI and return top-5 results with titles and URLs",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query string"
+          }
+        },
+        "required": ["query"]
+      },
+      "category": "internet"
+    },
+    {
+      "name": "get_search_status",
+      "description": "Get the current status of web search functionality and configuration",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "internet"
     }
   ],
   "categories": {

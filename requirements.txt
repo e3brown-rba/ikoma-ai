@@ -9,7 +9,7 @@ langgraph-checkpoint==2.1.0
 langgraph-checkpoint-sqlite==2.0.10
 
 # Core Dependencies
-numexpr==2.11.0
+numexpr==2.10.2
 openai==1.93.0
 chromadb==0.5.23
 sentence-transformers==2.2.2
@@ -25,6 +25,9 @@ pydantic-core==2.33.2
 # HTTP Client Dependencies
 requests==2.31.0  # For rate-limited HTTP client wrapper
 types-requests==2.32.4.20250611  # Type stubs for requests library
+
+# Search API Dependencies
+google-search-results==2.4.2  # SerpAPI client for web search functionality
 
 # Development Tools
 gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165

@@ -22,9 +22,15 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Shared singleton pattern with thread-safe implementation
   - Domain filtering integration for security
   - Comprehensive test suite and MCP tool integration
+- ✅ **Issue #2: SerpAPI search tool** - COMPLETED
+  - Rate-limited web search with SerpAPI integration
+  - Safe search with configurable rate limits (2 req/s default)
+  - JSON-formatted results with titles, URLs, and snippets
+  - Comprehensive error handling and status reporting
+  - Full test suite with mocking and edge case coverage
 
 #### **In Progress:**
-- 🔄 **Issue #2: SerpAPI search tool** - Next implementation target
+- ✅ **Issue #2: SerpAPI search tool** - COMPLETED
 - ⏳ **Issue #3: HTML→Text extractor utility** - Content parsing
 - ⏳ **Issue #6: Ingest fetched text into vector store** - Memory integration
 - ⏳ **Issue #7: Prompt template — add citation tokens** - Source attribution
@@ -176,7 +182,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 ### **Current Sprint (Week 1-2):**
 - ✅ **Domain Filter Implementation** (Issue #4) - COMPLETED
 - ✅ **HTTP Client Wrapper** (Issue #5) - COMPLETED
-- 🔄 **SerpAPI Integration** (Issue #2) - NEXT
+- ✅ **SerpAPI Integration** (Issue #2) - COMPLETED
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -191,7 +197,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 ### **Technical Deliverables:**
 - ✅ **Internet Safety**: Domain filtering and rate limiting
 - ✅ **HTTP Client**: Rate-limited wrapper with token bucket and backoff
-- ⏳ **Web Integration**: SerpAPI search and HTML extraction
+- ✅ **Web Integration**: SerpAPI search with rate limiting and safety controls
 - ⏳ **Continuous Mode**: Unattended execution capabilities
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
