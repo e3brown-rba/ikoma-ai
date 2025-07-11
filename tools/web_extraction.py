@@ -5,6 +5,9 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
+from bs4.element import Tag
+
 try:
     import trafilatura  # type: ignore
     from trafilatura.metadata import extract_metadata  # type: ignore
@@ -12,13 +15,11 @@ try:
 except ImportError:
     trafilatura = None
 
+HTMLParser = None
 try:
-    from selectolax.parser import HTMLParser
+    from selectolax.parser import HTMLParser  # type: ignore
 except ImportError:
-    HTMLParser = None  # type: ignore
-
-from bs4 import BeautifulSoup
-from bs4.element import Tag
+    pass
 
 
 @dataclass
@@ -151,7 +152,9 @@ class WebContentExtractor:
     def _extract_with_selectolax(self, html: str, url: str) -> ExtractedContent:
         """Fast extraction using selectolax for simple content."""
         try:
-            tree = HTMLParser(html)
+            if HTMLParser is None:
+                raise RuntimeError("selectolax is not available")
+            tree = HTMLParser(html)  # type: ignore
 
             # Remove unwanted elements
             for element in tree.css(
@@ -256,16 +259,16 @@ class WebContentExtractor:
 
         # Try regular title tag
         title_tag = soup.find("title")
-        if title_tag and title_tag.get_text():
+        if title_tag:
             title_text = title_tag.get_text().strip()
-            if title_text:
+            if isinstance(title_text, str) and title_text:
                 return title_text
 
         # Try first h1
         h1 = soup.find("h1")
-        if h1 and h1.get_text():
+        if h1:
             h1_text = h1.get_text().strip()
-            if h1_text:
+            if isinstance(h1_text, str) and h1_text:
                 return h1_text
 
         return "Untitled"
