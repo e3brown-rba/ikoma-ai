@@ -9,6 +9,7 @@ import json
 import os
 import time
 from datetime import datetime
+from typing import Any, Dict, List
 
 from langchain.tools import tool
 
@@ -89,7 +90,7 @@ def search_web(query: str) -> str:
             return f"No search results found for query: '{query}'"
 
         # Format results for easy consumption
-        formatted_results = {
+        formatted_results: Dict[str, Any] = {
             "query": query,
             "timestamp": datetime.now().isoformat(),
             "total_results": len(organic_results),
