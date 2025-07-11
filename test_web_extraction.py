@@ -1,5 +1,6 @@
 import pytest
-from tools.web_extraction import WebContentExtractor, ExtractedContent
+
+from tools.web_extraction import WebContentExtractor
 
 
 class TestWebContentExtractor:
@@ -159,8 +160,7 @@ class TestWebContentExtractor:
             <p>Sponsored Content: Special offer</p>
             <p>    Extra    whitespace   </p>
             <p>Line 1</p>
-            
-            
+
             <p>Line 2 after many breaks</p>
         </body></html>
         """
@@ -205,7 +205,7 @@ class TestWebContentExtractor:
         """Test that complexity detection works for speed optimization."""
         # Simple content
         simple_html = "<html><body><h1>Title</h1><p>Simple content.</p></body></html>"
-        assert extractor._is_simple_content(simple_html) == True
+        assert extractor._is_simple_content(simple_html)
 
         # Complex content with many scripts
         complex_html = """
@@ -221,11 +221,11 @@ class TestWebContentExtractor:
         </body>
         </html>
         """
-        assert extractor._is_simple_content(complex_html) == False
+        assert not extractor._is_simple_content(complex_html)
 
         # Large content
         large_html = "<html><body>" + "<p>Content</p>" * 10000 + "</body></html>"
-        assert extractor._is_simple_content(large_html) == False
+        assert not extractor._is_simple_content(large_html)
 
     def test_header_extraction(self, extractor):
         """Test that headers are properly extracted and structured."""

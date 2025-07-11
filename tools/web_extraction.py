@@ -1,14 +1,14 @@
-from typing import Dict, Optional, Any, List
+import logging
 import re
-from urllib.parse import urljoin, urlparse
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from typing import Any
+from urllib.parse import urlparse
 
 try:
     import trafilatura
-    from trafilatura.settings import use_config
     from trafilatura.metadata import extract_metadata
+    from trafilatura.settings import use_config
 except ImportError:
     trafilatura = None
 
@@ -28,11 +28,11 @@ class ExtractedContent:
     title: str
     content: str
     url: str
-    headers: Dict[str, List[str]]  # h1, h2, h3 hierarchy
-    metadata: Dict[str, Any]
+    headers: dict[str, list[str]]  # h1, h2, h3 hierarchy
+    metadata: dict[str, Any]
     extraction_method: str
     word_count: int
-    language: Optional[str] = None
+    language: str | None = None
 
 
 class WebContentExtractor:
@@ -226,12 +226,12 @@ class WebContentExtractor:
             word_count=len(content.split()) if content else 0,
         )
 
-    def _extract_headers_from_html(self, html: str) -> Dict[str, List[str]]:
+    def _extract_headers_from_html(self, html: str) -> dict[str, list[str]]:
         """Extract headers using BeautifulSoup for structure analysis."""
         soup = BeautifulSoup(html, "html.parser")
         return self._extract_headers_bs4(soup)
 
-    def _extract_headers_bs4(self, soup: BeautifulSoup) -> Dict[str, List[str]]:
+    def _extract_headers_bs4(self, soup: BeautifulSoup) -> dict[str, list[str]]:
         """Extract h1-h3 headers for content structure."""
         headers = {"h1": [], "h2": [], "h3": []}
 
