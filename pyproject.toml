@@ -2,6 +2,7 @@
 name = "ikoma"
 version = "0.2.0"
 description = "iKOMA AI Agent - Plan-Execute-Reflect Architecture"
+requires-python = ">=3.10"
 dependencies = [
     "langchain==0.3.26",
     "langchain-core==0.3.68",
