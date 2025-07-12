@@ -69,8 +69,20 @@ module = "serpapi.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "tools.web_extraction"
-ignore_errors = true
+module = "validators.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "trafilatura.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "textstat.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "bs4.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["."]

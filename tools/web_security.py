@@ -9,7 +9,7 @@ Part of Epic E-01: Internet Tooling - Issue #6.
 import ipaddress
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import Lock
 from urllib.parse import urlparse
 
@@ -24,46 +24,38 @@ logger = logging.getLogger(__name__)
 class FilterConfig:
     """Configuration for domain filtering and rate limiting."""
 
-    allowed_domains: set[str] = None  # type: ignore
-    blocked_domains: set[str] = None  # type: ignore
+    allowed_domains: set[str] = field(default_factory=lambda: {
+        "wikipedia.org",
+        "*.wikipedia.org",
+        "github.com",
+        "*.github.com",
+        "docs.python.org",
+        "pypi.org",
+        "stackoverflow.com",
+        "*.stackoverflow.com",
+        "medium.com",
+        "*.medium.com",
+        "dev.to",
+        "*.dev.to",
+        "realpython.com",
+        "*.realpython.com",
+        "python.org",
+        "*.python.org",
+    })
+    blocked_domains: set[str] = field(default_factory=lambda: {
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",
+        "*.local",
+        "*.internal",
+        "*.test",
+        "192.168.0.0/16",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+    })
     rate_limit_delay: float = 0.2  # 5 req/sec
     max_content_size: int = 5_000_000  # 5MB
-    allowed_schemes: set[str] = None  # type: ignore
-
-    def __post_init__(self):
-        if self.allowed_domains is None:
-            self.allowed_domains = {
-                "wikipedia.org",
-                "*.wikipedia.org",
-                "github.com",
-                "*.github.com",
-                "docs.python.org",
-                "pypi.org",
-                "stackoverflow.com",
-                "*.stackoverflow.com",
-                "medium.com",
-                "*.medium.com",
-                "dev.to",
-                "*.dev.to",
-                "realpython.com",
-                "*.realpython.com",
-                "python.org",
-                "*.python.org",
-            }
-        if self.blocked_domains is None:
-            self.blocked_domains = {
-                "localhost",
-                "127.0.0.1",
-                "0.0.0.0",
-                "*.local",
-                "*.internal",
-                "*.test",
-                "192.168.0.0/16",
-                "10.0.0.0/8",
-                "172.16.0.0/12",
-            }
-        if self.allowed_schemes is None:
-            self.allowed_schemes = {"http", "https"}
+    allowed_schemes: set[str] = field(default_factory=lambda: {"http", "https"})
 
 
 class SecureWebFilter:
@@ -71,7 +63,7 @@ class SecureWebFilter:
 
     def __init__(self, config: FilterConfig | None = None):
         self.config = config if config is not None else FilterConfig()
-        self.last_request_times = {}
+        self.last_request_times: dict[str, float] = {}
         self.rate_limit_lock = Lock()
         logger.info(
             f"Initialized SecureWebFilter with {len(self.config.allowed_domains)} allowed domains"

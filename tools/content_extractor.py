@@ -79,9 +79,9 @@ class ContentQualityScorer:
                 readability = 0.5  # Fallback if textstat fails
         else:
             # Simple readability approximation
-            sentences = len(re.split(r"[.!?]+", text))
-            words = len(re.findall(r"\b\w+\b", text))
-            avg_sentence_length = words / sentences if sentences > 0 else 0
+            sentence_count: int = len(re.split(r"[.!?]+", text))
+            word_count: int = len(re.findall(r"\b\w+\b", text))
+            avg_sentence_length = word_count / sentence_count if sentence_count > 0 else 0
             readability = max(0, min(1, 1 - abs(avg_sentence_length - 15) / 20))
 
         # Content length (20% weight) - optimal 500-2000 chars
@@ -91,14 +91,14 @@ class ContentQualityScorer:
         )
 
         # Vocabulary diversity (20% weight)
-        words = re.findall(r"\b\w+\b", text.lower())
-        unique_words = set(words)
+        words: list[str] = re.findall(r"\b\w+\b", text.lower())
+        unique_words: set[str] = set(words)
         vocab_diversity = len(unique_words) / len(words) if words else 0
         vocab_score = min(1.0, vocab_diversity * 2)  # Normalize to 0-1
 
         # Sentence structure (15% weight)
-        sentences = len(re.split(r"[.!?]+", text))
-        avg_sentence_length = len(words) / sentences if sentences > 0 else 0
+        sentence_count = len(re.split(r"[.!?]+", text))
+        avg_sentence_length = len(words) / sentence_count if sentence_count > 0 else 0
         structure_score = (
             1.0
             if 10 <= avg_sentence_length <= 20

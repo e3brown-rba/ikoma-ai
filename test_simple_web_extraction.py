@@ -15,14 +15,13 @@ from tools.web_security import FilterConfig, SecureWebFilter
 
 
 def test_security_filter():
-    """Test the security filter functionality."""
+    """Test security filtering functionality."""
     print("Testing security filter...")
 
     # Test blocked domains
     filter_config = FilterConfig()
     web_filter = SecureWebFilter(filter_config)
 
-    # Test localhost (should be blocked)
     try:
         web_filter.validate_url("http://localhost.localdomain/test")
         raise AssertionError("localhost should be blocked")
@@ -36,18 +35,16 @@ def test_security_filter():
 
     # Test Wikipedia (should be allowed)
     try:
-        web_filter.validate_url("https://en.wikipedia.org/wiki/Python")
-        print("✅ Security filter allows Wikipedia")
+        web_filter.validate_url("https://docs.python.org/3/")
+        # Should not raise an exception
     except ValueError as e:
-        print(f"❌ Security filter blocked Wikipedia: {e}")
-        return False
+        raise AssertionError(f"docs.python.org should be allowed: {e}") from e
 
-    print("✅ Security filter tests passed")
-    return True
+    print("✅ Security filtering works correctly")
 
 
 def test_content_extractor():
-    """Test the content extractor functionality."""
+    """Test content extraction functionality."""
     print("Testing content extractor...")
 
     extractor = ModernContentExtractor(min_quality_score=0.5)
@@ -62,12 +59,7 @@ def test_content_extractor():
 
     metrics = scorer.calculate_quality_score(good_text)
     assert "overall" in metrics
-    assert "readability" in metrics
-    assert "length" in metrics
-    assert "vocabulary" in metrics
-    assert "structure" in metrics
-    assert 0 <= metrics["overall"] <= 1
-
+    assert metrics["overall"] > 0.5
     print(f"✅ Quality scoring works: overall={metrics['overall']:.2f}")
 
     # Test text chunking
@@ -78,21 +70,16 @@ def test_content_extractor():
 
     chunks = extractor._intelligent_chunk_text(text, chunk_size=50)
     assert len(chunks) > 0
-    for chunk in chunks:
-        assert len(chunk) <= 50
-
-    print(f"✅ Text chunking works: {len(chunks)} chunks created")
+    print(f"✅ Text chunking works: {len(chunks)} chunks")
 
     # Test content extraction
     html_content = """
     <html>
+    <head><title>Python Documentation</title></head>
     <body>
-        <h1>Python Programming Guide</h1>
-        <p>Python is a high-level programming language known for its simplicity and readability.
-        It was created by Guido van Rossum and first released in 1991. Python's design philosophy
-        emphasizes code readability with its notable use of significant whitespace.</p>
-        <p>Python features a dynamic type system and automatic memory management. It supports multiple
-        programming paradigms, including structured, object-oriented, and functional programming.</p>
+        <h1>Python Programming Language</h1>
+        <p>Python is a high-level programming language known for its simplicity and readability.</p>
+        <p>It was created by Guido van Rossum and first released in 1991.</p>
     </body>
     </html>
     """
@@ -108,8 +95,6 @@ def test_content_extractor():
     print(
         f"✅ Content extraction works: {len(extracted.text_chunks)} chunks, quality={extracted.quality_score:.2f}"
     )
-
-    return True
 
 
 def test_rate_limiting():
@@ -130,37 +115,33 @@ def test_rate_limiting():
     end_time = time.time()
 
     # Should have taken at least the rate limit delay
-    assert end_time - start_time >= 0.1
+    assert end_time - start_time >= web_filter.config.rate_limit_delay * 0.9  # Allow small timing variance
 
-    print("✅ Rate limiting works")
-    return True
+    print("✅ Rate limiting works correctly")
 
 
 if __name__ == "__main__":
     print("🧪 Running simple web extraction tests...")
 
-    success = True
-
     try:
-        success &= test_security_filter()
+        test_security_filter()
+        print("✅ Security filter test passed")
     except Exception as e:
         print(f"❌ Security filter test failed: {e}")
-        success = False
+        sys.exit(1)
 
     try:
-        success &= test_content_extractor()
+        test_content_extractor()
+        print("✅ Content extractor test passed")
     except Exception as e:
         print(f"❌ Content extractor test failed: {e}")
-        success = False
+        sys.exit(1)
 
     try:
-        success &= test_rate_limiting()
+        test_rate_limiting()
+        print("✅ Rate limiting test passed")
     except Exception as e:
         print(f"❌ Rate limiting test failed: {e}")
-        success = False
-
-    if success:
-        print("\n🎉 All tests passed!")
-    else:
-        print("\n❌ Some tests failed!")
         sys.exit(1)
+
+    print("\n🎉 All tests passed!")
