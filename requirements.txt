@@ -25,6 +25,7 @@ pydantic-core==2.33.2
 # HTTP Client Dependencies
 requests==2.31.0  # For rate-limited HTTP client wrapper
 types-requests==2.32.4.20250611  # Type stubs for requests library
+validators==0.28.1  # URL validation for security filtering
 
 # Search API Dependencies
 google-search-results==2.4.2  # SerpAPI client for web search functionality
@@ -32,4 +33,5 @@ google-search-results==2.4.2  # SerpAPI client for web search functionality
 # Development Tools
 gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023-137, PYSEC-2023-161, PYSEC-2023-165
 yamllint
-bandit>=1.8.6  # Security scanning tool 
+bandit>=1.8.6  # Security scanning tool
+pytest-cov>=6.2.1  # Coverage testing for CI/CD 

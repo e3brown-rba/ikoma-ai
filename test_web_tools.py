@@ -6,12 +6,11 @@ external dependencies during testing.
 """
 
 import sys
-import time
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.web_tools import SearchRateLimiter, get_search_status, search_web
+from tools.web_tools import search_web
 
 
 def test_search_web_disabled():
@@ -108,63 +107,6 @@ def test_search_web_exception():
         with patch.dict(sys.modules, {"serpapi": mock_serpapi}):
             result = search_web.invoke("test query")
             assert "Search failed" in result
-
-
-def test_get_search_status():
-    """Test the search status tool."""
-    with patch.dict(
-        "os.environ",
-        {
-            "SEARCH_ENABLED": "true",
-            "SERPAPI_API_KEY": "test_key",
-            "SEARCH_RATE_LIMIT": "3",
-        },
-    ):
-        with patch.dict(sys.modules, {"serpapi": MagicMock()}):
-            result = get_search_status.invoke("")
-
-            assert "Search enabled: True" in result
-            assert "API key configured: True" in result
-            assert "Rate limit: 3" in result
-            assert "SerpAPI available: True" in result
-
-
-def test_get_search_status_disabled():
-    """Test search status when search is disabled."""
-    with patch.dict(
-        "os.environ",
-        {"SEARCH_ENABLED": "false", "SERPAPI_API_KEY": "", "SEARCH_RATE_LIMIT": "5"},
-    ):
-        result = get_search_status.invoke("")
-
-        assert "Search enabled: False" in result
-        assert "API key configured: False" in result
-        assert "Rate limit: 5" in result
-
-
-def test_rate_limiter():
-    """Test the rate limiter functionality."""
-    limiter = SearchRateLimiter(max_requests_per_second=2)
-
-    start_time = time.time()
-    limiter.wait_if_needed()
-    limiter.wait_if_needed()
-    elapsed = time.time() - start_time
-
-    # Should wait at least 0.5s for 2 RPS (1/2 second interval)
-    assert elapsed >= 0.4  # Allow some tolerance for timing
-
-
-def test_rate_limiter_no_wait():
-    """Test that rate limiter doesn't wait unnecessarily."""
-    limiter = SearchRateLimiter(max_requests_per_second=10)
-
-    start_time = time.time()
-    limiter.wait_if_needed()
-    elapsed = time.time() - start_time
-
-    # Should not wait significantly for high rate limits
-    assert elapsed < 0.1
 
 
 if __name__ == "__main__":

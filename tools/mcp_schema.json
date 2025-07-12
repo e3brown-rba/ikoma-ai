@@ -276,13 +276,54 @@
         "required": []
       },
       "category": "internet"
+    },
+    {
+      "name": "extract_web_content",
+      "description": "Extract high-quality text from web URLs with security validation and quality assessment",
+      "parameters": {
+        "type": "object", 
+        "properties": {
+          "url_and_options": {
+            "type": "string",
+            "description": "Format: 'url|||chunk_size|||store_in_memory|||min_quality' (last 3 optional, defaults: 1000,true,0.6)"
+          }
+        },
+        "required": ["url_and_options"]
+      },
+      "category": "web"
+    },
+    {
+      "name": "search_web_memories",
+      "description": "Search stored web content with quality and domain filtering",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query_and_filters": {
+            "type": "string", 
+            "description": "Format: 'query|||min_quality|||domain_filter|||max_results' (last 3 optional, defaults: 0.6,none,5)"
+          }
+        },
+        "required": ["query_and_filters"]
+      },
+      "category": "web"
+    },
+    {
+      "name": "get_web_extraction_status",
+      "description": "Get the current status of web content extraction functionality",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "web"
     }
   ],
   "categories": {
     "file_system": "Tools for file operations in the sandbox environment",
     "math": "Tools for mathematical calculations",
     "internet": "Tools for safe internet access and web operations",
-    "http": "Tools for rate-limited HTTP requests with domain filtering"
+    "http": "Tools for rate-limited HTTP requests with domain filtering",
+    "web": "Tools for high-quality web content extraction and storage"
   },
   "version": "1.0.0",
   "description": "Tool schema for iKOMA agent Phase 1-B plan-execute-reflect architecture"

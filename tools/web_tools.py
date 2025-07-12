@@ -1,44 +1,210 @@
 """
-Web Search Tools Module for iKOMA
+Enhanced Web Tools Module for iKOMA
 
-Provides web search capabilities using SerpAPI with rate limiting and safety controls.
-Part of Epic E-01: Internet Tooling - Issue #2.
+Provides high-quality web content extraction with security validation and ChromaDB storage.
+Implements OWASP-compliant security, trafilatura-based extraction, and quality assessment.
+Part of Epic E-01: Internet Tooling - Issue #6.
 """
 
 import json
 import os
-import time
+import uuid
 from datetime import datetime
 from typing import Any
 
+import requests
 from langchain.tools import tool
 
+from .content_extractor import get_content_extractor
+from .vector_store import get_vector_store
+from .web_security import enforce_web_rate_limit, get_web_filter, validate_web_url
 
-class SearchRateLimiter:
-    """Rate limiter for SerpAPI requests to prevent API quota exhaustion."""
-
-    def __init__(self, max_requests_per_second: int = 5):
-        self.max_rps = max_requests_per_second
-        self.last_request_time = 0.0
-        self.request_interval = 1.0 / max_requests_per_second
-
-    def wait_if_needed(self) -> None:
-        """Wait if necessary to respect rate limits."""
-        current_time = time.time()
-        time_since_last = current_time - self.last_request_time
-        if time_since_last < self.request_interval:
-            time.sleep(self.request_interval - time_since_last)
-        self.last_request_time = time.time()
+# Global instances for performance
+_web_filter = get_web_filter()
+_content_extractor = get_content_extractor()
 
 
-# Global rate limiter instance
-_rate_limiter = SearchRateLimiter(int(os.getenv("SEARCH_RATE_LIMIT", "5")))
+@tool
+def extract_web_content(url_and_options: str) -> str:
+    """Extract and store high-quality web content with security validation.
+    Format: 'url|||chunk_size|||store_in_memory|||min_quality'"""
+
+    parts = url_and_options.split("|||")
+    url = parts[0].strip()
+    chunk_size = int(parts[1]) if len(parts) > 1 and parts[1].strip() else 1000
+    store_in_memory = parts[2].lower() == "true" if len(parts) > 2 else True
+    min_quality = float(parts[3]) if len(parts) > 3 and parts[3].strip() else 0.6
+
+    try:
+        # Security validation
+        validate_web_url(url)
+        domain = url.split("/")[2] if "/" in url else url
+        enforce_web_rate_limit(domain)
+
+        # Fetch content with safety limits
+        headers = {
+            "User-Agent": "iKOMA/2.0 AI Assistant",
+            "Accept": "text/html,application/xhtml+xml",
+        }
+
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=10,
+            allow_redirects=False,  # Prevent redirect-based bypasses
+            stream=True,
+        )
+        response.raise_for_status()
+
+        # Size validation
+        content_length = response.headers.get("content-length")
+        if content_length and int(content_length) > _web_filter.config.max_content_size:
+            return f"Error: Content too large ({content_length} bytes)"
+
+        html_content = response.text
+        if len(html_content) > _web_filter.config.max_content_size:
+            return f"Error: Content too large ({len(html_content)} bytes)"
+
+        # Extract and assess content
+        extracted = _content_extractor.extract_content(url, html_content, chunk_size)
+
+        # Quality gate
+        if extracted.quality_score < min_quality:
+            return f"Content quality too low: {extracted.quality_score:.2f} < {min_quality} (extracted via {extracted.extraction_method})"
+
+        # Store in ChromaDB if requested
+        if store_in_memory:
+            store = get_vector_store()
+            namespace = ("web_content", "default")  # Separate collection
+
+            for i, chunk in enumerate(extracted.text_chunks):
+                memory_id = f"{uuid.uuid4()}_{i}"
+                memory_entry = {
+                    "content": chunk,
+                    "url": extracted.url,
+                    "title": extracted.title,
+                    "chunk_index": i,
+                    "total_chunks": len(extracted.text_chunks),
+                    "quality_score": extracted.quality_score,
+                    "readability_score": extracted.readability_score,
+                    "extraction_method": extracted.extraction_method,
+                    "domain": extracted.metadata["domain"],
+                    "timestamp": extracted.timestamp,
+                    "content_type": "web_content",
+                }
+                store.put(namespace, memory_id, memory_entry)
+
+        # Success response with quality metrics
+        return f"""🔍 **Web Content Extraction Results**
+
+📊 Quality Metrics:
+• Overall Score: {extracted.quality_score:.2f}/1.0
+• Readability: {extracted.readability_score:.2f}/1.0
+• Method: {extracted.extraction_method}
+• Chunks: {len(extracted.text_chunks)}
+
+📝 Preview: {extracted.text_chunks[0][:200]}..."""
+
+    except ValueError as e:
+        return f"❌ Security validation failed: {e}"
+    except requests.RequestException as e:
+        return f"❌ Network error: {e}"
+    except Exception as e:
+        return f"❌ Content extraction error: {e}"
 
 
+@tool
+def search_web_memories(query_and_filters: str) -> str:
+    """Search stored web content with quality and domain filtering.
+    Format: 'query|||min_quality|||domain_filter|||max_results'"""
+
+    parts = query_and_filters.split("|||")
+    query = parts[0].strip()
+    min_quality = float(parts[1]) if len(parts) > 1 and parts[1].strip() else 0.6
+    domain_filter = parts[2].strip() if len(parts) > 2 and parts[2].strip() else None
+    max_results = int(parts[3]) if len(parts) > 3 and parts[3].strip() else 5
+
+    try:
+        store = get_vector_store()
+        namespace = ("web_content", "default")
+
+        # Search with quality filtering
+        memories = store.search(namespace, query=query, limit=max_results * 2)
+
+        # Apply filters
+        filtered_results = []
+        for memory in memories:
+            # Handle both dict and object with value attribute
+            if isinstance(memory, dict):
+                content = memory
+            elif hasattr(memory, "value"):
+                content = memory.value
+            else:
+                content = memory
+
+            # Quality filter
+            if content.get("quality_score", 0) < min_quality:
+                continue
+
+            # Domain filter
+            if (
+                domain_filter
+                and domain_filter.lower() not in content.get("domain", "").lower()
+            ):
+                continue
+
+            filtered_results.append(content)
+            if len(filtered_results) >= max_results:
+                break
+
+        if not filtered_results:
+            return f"No web content found for '{query}' (min quality: {min_quality})"
+
+        # Format results
+        results = []
+        for content in filtered_results:
+            results.append(f"""📄 {content.get("title", "Untitled")}
+🔗 {content.get("url", "Unknown URL")}
+⭐ Quality: {content.get("quality_score", 0):.2f}
+📝 {content.get("content", "")[:150]}...""")
+
+        return f"🔍 Found {len(results)} high-quality results:\n\n" + "\n\n".join(
+            results
+        )
+
+    except Exception as e:
+        return f"❌ Search error: {e}"
+
+
+@tool
+def get_web_extraction_status() -> str:
+    """Get the current status of web content extraction functionality."""
+
+    status = {
+        "security_filter": _web_filter.get_status(),
+        "content_extractor": {
+            "min_quality_score": _content_extractor.min_quality_score,
+            "trafilatura_available": hasattr(_content_extractor, "trafilatura_config")
+            and _content_extractor.trafilatura_config is not None,
+        },
+        "vector_store": "available",  # Assuming it's available if we can import it
+    }
+
+    result = "Web Content Extraction Status:\n"
+    result += f"- Security filter: {status['security_filter']['allowed_domains_count']} allowed domains\n"
+    result += f"- Content extractor: min quality {status['content_extractor']['min_quality_score']}\n"
+    result += f"- Vector store: {status['vector_store']}\n"
+    result += f"- Trafilatura available: {status['content_extractor']['trafilatura_available']}\n"
+
+    return result
+
+
+# Legacy search function for backward compatibility
 @tool
 def search_web(query: str) -> str:
     """
     Search the web using SerpAPI and return top-5 results with titles and URLs.
+    (Legacy function - consider using extract_web_content for better results)
 
     Args:
         query: Search query string
@@ -65,9 +231,6 @@ def search_web(query: str) -> str:
             return (
                 "SerpAPI client not installed. Run: pip install google-search-results"
             )
-
-        # Rate limiting
-        _rate_limiter.wait_if_needed()
 
         # Perform search with safety settings
         search = GoogleSearch(
@@ -113,41 +276,3 @@ def search_web(query: str) -> str:
 
     except Exception as e:
         return f"Search failed: {str(e)}"
-
-
-@tool
-def get_search_status() -> str:
-    """
-    Get the current status of web search functionality.
-
-    Returns:
-        String with search configuration and status information
-    """
-    status = {
-        "search_enabled": os.getenv("SEARCH_ENABLED", "false").lower() == "true",
-        "api_key_configured": bool(os.getenv("SERPAPI_API_KEY")),
-        "rate_limit": int(os.getenv("SEARCH_RATE_LIMIT", "5")),
-        "serpapi_available": False,
-    }
-
-    # Check if SerpAPI is available
-    try:
-        __import__("serpapi")
-        status["serpapi_available"] = True
-    except ImportError:
-        pass
-
-    result = "Web Search Status:\n"
-    result += f"- Search enabled: {status['search_enabled']}\n"
-    result += f"- API key configured: {status['api_key_configured']}\n"
-    result += f"- Rate limit: {status['rate_limit']} req/s\n"
-    result += f"- SerpAPI available: {status['serpapi_available']}\n"
-
-    if not status["search_enabled"]:
-        result += "\nTo enable search, set SEARCH_ENABLED=true in your .env file"
-    if not status["api_key_configured"]:
-        result += "\nTo configure API key, set SERPAPI_API_KEY in your .env file"
-    if not status["serpapi_available"]:
-        result += "\nTo install SerpAPI, run: pip install google-search-results"
-
-    return result

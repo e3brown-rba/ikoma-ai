@@ -184,8 +184,21 @@
   - Domain filtering integration for security
   - Comprehensive test suite and MCP tool integration
 - ✅ **Issue #2: SerpAPI search tool** - COMPLETED
-- ⏳ **Issue #3: HTML→Text extractor utility** - PLANNED
-- ⏳ **Issue #6: Ingest fetched text into vector store** - PLANNED
+- ✅ **Issue #3: HTML→Text extractor utility** - COMPLETED
+  - Multi-library extraction with trafilatura, selectolax, and BeautifulSoup
+  - Graceful fallback system for missing dependencies
+  - Comprehensive error handling and content validation
+  - MCP tool integration with proper type annotations
+  - CI-compatible with robust test coverage
+- ✅ **Issue #6: Security-first HTML→Text extractor for web content extraction** - COMPLETED
+  - OWASP-compliant domain filtering and SSRF prevention
+  - High-quality content extraction using trafilatura with multi-factor quality scoring
+  - Intelligent text chunking with semantic boundaries
+  - ChromaDB storage and retrieval with quality filtering
+  - Rate limiting and security validation
+  - Comprehensive test coverage (13 tests) with mocking for local-first operation
+  - MCP tool integration with proper type annotations
+  - Local-first architecture (no cloud dependencies required)
 - ⏳ **Issue #7: Prompt template — add citation tokens** - PLANNED
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - PLANNED
 
