@@ -145,13 +145,9 @@ def search_web_memories(query_and_filters: str) -> str:
         # Apply filters
         filtered_results = []
         for memory in memories:
-            # Handle both dict and object with value attribute
             if isinstance(memory, dict):
                 content = memory
-            elif hasattr(memory, "value"):
-                content = memory.value
-            else:
-                content = memory
+            # No else/continue needed
 
             # Quality filter
             if content.get("quality_score", 0) < min_quality:
