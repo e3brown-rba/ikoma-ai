@@ -79,7 +79,15 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Robust fallback strategies with og:title prioritization
   - MCP tool integration with JSON output format
   - 74% test coverage with 13 comprehensive test scenarios
-- ⏳ **Issue #6: Ingest fetched text into vector store** - Memory integration
+- ✅ **Issue #6: Security-first HTML→Text extractor for web content extraction** - COMPLETED
+  - **Security Features**: OWASP-compliant domain filtering, SSRF prevention, rate limiting
+  - **Content Extraction**: High-quality extraction using trafilatura with multi-factor quality scoring
+  - **Intelligent Processing**: Smart text chunking with semantic boundaries and quality filtering
+  - **Storage Integration**: ChromaDB storage and retrieval with quality-based filtering
+  - **Local-First Design**: No cloud dependencies required, uses local LM Studio for embeddings
+  - **Comprehensive Testing**: 13 tests covering security validation, quality filtering, storage, and integration
+  - **MCP Integration**: Proper tool registration with type annotations and error handling
+  - **Performance**: Optimized for local operation with mocked embeddings in tests
 - ⏳ **Issue #7: Prompt template — add citation tokens** - Source attribution
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - User experience
 
