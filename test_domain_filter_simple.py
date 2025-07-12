@@ -19,7 +19,9 @@ def test_domain_filter():
     assert "DENIED" in result or "blocked" in result or "not allowed" in result
 
     # Test Wikipedia (should be allowed)
-    result = validate_url_for_access.invoke("https://en.wikipedia.org/wiki/Python_(programming_language)")
+    result = validate_url_for_access.invoke(
+        "https://en.wikipedia.org/wiki/Python_(programming_language)"
+    )
     assert "ALLOWED" in result or "allowed" in result
 
     # Test GitHub (should be allowed)

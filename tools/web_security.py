@@ -24,35 +24,39 @@ logger = logging.getLogger(__name__)
 class FilterConfig:
     """Configuration for domain filtering and rate limiting."""
 
-    allowed_domains: set[str] = field(default_factory=lambda: {
-        "wikipedia.org",
-        "*.wikipedia.org",
-        "github.com",
-        "*.github.com",
-        "docs.python.org",
-        "pypi.org",
-        "stackoverflow.com",
-        "*.stackoverflow.com",
-        "medium.com",
-        "*.medium.com",
-        "dev.to",
-        "*.dev.to",
-        "realpython.com",
-        "*.realpython.com",
-        "python.org",
-        "*.python.org",
-    })
-    blocked_domains: set[str] = field(default_factory=lambda: {
-        "localhost",
-        "127.0.0.1",
-        "0.0.0.0",
-        "*.local",
-        "*.internal",
-        "*.test",
-        "192.168.0.0/16",
-        "10.0.0.0/8",
-        "172.16.0.0/12",
-    })
+    allowed_domains: set[str] = field(
+        default_factory=lambda: {
+            "wikipedia.org",
+            "*.wikipedia.org",
+            "github.com",
+            "*.github.com",
+            "docs.python.org",
+            "pypi.org",
+            "stackoverflow.com",
+            "*.stackoverflow.com",
+            "medium.com",
+            "*.medium.com",
+            "dev.to",
+            "*.dev.to",
+            "realpython.com",
+            "*.realpython.com",
+            "python.org",
+            "*.python.org",
+        }
+    )
+    blocked_domains: set[str] = field(
+        default_factory=lambda: {
+            "localhost",
+            "127.0.0.1",
+            "0.0.0.0",
+            "*.local",
+            "*.internal",
+            "*.test",
+            "192.168.0.0/16",
+            "10.0.0.0/8",
+            "172.16.0.0/12",
+        }
+    )
     rate_limit_delay: float = 0.2  # 5 req/sec
     max_content_size: int = 5_000_000  # 5MB
     allowed_schemes: set[str] = field(default_factory=lambda: {"http", "https"})

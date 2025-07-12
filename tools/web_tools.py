@@ -134,7 +134,7 @@ def search_web_memories(query_and_filters: str) -> str:
         memories: list[dict[str, Any]] = []
 
         # Convert search results to list with proper typing
-        if hasattr(search_results, '__iter__'):
+        if hasattr(search_results, "__iter__"):
             try:
                 memories = list(search_results)
             except (TypeError, ValueError):
@@ -181,7 +181,9 @@ def search_web_memories(query_and_filters: str) -> str:
                 f"\n📝 {content.get('content', '')[:150]}..."
             )
 
-        return f"🔍 Found {len(results)} high-quality results:\n\n" + "\n\n".join(results)
+        return f"🔍 Found {len(results)} high-quality results:\n\n" + "\n\n".join(
+            results
+        )
 
     except Exception as e:
         return f"❌ Search error: {e}"

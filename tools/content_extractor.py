@@ -81,7 +81,9 @@ class ContentQualityScorer:
             # Simple readability approximation
             sentence_count: int = len(re.split(r"[.!?]+", text))
             word_count: int = len(re.findall(r"\b\w+\b", text))
-            avg_sentence_length = word_count / sentence_count if sentence_count > 0 else 0
+            avg_sentence_length = (
+                word_count / sentence_count if sentence_count > 0 else 0
+            )
             readability = max(0, min(1, 1 - abs(avg_sentence_length - 15) / 20))
 
         # Content length (20% weight) - optimal 500-2000 chars

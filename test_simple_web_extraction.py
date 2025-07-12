@@ -115,7 +115,9 @@ def test_rate_limiting():
     end_time = time.time()
 
     # Should have taken at least the rate limit delay
-    assert end_time - start_time >= web_filter.config.rate_limit_delay * 0.9  # Allow small timing variance
+    assert (
+        end_time - start_time >= web_filter.config.rate_limit_delay * 0.9
+    )  # Allow small timing variance
 
     print("✅ Rate limiting works correctly")
 
