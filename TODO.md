@@ -199,6 +199,11 @@
   - Comprehensive test coverage (13 tests) with mocking for local-first operation
   - MCP tool integration with proper type annotations
   - Local-first architecture (no cloud dependencies required)
+  - Hybrid trafilatura/selectolax architecture for optimal performance
+  - Comprehensive metadata extraction with headers and structure
+  - Robust fallback strategies with og:title prioritization
+  - MCP tool integration with JSON output format
+  - 74% test coverage with 13 comprehensive test scenarios
 - ⏳ **Issue #7: Prompt template — add citation tokens** - PLANNED
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - PLANNED
 

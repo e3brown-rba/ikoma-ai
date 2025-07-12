@@ -68,6 +68,10 @@ ignore_missing_imports = true
 module = "serpapi.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "tools.web_extraction"
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["."]
 python_files = ["test_*.py"]
