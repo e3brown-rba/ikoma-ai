@@ -96,7 +96,7 @@ class SecureWebFilter:
         # Now validate URL format (except for blocked domains)
         if validators is None:
             # Fallback validation when validators is not available
-            if not url.startswith(('http://', 'https://')):
+            if not url.startswith(("http://", "https://")):
                 raise ValueError(f"Invalid URL format: {url}")
         elif not validators.url(url):
             raise ValueError(f"Invalid URL format: {url}")
