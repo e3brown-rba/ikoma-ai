@@ -210,8 +210,8 @@ class ModernContentExtractor:
                 metadata = trafilatura.extract_metadata(html_content)
                 if metadata and metadata.title:
                     title = metadata.title
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Title extraction failed: {e}")
 
         # Quality assessment
         quality_metrics = self.quality_scorer.calculate_quality_score(
@@ -237,8 +237,8 @@ class ModernContentExtractor:
                 metadata_obj = trafilatura.extract_metadata(html_content)
                 if metadata_obj and metadata_obj.language:
                     metadata["language"] = metadata_obj.language
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Language extraction failed: {e}")
 
         return ExtractedContent(
             url=url,

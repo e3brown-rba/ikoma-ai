@@ -51,7 +51,7 @@ class FilterConfig:
         default_factory=lambda: {
             "localhost",
             "127.0.0.1",
-            "0.0.0.0",
+            "0.0.0.0",  # nosec B104 - This is intentionally blocked for security
             "*.local",
             "*.internal",
             "*.test",
