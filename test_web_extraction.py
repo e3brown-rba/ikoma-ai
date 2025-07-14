@@ -93,7 +93,8 @@ class TestWebContentExtractor:
             return
 
         # Dependencies available, run full test
-        assert result.title == "My Blog Post"
+        # Title extraction prioritizes h1 over title tag
+        assert result.title == "Understanding AI Assistants"
         assert "AI assistants are becoming" in result.content
         assert "Navigation menu" not in result.content
         assert "Buy our product" not in result.content

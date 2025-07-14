@@ -19,6 +19,7 @@ A sophisticated local AI assistant powered by LangGraph with advanced **plan-exe
 - 🛡️ **Enhanced Safety**: Confirmation prompts for all destructive operations
 - 🔍 **Semantic Search**: Find relevant memories and context by meaning, not just keywords
 - 🏗️ **Modern Architecture**: Built on LangGraph for reliable, scalable agent workflows with 60% improved performance
+- 🌐 **Security-First Web Content Extraction**: OWASP-compliant domain filtering, high-quality HTML→Text extraction, and ChromaDB storage with quality scoring
 
 ## 🏗️ Architecture Overview
 

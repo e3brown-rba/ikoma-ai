@@ -14,7 +14,7 @@ from .internet_tools import (
     reload_domain_filter_config,
     validate_url_for_access,
 )
-from .web_tools import get_search_status, search_web
+from .web_tools import search_web
 
 
 class ToolLoader:
@@ -74,7 +74,6 @@ class ToolLoader:
             "reload_domain_filter_config": reload_domain_filter_config,
             "validate_url_for_access": validate_url_for_access,
             "search_web": search_web,
-            "get_search_status": get_search_status,
         }
 
         for tool_info in self.schema.get("tools", []):

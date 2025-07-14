@@ -25,7 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=8.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest-cov>=6.2.1",
     "ruff>=0.12.0",
 ]
 
@@ -69,8 +69,20 @@ module = "serpapi.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "tools.web_extraction"
-ignore_errors = true
+module = "validators.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "trafilatura.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "textstat.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "bs4.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["."]
@@ -83,7 +95,7 @@ addopts = [
     "--cov=agent",
     "--cov=tools",
     "--cov-report=term-missing",
-    "--cov-report=xml",
+    "--cov-report=xml"
 ]
 
 [tool.ruff]
@@ -106,4 +118,28 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["agent", "tools"] 
+known-first-party = ["agent", "tools"]
+
+[tool.coverage.run]
+source = ["agent", "tools"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/migrations/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+] 
