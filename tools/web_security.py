@@ -13,7 +13,10 @@ from dataclasses import dataclass, field
 from threading import Lock
 from urllib.parse import urlparse
 
-import validators
+try:
+    import validators
+except ImportError:
+    validators = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -91,7 +94,11 @@ class SecureWebFilter:
                     raise ValueError(f"Domain blocked: {domain}")
 
         # Now validate URL format (except for blocked domains)
-        if not validators.url(url):
+        if validators is None:
+            # Fallback validation when validators is not available
+            if not url.startswith(('http://', 'https://')):
+                raise ValueError(f"Invalid URL format: {url}")
+        elif not validators.url(url):
             raise ValueError(f"Invalid URL format: {url}")
 
         # Scheme validation
