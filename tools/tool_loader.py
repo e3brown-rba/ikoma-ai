@@ -119,7 +119,9 @@ class ToolLoader:
                             if isinstance(node.value, int | float):
                                 return float(node.value)
                             else:
-                                raise ValueError(f"Unsupported constant type: {type(node.value)}")
+                                raise ValueError(
+                                    f"Unsupported constant type: {type(node.value)}"
+                                )
                         elif isinstance(node, ast.BinOp):
                             left = self._eval_node(node.left)
                             right = self._eval_node(node.right)
