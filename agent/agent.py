@@ -35,6 +35,8 @@ class AgentState(TypedDict):
     continue_planning: bool
     max_iterations: int
     current_iteration: int
+    citations: list[dict[str, Any]] | None  # New: citation tracking
+    citation_counter: int | None  # New: tracks next citation ID
 
 
 # --- File Tools moved to tools/fs_tools.py ---
@@ -200,6 +202,34 @@ Important guidelines:
 8. Do NOT use Calculator tool for non-mathematical questions
 9. Calculator tool is ONLY for numerical calculations and math problems
 
+Citation Guidelines:
+- When a step involves information from external sources or previous context, include citation markers [[n]] in the description
+- Use [[1]], [[2]], etc. for different sources
+- Place citations immediately after claims that need sourcing
+- The execute phase will populate actual citation details
+- For future web tools, include citations when referencing external information
+
+Example with citations:
+```json
+{{
+  "plan": [
+    {{
+      "step": 1,
+      "tool_name": "web_search",
+      "args": {{"query": "Python best practices 2025"}},
+      "description": "Search for current Python best practices [[1]]"
+    }},
+    {{
+      "step": 2,
+      "tool_name": "create_text_file",
+      "args": {{"filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."}},
+      "description": "Create file with researched best practices citing source [[1]]"
+    }}
+  ],
+  "reasoning": "This plan searches for current information [[1]] and documents it properly"
+}}
+```
+
 Tool argument examples:
 - list_sandbox_files: {{"query": ""}} or {{"query": "search_term"}}
 - read_text_file: {{"filename": "file.txt"}}
@@ -300,8 +330,26 @@ Remember: Return ONLY valid JSON, no other text."""
 def execute_node(
     state: AgentState, config: dict, *, store: Any, tools: Any
 ) -> AgentState:
-    """Optimized execute_node that uses shared tools."""
+    """Optimized execute_node that uses shared tools with citation tracking."""
     try:
+        # Initialize citation manager
+        from tools.citation_manager import CitationManager
+
+        citation_manager = CitationManager()
+
+        # Initialize citations if not present
+        if state.get("citations") is None:
+            state["citations"] = []
+            state["citation_counter"] = 1
+        else:
+            # Load existing citations into manager
+            citation_manager.from_dict(
+                {
+                    "citations": state["citations"],
+                    "counter": state.get("citation_counter", 1),
+                }
+            )
+
         # Execute each step in the plan
         execution_results = []
 
@@ -387,16 +435,34 @@ def execute_node(
                     # Regular tool execution
                     result = tool.invoke(args)
 
-                execution_results.append(
-                    {
-                        "step": step["step"],
-                        "tool_name": tool_name,
-                        "args": args,
-                        "description": description,
-                        "status": "success",
-                        "result": str(result),
-                    }
-                )
+                # Track execution result
+                execution_result = {
+                    "step": step["step"],
+                    "tool_name": tool_name,
+                    "args": args,
+                    "description": description,
+                    "status": "success",
+                    "result": str(result),
+                }
+
+                # Check for citation-worthy sources after successful execution
+                if execution_result["status"] == "success":
+                    # For future web tools, extract citation info
+                    if tool_name in [
+                        "web_search",
+                        "web_fetch",
+                        "search_web",
+                    ]:  # Future tools
+                        # Extract URL and title from result if available
+                        # This will be implemented when web tools are added
+                        pass
+
+                    # For memory-based tools, track citations
+                    elif tool_name in ["retrieve_memory", "search_memory"]:
+                        # Extract memory source info if available
+                        pass
+
+                execution_results.append(execution_result)
 
             except Exception as e:
                 execution_results.append(
@@ -409,6 +475,11 @@ def execute_node(
                         "result": f"Error executing tool: {e}",
                     }
                 )
+
+        # Update citation state
+        citation_data = citation_manager.to_dict()
+        state["citations"] = citation_data["citations"]
+        state["citation_counter"] = citation_data["counter"]
 
         state["execution_results"] = execution_results
 
