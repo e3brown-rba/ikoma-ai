@@ -16,13 +16,11 @@ def test_citation_manager_basic():
     citation_id1 = cm.add_citation(
         url="https://example.com",
         title="Example Page",
-        content_preview="This is an example page content"
+        content_preview="This is an example page content",
     )
 
     citation_id2 = cm.add_citation(
-        url="https://test.org",
-        title="Test Page",
-        content_preview="Another test page"
+        url="https://test.org", title="Test Page", content_preview="Another test page"
     )
 
     assert citation_id1 == 1
@@ -130,39 +128,39 @@ def test_planner_citation_emission():
     # Mock planning prompt with citation instructions
     # planning_prompt = """You are a planning assistant. When creating plans that reference external information or previous knowledge, include citation markers [[n]] where n is a number.
 
-# Available tools:
-# - web_search: Search the web for information
-# - create_text_file: Create a text file with content
+    # Available tools:
+    # - web_search: Search the web for information
+    # - create_text_file: Create a text file with content
 
-# Your task is to create a JSON plan. When a step involves information from external sources or previous context, include [[n]] citation markers in the description.
+    # Your task is to create a JSON plan. When a step involves information from external sources or previous context, include [[n]] citation markers in the description.
 
-# Citation Guidelines:
-# - Use [[1]], [[2]], etc. for different sources
-# - Place citations immediately after claims that need sourcing
-# - The execute phase will populate actual citation details
+    # Citation Guidelines:
+    # - Use [[1]], [[2]], etc. for different sources
+    # - Place citations immediately after claims that need sourcing
+    # - The execute phase will populate actual citation details
 
-# Example with citations:
-# ```json
-# {
-#   "plan": [
-#     {
-#       "step": 1,
-#       "tool_name": "web_search",
-#       "args": {"query": "Python best practices 2025"},
-#       "description": "Search for current Python best practices [[1]]"
-#     },
-#     {
-#       "step": 2,
-#       "tool_name": "create_text_file",
-#       "args": {"filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."},
-#       "description": "Create file with researched best practices citing source [[1]]"
-#     }
-#   ],
-#   "reasoning": "This plan searches for current information [[1]] and documents it properly"
-# }
-# ```
+    # Example with citations:
+    # ```json
+    # {
+    #   "plan": [
+    #     {
+    #       "step": 1,
+    #       "tool_name": "web_search",
+    #       "args": {"query": "Python best practices 2025"},
+    #       "description": "Search for current Python best practices [[1]]"
+    #     },
+    #     {
+    #       "step": 2,
+    #       "tool_name": "create_text_file",
+    #       "args": {"filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."},
+    #       "description": "Create file with researched best practices citing source [[1]]"
+    #     }
+    #   ],
+    #   "reasoning": "This plan searches for current information [[1]] and documents it properly"
+    # }
+    # ```
 
-# User's request: Search for Python best practices and create a summary file."""
+    # User's request: Search for Python best practices and create a summary file."""
 
     # This would normally be processed by the LLM
     # For testing, we'll simulate the expected output
@@ -172,16 +170,18 @@ def test_planner_citation_emission():
                 "step": 1,
                 "tool_name": "web_search",
                 "args": {"query": "Python best practices 2025"},
-                "description": "Search for current Python best practices [[1]]"
+                "description": "Search for current Python best practices [[1]]",
             },
             {
                 "step": 2,
                 "tool_name": "create_text_file",
-                "args": {"filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."},
-                "description": "Create file with researched best practices citing source [[1]]"
-            }
+                "args": {
+                    "filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."
+                },
+                "description": "Create file with researched best practices citing source [[1]]",
+            },
         ],
-        "reasoning": "This plan searches for current information [[1]] and documents it properly"
+        "reasoning": "This plan searches for current information [[1]] and documents it properly",
     }
 
     # Extract all descriptions and reasoning
@@ -191,7 +191,7 @@ def test_planner_citation_emission():
     all_text += expected_plan["reasoning"]
 
     # Check for citation markers
-    citation_pattern = r'\[\[(\d+)\]\]'
+    citation_pattern = r"\[\[(\d+)\]\]"
     citations = re.findall(citation_pattern, all_text)
 
     assert len(citations) > 0, "No citation markers found in plan"
@@ -205,18 +205,13 @@ def test_citation_state_persistence():
     print("Testing citation state persistence...")
 
     # Mock agent state
-    state = {
-        "citations": [],
-        "citation_counter": 1,
-        "execution_results": []
-    }
+    state = {"citations": [], "citation_counter": 1, "execution_results": []}
 
     # Simulate adding citations during execution
     cm = CitationManager()
-    cm.from_dict({
-        "citations": state["citations"],
-        "counter": state["citation_counter"]
-    })
+    cm.from_dict(
+        {"citations": state["citations"], "counter": state["citation_counter"]}
+    )
 
     # Add citations
     cm.add_citation("https://example.com", "Example", "Content")
@@ -267,16 +262,18 @@ def test_citation_integration():
             "args": {"query": "Python best practices"},
             "description": "Search for current Python best practices [[1]]",
             "status": "success",
-            "result": "Found information from https://python.org/best-practices"
+            "result": "Found information from https://python.org/best-practices",
         },
         {
             "step": 2,
             "tool_name": "create_text_file",
-            "args": {"filename_and_content": "practices.txt|||Based on research [[1]], here are the best practices..."},
+            "args": {
+                "filename_and_content": "practices.txt|||Based on research [[1]], here are the best practices..."
+            },
             "description": "Create file with researched practices citing source [[1]]",
             "status": "success",
-            "result": "File created successfully"
-        }
+            "result": "File created successfully",
+        },
     ]
 
     # Initialize citation manager
@@ -292,7 +289,9 @@ def test_citation_integration():
                 # Extract URL from result (in real implementation, this would parse the result)
                 url = "https://python.org/best-practices"
                 title = "Python Best Practices"
-                citation_id = cm.add_citation(url, title, "Python development best practices")
+                citation_id = cm.add_citation(
+                    url, title, "Python development best practices"
+                )
 
                 # Verify citation was added
                 assert citation_id == 1

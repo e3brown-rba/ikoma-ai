@@ -334,6 +334,7 @@ def execute_node(
     try:
         # Initialize citation manager
         from tools.citation_manager import CitationManager
+
         citation_manager = CitationManager()
 
         # Initialize citations if not present
@@ -342,10 +343,12 @@ def execute_node(
             state["citation_counter"] = 1
         else:
             # Load existing citations into manager
-            citation_manager.from_dict({
-                "citations": state["citations"],
-                "counter": state.get("citation_counter", 1)
-            })
+            citation_manager.from_dict(
+                {
+                    "citations": state["citations"],
+                    "counter": state.get("citation_counter", 1),
+                }
+            )
 
         # Execute each step in the plan
         execution_results = []
@@ -445,7 +448,11 @@ def execute_node(
                 # Check for citation-worthy sources after successful execution
                 if execution_result["status"] == "success":
                     # For future web tools, extract citation info
-                    if tool_name in ["web_search", "web_fetch", "search_web"]:  # Future tools
+                    if tool_name in [
+                        "web_search",
+                        "web_fetch",
+                        "search_web",
+                    ]:  # Future tools
                         # Extract URL and title from result if available
                         # This will be implemented when web tools are added
                         pass

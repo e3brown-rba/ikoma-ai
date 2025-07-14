@@ -6,6 +6,7 @@ from typing import Any
 @dataclass
 class Citation:
     """Represents a single citation with source information."""
+
     id: int
     url: str
     title: str
@@ -21,7 +22,9 @@ class CitationManager:
         self.citations: dict[int, Citation] = {}
         self.counter = 1
 
-    def add_citation(self, url: str, title: str, content_preview: str = "", source_type: str = "web") -> int:
+    def add_citation(
+        self, url: str, title: str, content_preview: str = "", source_type: str = "web"
+    ) -> int:
         """Add a citation and return its ID."""
         citation = Citation(
             id=self.counter,
@@ -29,7 +32,7 @@ class CitationManager:
             title=title,
             timestamp=datetime.now().isoformat(),
             content_preview=content_preview[:200],
-            source_type=source_type
+            source_type=source_type,
         )
         self.citations[self.counter] = citation
         self.counter += 1
@@ -54,7 +57,7 @@ class CitationManager:
         """Convert citations to dictionary format for state storage."""
         return {
             "citations": [asdict(citation) for citation in self.citations.values()],
-            "counter": self.counter
+            "counter": self.counter,
         }
 
     def from_dict(self, data: dict[str, Any]) -> None:
@@ -69,7 +72,8 @@ class CitationManager:
     def extract_citations_from_text(self, text: str) -> list[int]:
         """Extract citation IDs from text containing [[n]] markers."""
         import re
-        pattern = r'\[\[(\d+)\]\]'
+
+        pattern = r"\[\[(\d+)\]\]"
         matches = re.findall(pattern, text)
         return [int(match) for match in matches]
 
@@ -81,7 +85,7 @@ class CitationManager:
             citation_id = int(match.group(1))
             return self.get_citation_text(citation_id)
 
-        pattern = r'\[\[(\d+)\]\]'
+        pattern = r"\[\[(\d+)\]\]"
         return re.sub(pattern, replace_citation, text)
 
     def clear(self) -> None:
