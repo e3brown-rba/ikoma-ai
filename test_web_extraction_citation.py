@@ -53,8 +53,9 @@ def test_web_extraction_registers_citation(mock_get):
     print("✅ Citation metadata found:", metadata)
     assert metadata["url"] == url, "Citation URL mismatch."
     title = str(metadata["title"])
-    assert "Test Page" in title or "Hello World" in title, (
-        f"Citation title mismatch: {title}"
+    # The title should be extracted from the HTML content
+    assert "Hello World" in title or "Test Page" in title, (
+        f"Citation title should contain extracted content: {title}"
     )
     print("🎉 Web extraction citation registration test passed!")
 
