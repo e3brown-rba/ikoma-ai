@@ -211,7 +211,7 @@
   - Comprehensive test suite with 7 citation system tests
   - MCP tool integration ready for Phase 2 internet tools
   - All linting checks pass (ruff, mypy) with modern type annotations
-- [x] **Issue #8: Render citation superscripts in TUI/dashboard**
+- ✅ **Issue #8: Render citation superscripts in TUI/dashboard** - COMPLETED
   - Unicode superscript support for citations in TUI and dashboard
   - Rich console integration for agent output
   - FastAPI dashboard with dynamic citation loading and in-memory caching

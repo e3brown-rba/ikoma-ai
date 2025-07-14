@@ -6,10 +6,10 @@ Implements OWASP-compliant sanitization and validation.
 """
 
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from markupsafe import escape
-from typing import Any
 
 
 def sanitize_citation_url(url: str) -> str | None:

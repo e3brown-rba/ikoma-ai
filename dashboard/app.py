@@ -6,7 +6,6 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import escape
-from typing import Dict, Tuple
 
 from tools.citation_manager import ProductionCitationManager
 
@@ -22,7 +21,7 @@ if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Simple in-memory cache for citation HTML, keyed by conversation_id
-_citation_cache: Dict[str, Tuple[str, float]] = {}
+_citation_cache: dict[str, tuple[str, float]] = {}
 _CACHE_TTL = 60  # seconds
 
 @app.get("/", response_class=HTMLResponse)

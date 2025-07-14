@@ -5,7 +5,7 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import chromadb
 import openai
@@ -301,7 +301,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
 
 
 # Global instance for easy access
-vector_store: Optional[PersistentVectorStore] = None
+vector_store: PersistentVectorStore | None = None
 
 
 def get_vector_store() -> PersistentVectorStore:
