@@ -39,18 +39,22 @@ def test_citation_manager():
         url="https://example.com/sky",
         title="Sky Color Research",
         content_preview="Research on why the sky appears blue",
-        domain="example.com"
+        domain="example.com",
     )
     citation_id2 = citation_mgr.add_citation(
         url="https://example.com/water",
         title="Water Properties",
         content_preview="Information about water freezing point",
-        domain="example.com"
+        domain="example.com",
     )
     citation1 = citation_mgr.get_citation_details(citation_id1)
     citation2 = citation_mgr.get_citation_details(citation_id2)
-    print(f"  Added citation {citation_id1}: {citation1.title if citation1 else 'Not found'}")
-    print(f"  Added citation {citation_id2}: {citation2.title if citation2 else 'Not found'}")
+    print(
+        f"  Added citation {citation_id1}: {citation1.title if citation1 else 'Not found'}"
+    )
+    print(
+        f"  Added citation {citation_id2}: {citation2.title if citation2 else 'Not found'}"
+    )
 
     # Test Rich rendering
     print("\nRich rendering test:")
@@ -90,7 +94,9 @@ def test_unicode_support():
     print("\nTesting fallback behavior with invalid input:")
     try:
         # This should trigger the fallback
-        result = citation_mgr.unicode_superscript(-1)  # Negative numbers might cause issues
+        result = citation_mgr.unicode_superscript(
+            -1
+        )  # Negative numbers might cause issues
         print(f"  Fallback result: {result}")
     except Exception as e:
         print(f"  Exception caught: {e}")
@@ -109,5 +115,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

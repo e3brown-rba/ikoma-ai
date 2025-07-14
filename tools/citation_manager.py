@@ -12,6 +12,7 @@ from .security import validate_citation_metadata
 @dataclass
 class CitationSource:
     """Enhanced citation source with confidence scoring and domain tracking."""
+
     id: int
     url: str
     title: str
@@ -32,21 +33,31 @@ class ProductionCitationManager:
 
         # Unicode superscript mapping (research-backed approach)
         self.superscript_map = {
-            '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-            '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+            "0": "⁰",
+            "1": "¹",
+            "2": "²",
+            "3": "³",
+            "4": "⁴",
+            "5": "⁵",
+            "6": "⁶",
+            "7": "⁷",
+            "8": "⁸",
+            "9": "⁹",
         }
 
-    def unicode_superscript(self: 'ProductionCitationManager', num: int) -> str:
+    def unicode_superscript(self: "ProductionCitationManager", num: int) -> str:
         """Convert number to Unicode superscript with fallback."""
         try:
-            return ''.join(self.superscript_map.get(c, c) for c in str(num))
+            return "".join(self.superscript_map.get(c, c) for c in str(num))
         except Exception:
             return f"[{num}]"  # Fallback for unsupported terminals
 
-    def parse_citations_anthropic_style(self: 'ProductionCitationManager', text: str) -> tuple[str, list[int]]:
+    def parse_citations_anthropic_style(
+        self: "ProductionCitationManager", text: str
+    ) -> tuple[str, list[int]]:
         """Parse Anthropic-style citations with robust error handling."""
         # Pattern from research: 70% industry adoption of [[n]] format
-        pattern = r'\[\[(\d+)\]\]'
+        pattern = r"\[\[(\d+)\]\]"
         citations = []
 
         def replace_citation(match: re.Match) -> str:
@@ -57,8 +68,14 @@ class ProductionCitationManager:
         clean_text = re.sub(pattern, replace_citation, text)
         return clean_text, citations
 
-    def add_citation(self: 'ProductionCitationManager', url: str, title: str, content_preview: str = "",
-        source_type: str = "web", domain: str = "", confidence_score: float = 0.95
+    def add_citation(
+        self: "ProductionCitationManager",
+        url: str,
+        title: str,
+        content_preview: str = "",
+        source_type: str = "web",
+        domain: str = "",
+        confidence_score: float = 0.95,
     ) -> int:
         """Add a citation and return its ID with enhanced metadata and security validation."""
         # Validate and sanitize metadata
@@ -89,6 +106,7 @@ class ProductionCitationManager:
         if not validated_metadata["domain"] and validated_metadata["url"]:
             try:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(validated_metadata["url"])
                 validated_metadata["domain"] = parsed.netloc
             except Exception:
@@ -108,7 +126,7 @@ class ProductionCitationManager:
         self.counter += 1
         return citation.id
 
-    def get_citation_text(self: 'ProductionCitationManager', citation_id: int) -> str:
+    def get_citation_text(self: "ProductionCitationManager", citation_id: int) -> str:
         """Format citation for display with Unicode superscript."""
         if citation_id in self.sources:
             c = self.sources[citation_id]
@@ -116,15 +134,19 @@ class ProductionCitationManager:
             return f"{superscript} {c.title} - {c.url}"
         return f"[{citation_id}] Citation not found"
 
-    def get_citation_details(self: 'ProductionCitationManager', citation_id: int) -> CitationSource | None:
+    def get_citation_details(
+        self: "ProductionCitationManager", citation_id: int
+    ) -> CitationSource | None:
         """Get full citation details."""
         return self.sources.get(citation_id)
 
-    def get_all_citations(self: 'ProductionCitationManager') -> list[CitationSource]:
+    def get_all_citations(self: "ProductionCitationManager") -> list[CitationSource]:
         """Get all citations as a list."""
         return list(self.sources.values())
 
-    def render_response_with_citations(self: 'ProductionCitationManager', output: str) -> None:
+    def render_response_with_citations(
+        self: "ProductionCitationManager", output: str
+    ) -> None:
         """Production TUI rendering with Unicode superscripts and Rich formatting."""
         clean_text, citation_ids = self.parse_citations_anthropic_style(output)
 
@@ -142,14 +164,14 @@ class ProductionCitationManager:
 
         self.console.print(rich_text)
 
-    def to_dict(self: 'ProductionCitationManager') -> dict[str, Any]:
+    def to_dict(self: "ProductionCitationManager") -> dict[str, Any]:
         """Convert citations to dictionary format for state storage."""
         return {
             "citations": [asdict(citation) for citation in self.sources.values()],
             "counter": self.counter,
         }
 
-    def from_dict(self: 'ProductionCitationManager', data: dict[str, Any]) -> None:
+    def from_dict(self: "ProductionCitationManager", data: dict[str, Any]) -> None:
         """Load citations from dictionary format."""
         self.sources.clear()
         self.counter = data.get("counter", 1)
@@ -158,14 +180,19 @@ class ProductionCitationManager:
             citation = CitationSource(**citation_data)
             self.sources[citation.id] = citation
 
-    def extract_citations_from_text(self: 'ProductionCitationManager', text: str) -> list[int]:
+    def extract_citations_from_text(
+        self: "ProductionCitationManager", text: str
+    ) -> list[int]:
         """Extract citation IDs from text containing [[n]] markers."""
         pattern = r"\[\[(\d+)\]\]"
         matches = re.findall(pattern, text)
         return [int(match) for match in matches]
 
-    def replace_citations_with_text(self: 'ProductionCitationManager', text: str) -> str:
+    def replace_citations_with_text(
+        self: "ProductionCitationManager", text: str
+    ) -> str:
         """Replace [[n]] markers with formatted citation text."""
+
         def replace_citation(match: Any) -> str:
             citation_id = int(match.group(1))
             return self.get_citation_text(citation_id)
@@ -173,12 +200,14 @@ class ProductionCitationManager:
         pattern = r"\[\[(\d+)\]\]"
         return re.sub(pattern, replace_citation, text)
 
-    def clear(self: 'ProductionCitationManager') -> None:
+    def clear(self: "ProductionCitationManager") -> None:
         """Clear all citations."""
         self.sources.clear()
         self.counter = 1
 
-    def get_conversation_citations(self: 'ProductionCitationManager', conversation_id: str) -> list[CitationSource]:
+    def get_conversation_citations(
+        self: "ProductionCitationManager", conversation_id: str
+    ) -> list[CitationSource]:
         """Get citations for a specific conversation (for dashboard integration)."""
         # For now, return all citations. In production, this would filter by conversation_id
         return self.get_all_citations()

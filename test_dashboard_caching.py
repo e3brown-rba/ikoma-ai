@@ -19,25 +19,26 @@ def add_sample_citations() -> ProductionCitationManager:
         url="https://example.com/article1",
         title="Sample Article 1",
         content_preview="This is a sample article for testing...",
-        domain="example.com"
+        domain="example.com",
     )
 
     citation_mgr.add_citation(
         url="https://example.com/article2",
         title="Sample Article 2",
         content_preview="Another sample article for testing...",
-        domain="example.com"
+        domain="example.com",
     )
 
     citation_mgr.add_citation(
         url="https://example.com/article3",
         title="Sample Article 3",
         content_preview="Third sample article for testing...",
-        domain="example.com"
+        domain="example.com",
     )
 
     print(f"✅ Added {len(citation_mgr.get_all_citations())} sample citations")
     return citation_mgr
+
 
 def test_dashboard_caching() -> None:
     """Test the dashboard caching functionality."""
@@ -103,9 +104,12 @@ def test_dashboard_caching() -> None:
 
     except requests.exceptions.ConnectionError:
         print("❌ Could not connect to dashboard server.")
-        print("   Make sure the server is running: uvicorn dashboard.app:app --reload --port 8000")
+        print(
+            "   Make sure the server is running: uvicorn dashboard.app:app --reload --port 8000"
+        )
     except Exception as e:
         print(f"❌ Test failed: {e}")
+
 
 if __name__ == "__main__":
     test_dashboard_caching()

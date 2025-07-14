@@ -23,7 +23,11 @@ def test_citation_state_storage():
 
     # Create state with citations and memorable content
     state = AgentState(
-        messages=[HumanMessage(content="This is an important task that I want to remember for future reference.")],
+        messages=[
+            HumanMessage(
+                content="This is an important task that I want to remember for future reference."
+            )
+        ],
         memory_context=None,
         user_profile=None,
         session_summary=None,
@@ -52,12 +56,15 @@ def test_citation_state_storage():
     # Verify citation state is included in memory
     assert "citations" in memory_entry, "Citation state not stored in memory"
     assert "citation_counter" in memory_entry, "Citation counter not stored in memory"
-    assert memory_entry["citations"] == [{"id": 1, "url": "https://example.com", "title": "Test Citation"}]
+    assert memory_entry["citations"] == [
+        {"id": 1, "url": "https://example.com", "title": "Test Citation"}
+    ]
     assert memory_entry["citation_counter"] == 2
 
     print("✅ Citation state properly stored in memory")
     print("✅ Memory entry contains citation fields")
     print("🎉 Citation state storage test passed!")
+
 
 def test_citation_manager_integration():
     """Test that the citation manager can load state from agent result."""
@@ -68,11 +75,18 @@ def test_citation_manager_integration():
     # Simulate agent result with citations
     agent_result = {
         "citations": [
-            {"id": 1, "url": "https://example.com", "title": "Test Citation",
-             "timestamp": "2025-01-01T00:00:00", "domain": "example.com",
-             "confidence_score": 0.95, "content_preview": "Test content", "source_type": "web"}
+            {
+                "id": 1,
+                "url": "https://example.com",
+                "title": "Test Citation",
+                "timestamp": "2025-01-01T00:00:00",
+                "domain": "example.com",
+                "confidence_score": 0.95,
+                "content_preview": "Test content",
+                "source_type": "web",
+            }
         ],
-        "counter": 2  # Use 'counter' instead of 'citation_counter'
+        "counter": 2,  # Use 'counter' instead of 'citation_counter'
     }
 
     # Create citation manager and load state
@@ -91,6 +105,7 @@ def test_citation_manager_integration():
     print("✅ Citation manager loaded state from agent result")
     print("✅ Citation details accessible via citation manager")
     print("🎉 Citation manager integration test passed!")
+
 
 def test_citation_state_initialization():
     """Test that citation state is properly initialized in agent state."""
@@ -121,6 +136,7 @@ def test_citation_state_initialization():
     print("✅ Citation state properly initialized")
     print("✅ Citation fields present in initial state")
     print("🎉 Citation state initialization test passed!")
+
 
 if __name__ == "__main__":
     print("🚀 Starting Citation State Persistence Tests")

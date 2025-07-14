@@ -2,6 +2,7 @@
 """
 Test that web extraction registers a citation and stores it in ChromaDB.
 """
+
 import os
 import sys
 from unittest.mock import patch
@@ -18,13 +19,16 @@ class MockResponse:
         self.text = text
         self.status_code = status_code
         self.headers = {"content-length": str(len(text))}
+
     def raise_for_status(self):
         if self.status_code != 200:
             raise Exception("HTTP error")
 
+
 MOCK_HTML = """
 <html><head><title>Test Page</title></head><body><h1>Hello World</h1><p>This is a test page for extraction.</p></body></html>
 """
+
 
 @patch("tools.web_tools.validate_web_url", lambda url: None)
 @patch("tools.web_tools.requests.get", return_value=MockResponse(MOCK_HTML))
@@ -38,6 +42,7 @@ def test_web_extraction_registers_citation(mock_get):
     print("Extraction result:\n", result)
     # Parse citation ID from result
     import re
+
     match = re.search(r"\[\[(\d+)\]\]", result)
     assert match, "No citation ID found in extraction result."
     citation_id = int(match.group(1))
@@ -48,8 +53,11 @@ def test_web_extraction_registers_citation(mock_get):
     print("✅ Citation metadata found:", metadata)
     assert metadata["url"] == url, "Citation URL mismatch."
     title = str(metadata["title"])
-    assert ("Test Page" in title or "Hello World" in title), f"Citation title mismatch: {title}"
+    assert "Test Page" in title or "Hello World" in title, (
+        f"Citation title mismatch: {title}"
+    )
     print("🎉 Web extraction citation registration test passed!")
+
 
 if __name__ == "__main__":
     test_web_extraction_registers_citation()

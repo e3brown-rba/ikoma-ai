@@ -41,12 +41,17 @@ def test_citation_storage_and_retrieval():
     assert metadata["url"] == citation.url, "URL mismatch."
     assert metadata["title"] == citation.title, "Title mismatch."
     assert metadata["domain"] == citation.domain, "Domain mismatch."
-    assert metadata["confidence_score"] == citation.confidence_score, "Confidence score mismatch."
+    assert metadata["confidence_score"] == citation.confidence_score, (
+        "Confidence score mismatch."
+    )
     assert metadata["source_type"] == citation.source_type, "Source type mismatch."
-    assert metadata["content_preview"] == citation.content_preview, "Content preview mismatch."
+    assert metadata["content_preview"] == citation.content_preview, (
+        "Content preview mismatch."
+    )
     print("✅ Metadata fields match.")
 
     print("\n🎉 Citation ChromaDB integration test passed!")
+
 
 if __name__ == "__main__":
     test_citation_storage_and_retrieval()

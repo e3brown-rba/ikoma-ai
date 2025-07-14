@@ -336,6 +336,7 @@ def example_persist() -> dict[str, Any] | None:
 def get_citation_collection(client: Any = None) -> Any:
     """Get or create the optimized citation collection in ChromaDB."""
     import chromadb
+
     if client is None:
         client = chromadb.PersistentClient(
             path="agent/memory/vector_store",
@@ -357,7 +358,9 @@ def get_citation_collection(client: Any = None) -> Any:
     return collection
 
 
-def store_citation_with_metadata(citation_source: CitationSource, content: str, client: Any = None) -> None:
+def store_citation_with_metadata(
+    citation_source: CitationSource, content: str, client: Any = None
+) -> None:
     """Store a citation in the citation collection with optimized metadata and security validation."""
     start_time = time.time()
     # Validate and sanitize citation metadata
@@ -398,10 +401,12 @@ def store_citation_with_metadata(citation_source: CitationSource, content: str, 
     collection.add(
         documents=[sanitized_content],
         metadatas=[storage_metadata],
-        ids=[f"citation_{citation_source.id}"]
+        ids=[f"citation_{citation_source.id}"],
     )
     elapsed = time.time() - start_time
-    logging.info(f"store_citation_with_metadata: Stored citation {citation_source.id} in {elapsed:.4f} seconds.")
+    logging.info(
+        f"store_citation_with_metadata: Stored citation {citation_source.id} in {elapsed:.4f} seconds."
+    )
 
 
 def get_citation_metadata(citation_id: int, client: Any = None) -> Any:
@@ -420,7 +425,9 @@ def get_citation_by_id(citation_id: int, client: Any = None) -> Any:
     collection = get_citation_collection(client)
     result = collection.get(ids=[f"citation_{citation_id}"])
     elapsed = time.time() - start_time
-    logging.info(f"get_citation_by_id: Retrieved citation {citation_id} in {elapsed:.4f} seconds.")
+    logging.info(
+        f"get_citation_by_id: Retrieved citation {citation_id} in {elapsed:.4f} seconds."
+    )
     return result
 
 

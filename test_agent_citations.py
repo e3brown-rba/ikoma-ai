@@ -30,13 +30,13 @@ def test_agent_with_citations():
             url="https://example.com/test1",
             title="Test Source 1",
             content_preview="This is a test source",
-            domain="example.com"
+            domain="example.com",
         )
         citation_id2 = citation_mgr.add_citation(
             url="https://example.com/test2",
             title="Test Source 2",
             content_preview="This is another test source",
-            domain="example.com"
+            domain="example.com",
         )
 
         print(f"✅ Added test citations: {citation_id1}, {citation_id2}")
@@ -57,6 +57,7 @@ def test_agent_with_citations():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -132,5 +133,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

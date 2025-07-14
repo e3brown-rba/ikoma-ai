@@ -59,9 +59,9 @@ def test_title_sanitization() -> None:
     sanitized = sanitize_citation_title(malicious_title)
     print(f"Debug: Original: {malicious_title}")
     print(f"Debug: Sanitized: {sanitized}")
-    assert '<script>' not in sanitized
+    assert "<script>" not in sanitized
     # Check that HTML is escaped (markupsafe.escape converts < to &lt;)
-    assert '&lt;' in sanitized or '<' not in sanitized
+    assert "&lt;" in sanitized or "<" not in sanitized
 
     # Long titles should be truncated
     long_title = "A" * 600
@@ -83,7 +83,7 @@ def test_metadata_validation() -> None:
         "domain": "example.com",
         "confidence_score": 0.95,
         "content_preview": "Test content",
-        "source_type": "web"
+        "source_type": "web",
     }
 
     validated = validate_citation_metadata(valid_metadata)
@@ -116,7 +116,7 @@ def test_content_safety() -> None:
     # Dangerous content
     assert not is_safe_citation_content('<script>alert("xss")</script>')
     assert not is_safe_citation_content('javascript:alert("xss")')
-    assert not is_safe_citation_content('onclick="alert(\'xss\')"')
+    assert not is_safe_citation_content("onclick=\"alert('xss')\"")
 
     # Content too long
     long_content = "A" * 11000
@@ -135,18 +135,18 @@ def test_content_sanitization() -> None:
     # Remove dangerous HTML
     dangerous_content = '<script>alert("xss")</script>Normal content'
     sanitized = sanitize_citation_content(dangerous_content)
-    assert '<script>' not in sanitized
-    assert 'Normal content' in sanitized
+    assert "<script>" not in sanitized
+    assert "Normal content" in sanitized
 
     # Remove event handlers
-    event_content = '<a onclick="alert(\'xss\')">Link</a>'
+    event_content = "<a onclick=\"alert('xss')\">Link</a>"
     sanitized = sanitize_citation_content(event_content)
-    assert 'onclick' not in sanitized
+    assert "onclick" not in sanitized
 
     # Remove dangerous protocols
     protocol_content = 'javascript:alert("xss")'
     sanitized = sanitize_citation_content(protocol_content)
-    assert 'javascript:' not in sanitized
+    assert "javascript:" not in sanitized
 
     print("✅ Content sanitization tests passed!")
 
@@ -165,7 +165,7 @@ def test_integration_with_citation_manager() -> None:
             url="javascript:alert('xss')",  # Should be sanitized
             title="<script>alert('xss')</script>",  # Should be sanitized
             content_preview="Normal content",
-            domain="example.com"
+            domain="example.com",
         )
 
         # Verify citation was created with sanitized data
@@ -204,5 +204,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Security test failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

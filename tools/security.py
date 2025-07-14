@@ -29,7 +29,7 @@ def sanitize_citation_url(url: str) -> str | None:
         raise ValueError("URL too long (max 2000 characters)")
 
     # Remove dangerous protocols
-    dangerous_protocols = ['javascript:', 'data:', 'vbscript:', 'file:']
+    dangerous_protocols = ["javascript:", "data:", "vbscript:", "file:"]
     url_lower = url.lower()
     for protocol in dangerous_protocols:
         if url_lower.startswith(protocol):
@@ -38,7 +38,7 @@ def sanitize_citation_url(url: str) -> str | None:
     # Validate URL structure
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in ['http', 'https']:
+        if parsed.scheme not in ["http", "https"]:
             raise ValueError("Only HTTP and HTTPS protocols are allowed")
 
         if not parsed.netloc:
@@ -46,7 +46,7 @@ def sanitize_citation_url(url: str) -> str | None:
 
         # Basic domain validation (prevent localhost, private IPs in production)
         netloc = parsed.netloc.lower()
-        if netloc in ['localhost', '127.0.0.1', '::1']:
+        if netloc in ["localhost", "127.0.0.1", "::1"]:
             raise ValueError("Localhost URLs are not allowed")
 
     except Exception as e:
@@ -70,9 +70,9 @@ def sanitize_citation_title(title: str) -> str:
         title = str(title)
 
     # Remove HTML tags and dangerous content
-    title = re.sub(r'<[^>]*>', '', title)
-    title = re.sub(r'javascript:', '', title, flags=re.IGNORECASE)
-    title = re.sub(r'data:', '', title, flags=re.IGNORECASE)
+    title = re.sub(r"<[^>]*>", "", title)
+    title = re.sub(r"javascript:", "", title, flags=re.IGNORECASE)
+    title = re.sub(r"data:", "", title, flags=re.IGNORECASE)
 
     # Limit length
     if len(title) > 500:
@@ -97,46 +97,46 @@ def validate_citation_metadata(metadata: dict) -> dict:
     validated: dict[str, Any] = {}
 
     # Validate required fields
-    required_fields = ['url', 'title']
+    required_fields = ["url", "title"]
     for field in required_fields:
         if field not in metadata:
             raise ValueError(f"Missing required field: {field}")
 
     # Sanitize URL
-    validated['url'] = sanitize_citation_url(metadata['url'])
+    validated["url"] = sanitize_citation_url(metadata["url"])
 
     # Sanitize title
-    validated['title'] = sanitize_citation_title(metadata['title'])
+    validated["title"] = sanitize_citation_title(metadata["title"])
 
     # Validate optional fields
-    if 'domain' in metadata:
-        domain = str(metadata['domain']).strip()
+    if "domain" in metadata:
+        domain = str(metadata["domain"]).strip()
         if len(domain) > 100:
             domain = domain[:97] + "..."
-        validated['domain'] = escape(domain)
+        validated["domain"] = escape(domain)
 
-    if 'content_preview' in metadata:
-        preview = str(metadata['content_preview'])
+    if "content_preview" in metadata:
+        preview = str(metadata["content_preview"])
         if len(preview) > 1000:
             preview = preview[:997] + "..."
-        validated['content_preview'] = escape(preview)
+        validated["content_preview"] = escape(preview)
 
-    if 'confidence_score' in metadata:
+    if "confidence_score" in metadata:
         try:
-            score = float(metadata['confidence_score'])
+            score = float(metadata["confidence_score"])
             if not 0 <= score <= 1:
                 raise ValueError("Confidence score must be between 0 and 1")
-            validated['confidence_score'] = score
+            validated["confidence_score"] = score
         except (ValueError, TypeError):
-            validated['confidence_score'] = 0.5  # Default fallback
+            validated["confidence_score"] = 0.5  # Default fallback
     else:
-        validated['confidence_score'] = 0.5
+        validated["confidence_score"] = 0.5
 
-    if 'source_type' in metadata:
-        source_type = str(metadata['source_type']).strip()
+    if "source_type" in metadata:
+        source_type = str(metadata["source_type"]).strip()
         if len(source_type) > 50:
             source_type = source_type[:47] + "..."
-        validated['source_type'] = escape(source_type)
+        validated["source_type"] = escape(source_type)
 
     return validated
 
@@ -154,11 +154,11 @@ def is_safe_citation_content(content: str) -> bool:
 
     # Check for dangerous patterns
     dangerous_patterns = [
-        r'<script[^>]*>',
-        r'javascript:',
-        r'data:text/html',
-        r'vbscript:',
-        r'on\w+\s*=',
+        r"<script[^>]*>",
+        r"javascript:",
+        r"data:text/html",
+        r"vbscript:",
+        r"on\w+\s*=",
     ]
 
     content_lower = content.lower()
@@ -188,17 +188,23 @@ def sanitize_citation_content(content: str) -> str:
         content = str(content)
 
     # Remove dangerous HTML
-    content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.IGNORECASE | re.DOTALL)
-    content = re.sub(r'<iframe[^>]*>.*?</iframe>', '', content, flags=re.IGNORECASE | re.DOTALL)
-    content = re.sub(r'<object[^>]*>.*?</object>', '', content, flags=re.IGNORECASE | re.DOTALL)
+    content = re.sub(
+        r"<script[^>]*>.*?</script>", "", content, flags=re.IGNORECASE | re.DOTALL
+    )
+    content = re.sub(
+        r"<iframe[^>]*>.*?</iframe>", "", content, flags=re.IGNORECASE | re.DOTALL
+    )
+    content = re.sub(
+        r"<object[^>]*>.*?</object>", "", content, flags=re.IGNORECASE | re.DOTALL
+    )
 
     # Remove event handlers
-    content = re.sub(r'on\w+\s*=\s*["\'][^"\']*["\']', '', content, flags=re.IGNORECASE)
+    content = re.sub(r'on\w+\s*=\s*["\'][^"\']*["\']', "", content, flags=re.IGNORECASE)
 
     # Remove dangerous protocols
-    content = re.sub(r'javascript:', '', content, flags=re.IGNORECASE)
-    content = re.sub(r'data:', '', content, flags=re.IGNORECASE)
-    content = re.sub(r'vbscript:', '', content, flags=re.IGNORECASE)
+    content = re.sub(r"javascript:", "", content, flags=re.IGNORECASE)
+    content = re.sub(r"data:", "", content, flags=re.IGNORECASE)
+    content = re.sub(r"vbscript:", "", content, flags=re.IGNORECASE)
 
     # Limit length
     if len(content) > 10000:

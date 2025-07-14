@@ -105,10 +105,14 @@ def extract_web_content(url_and_options: str) -> str:
                 timestamp=extracted.timestamp,
                 domain=extracted.metadata["domain"],
                 confidence_score=extracted.quality_score,
-                content_preview=extracted.text_chunks[0][:200] if extracted.text_chunks else "",
+                content_preview=extracted.text_chunks[0][:200]
+                if extracted.text_chunks
+                else "",
                 source_type="web",
             )
-            store_citation_with_metadata(citation, extracted.text_chunks[0] if extracted.text_chunks else "")
+            store_citation_with_metadata(
+                citation, extracted.text_chunks[0] if extracted.text_chunks else ""
+            )
             citation_id = citation.id
 
         # Success response with quality metrics and citation ID

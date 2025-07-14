@@ -79,14 +79,20 @@ def retrieve_long_term_memory(
                         # Restore citation state from memory if available
                         if memory.value.get("citations") and not state.get("citations"):
                             state["citations"] = memory.value.get("citations")
-                        if memory.value.get("citation_counter") and not state.get("citation_counter"):
-                            state["citation_counter"] = memory.value.get("citation_counter")
+                        if memory.value.get("citation_counter") and not state.get(
+                            "citation_counter"
+                        ):
+                            state["citation_counter"] = memory.value.get(
+                                "citation_counter"
+                            )
                     elif isinstance(memory, dict):
                         content = memory.get("content", "")
                         # Restore citation state from memory if available
                         if memory.get("citations") and not state.get("citations"):
                             state["citations"] = memory.get("citations")
-                        if memory.get("citation_counter") and not state.get("citation_counter"):
+                        if memory.get("citation_counter") and not state.get(
+                            "citation_counter"
+                        ):
                             state["citation_counter"] = memory.get("citation_counter")
                     else:
                         content = str(memory)
@@ -156,7 +162,9 @@ def store_long_term_memory(
                 "plan_context": state.get("current_plan"),
                 "reflection": state.get("reflection"),
                 "citations": state.get("citations"),  # Include citation state
-                "citation_counter": state.get("citation_counter"),  # Include citation counter
+                "citation_counter": state.get(
+                    "citation_counter"
+                ),  # Include citation counter
             }
 
             try:
@@ -595,18 +603,24 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
                 # Add citations to response if any exist
                 if state.get("citations"):
                     citation_manager = ProductionCitationManager()
-                    citation_manager.from_dict({
-                        "citations": state["citations"],
-                        "counter": state.get("citation_counter", 1)
-                    })
+                    citation_manager.from_dict(
+                        {
+                            "citations": state["citations"],
+                            "counter": state.get("citation_counter", 1),
+                        }
+                    )
 
                     # Extract citations from the response text
-                    citation_ids = citation_manager.extract_citations_from_text(final_response)
+                    citation_ids = citation_manager.extract_citations_from_text(
+                        final_response
+                    )
                     if citation_ids:
                         final_response += "\n\n📚 Sources:\n"
                         for cid in citation_ids:
                             if citation := citation_manager.get_citation_details(cid):
-                                final_response += f"  [{cid}] {citation.title} - {citation.url}\n"
+                                final_response += (
+                                    f"  [{cid}] {citation.title} - {citation.url}\n"
+                                )
 
                 state["messages"].append(AIMessage(content=final_response))
             else:
@@ -805,10 +819,12 @@ if __name__ == "__main__":
 
                 # Load citation state from result if available
                 if result.get("citations"):
-                    citation_mgr.from_dict({
-                        "citations": result["citations"],
-                        "counter": result.get("citation_counter", 1)
-                    })
+                    citation_mgr.from_dict(
+                        {
+                            "citations": result["citations"],
+                            "counter": result.get("citation_counter", 1),
+                        }
+                    )
 
                 # Render response with citations using Rich
                 print("🤖 Ikoma: ", end="")

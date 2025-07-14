@@ -24,10 +24,12 @@ if os.path.exists(STATIC_DIR):
 _citation_cache: dict[str, tuple[str, float]] = {}
 _CACHE_TTL = 60  # seconds
 
+
 @app.get("/", response_class=HTMLResponse)
 def dashboard_home(request: Request) -> HTMLResponse:
     """Render the dashboard home page."""
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.get("/citations/{conversation_id}", response_class=HTMLResponse)
 def get_citations(request: Request, conversation_id: str) -> HTMLResponse:
@@ -46,19 +48,19 @@ def get_citations(request: Request, conversation_id: str) -> HTMLResponse:
             url="https://example.com/article1",
             title="Sample Article 1",
             content_preview="This is a sample article for testing...",
-            domain="example.com"
+            domain="example.com",
         )
         citation_mgr.add_citation(
             url="https://example.com/article2",
             title="Sample Article 2",
             content_preview="Another sample article for testing...",
-            domain="example.com"
+            domain="example.com",
         )
         citation_mgr.add_citation(
             url="https://example.com/article3",
             title="Sample Article 3",
             content_preview="Third sample article for testing...",
-            domain="example.com"
+            domain="example.com",
         )
         citations = citation_mgr.get_all_citations()
     html_citations = ""
