@@ -18,7 +18,7 @@ class Citation:
 class CitationManager:
     """Manages citations and their formatting for the agent system."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.citations: dict[int, Citation] = {}
         self.counter = 1
 
@@ -81,7 +81,7 @@ class CitationManager:
         """Replace [[n]] markers with formatted citation text."""
         import re
 
-        def replace_citation(match):
+        def replace_citation(match: Any) -> str:
             citation_id = int(match.group(1))
             return self.get_citation_text(citation_id)
 
