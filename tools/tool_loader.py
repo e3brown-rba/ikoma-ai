@@ -116,7 +116,7 @@ class ToolLoader:
                     def _eval_node(self, node: ast.AST) -> float:
                         """Recursively evaluate AST nodes for basic math operations."""
                         if isinstance(node, ast.Constant):
-                            if isinstance(node.value, (int, float)):
+                            if isinstance(node.value, int | float):
                                 return float(node.value)
                             else:
                                 raise ValueError(f"Unsupported constant type: {type(node.value)}")
