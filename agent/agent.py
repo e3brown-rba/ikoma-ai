@@ -14,6 +14,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
 
+from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
 # Load environment variables from .env file
@@ -75,8 +76,18 @@ def retrieve_long_term_memory(
                     # Handle different memory result structures
                     if hasattr(memory, "value"):
                         content = memory.value.get("content", "")
+                        # Restore citation state from memory if available
+                        if memory.value.get("citations") and not state.get("citations"):
+                            state["citations"] = memory.value.get("citations")
+                        if memory.value.get("citation_counter") and not state.get("citation_counter"):
+                            state["citation_counter"] = memory.value.get("citation_counter")
                     elif isinstance(memory, dict):
                         content = memory.get("content", "")
+                        # Restore citation state from memory if available
+                        if memory.get("citations") and not state.get("citations"):
+                            state["citations"] = memory.get("citations")
+                        if memory.get("citation_counter") and not state.get("citation_counter"):
+                            state["citation_counter"] = memory.get("citation_counter")
                     else:
                         content = str(memory)
                     memory_context += f"- {content}\n"
@@ -144,6 +155,8 @@ def store_long_term_memory(
                 "context": "conversation",
                 "plan_context": state.get("current_plan"),
                 "reflection": state.get("reflection"),
+                "citations": state.get("citations"),  # Include citation state
+                "citation_counter": state.get("citation_counter"),  # Include citation counter
             }
 
             try:
@@ -569,7 +582,7 @@ Return only the JSON, no other text."""
             ):
                 state["continue_planning"] = False
 
-                # Create final response
+                # Create final response with citation support
                 final_response = f"""Task completed! Here's what I accomplished:
 
 {reflection_data.get("summary", "Task execution completed.")}
@@ -578,6 +591,22 @@ Execution Details:
 {results_text}
 
 Success Rate: {reflection_data.get("success_rate", "N/A")}"""
+
+                # Add citations to response if any exist
+                if state.get("citations"):
+                    citation_manager = ProductionCitationManager()
+                    citation_manager.from_dict({
+                        "citations": state["citations"],
+                        "counter": state.get("citation_counter", 1)
+                    })
+
+                    # Extract citations from the response text
+                    citation_ids = citation_manager.extract_citations_from_text(final_response)
+                    if citation_ids:
+                        final_response += "\n\n📚 Sources:\n"
+                        for cid in citation_ids:
+                            if citation := citation_manager.get_citation_details(cid):
+                                final_response += f"  [{cid}] {citation.title} - {citation.url}\n"
 
                 state["messages"].append(AIMessage(content=final_response))
             else:
@@ -756,6 +785,8 @@ if __name__ == "__main__":
                 "continue_planning": False,
                 "max_iterations": 3,
                 "current_iteration": 0,
+                "citations": [],  # Initialize citation tracking
+                "citation_counter": 1,  # Initialize citation counter
             }
 
             result = agent.invoke(initial_state, config)
@@ -768,7 +799,20 @@ if __name__ == "__main__":
             ]
             if ai_messages:
                 output = ai_messages[-1].content
-                print(f"🤖 Ikoma: {output}")
+
+                # Initialize citation manager for this conversation
+                citation_mgr = ProductionCitationManager()
+
+                # Load citation state from result if available
+                if result.get("citations"):
+                    citation_mgr.from_dict({
+                        "citations": result["citations"],
+                        "counter": result.get("citation_counter", 1)
+                    })
+
+                # Render response with citations using Rich
+                print("🤖 Ikoma: ", end="")
+                citation_mgr.render_response_with_citations(output)
             else:
                 print(
                     "🤖 Ikoma: I apologize, but I had trouble processing that request."

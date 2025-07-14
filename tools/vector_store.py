@@ -1,14 +1,24 @@
 import json
+import logging
 import os
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Optional
 
 import chromadb
 import openai
 from chromadb.config import Settings
 from langchain_openai import OpenAIEmbeddings
+
+from tools.citation_manager import CitationSource
+from tools.security import sanitize_citation_content, validate_citation_metadata
+
+# Suppress ChromaDB telemetry errors (noisy, not critical)
+logging.getLogger("chromadb.telemetry").setLevel(logging.ERROR)
+# Optionally, suppress all ChromaDB logs:
+# logging.getLogger("chromadb").setLevel(logging.WARNING)
 
 
 class PersistentVectorStore:
@@ -291,7 +301,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
 
 
 # Global instance for easy access
-vector_store: PersistentVectorStore | None = None
+vector_store: Optional[PersistentVectorStore] = None
 
 
 def get_vector_store() -> PersistentVectorStore:
@@ -321,6 +331,97 @@ def example_persist() -> dict[str, Any] | None:
     }
     store.put(test_ns, test_key, test_value)
     return store.get(test_ns, test_key)
+
+
+def get_citation_collection(client: Any = None) -> Any:
+    """Get or create the optimized citation collection in ChromaDB."""
+    import chromadb
+    if client is None:
+        client = chromadb.PersistentClient(
+            path="agent/memory/vector_store",
+            settings=Settings(anonymized_telemetry=False, allow_reset=True),
+        )
+    try:
+        collection = client.get_collection("citations_v2")
+    except Exception:
+        collection = client.create_collection(
+            name="citations_v2",
+            metadata={
+                "description": "Citation storage for agent",
+                "hnsw:space": "cosine",
+                "hnsw:M": 16,
+                "hnsw:batch_size": 1000,
+                "hnsw:sync_threshold": 10000,
+            },
+        )
+    return collection
+
+
+def store_citation_with_metadata(citation_source: CitationSource, content: str, client: Any = None) -> None:
+    """Store a citation in the citation collection with optimized metadata and security validation."""
+    start_time = time.time()
+    # Validate and sanitize citation metadata
+    metadata = {
+        "url": citation_source.url,
+        "title": citation_source.title,
+        "domain": citation_source.domain,
+        "confidence_score": citation_source.confidence_score,
+        "content_preview": citation_source.content_preview,
+        "source_type": citation_source.source_type,
+    }
+
+    try:
+        validated_metadata = validate_citation_metadata(metadata)
+    except ValueError as e:
+        print(f"Warning: Citation metadata validation failed: {e}")
+        # Use fallback metadata for invalid citations
+        validated_metadata = {
+            "url": "https://example.com/invalid",
+            "title": "Invalid Citation",
+            "domain": "unknown",
+            "confidence_score": 0.0,
+            "content_preview": "",
+            "source_type": "unknown",
+        }
+
+    # Sanitize content before storage
+    sanitized_content = sanitize_citation_content(content)
+
+    # Add additional metadata for storage
+    storage_metadata = {
+        **validated_metadata,
+        "timestamp": citation_source.timestamp,
+        "retrieval_rank": citation_source.id,
+    }
+
+    collection = get_citation_collection(client)
+    collection.add(
+        documents=[sanitized_content],
+        metadatas=[storage_metadata],
+        ids=[f"citation_{citation_source.id}"]
+    )
+    elapsed = time.time() - start_time
+    logging.info(f"store_citation_with_metadata: Stored citation {citation_source.id} in {elapsed:.4f} seconds.")
+
+
+def get_citation_metadata(citation_id: int, client: Any = None) -> Any:
+    """Retrieve citation metadata by citation ID."""
+    collection = get_citation_collection(client)
+    result = collection.get(ids=[f"citation_{citation_id}"])
+    metadatas = result.get("metadatas") if result else None
+    if isinstance(metadatas, list) and len(metadatas) > 0 and metadatas[0]:
+        return metadatas[0]
+    return None
+
+
+def get_citation_by_id(citation_id: int, client: Any = None) -> Any:
+    """Retrieve a citation by its ID and log performance."""
+    start_time = time.time()
+    collection = get_citation_collection(client)
+    result = collection.get(ids=[f"citation_{citation_id}"])
+    elapsed = time.time() - start_time
+    logging.info(f"get_citation_by_id: Retrieved citation {citation_id} in {elapsed:.4f} seconds.")
+    return result
 
 
 if __name__ == "__main__":

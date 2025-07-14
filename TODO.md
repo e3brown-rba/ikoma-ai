@@ -211,7 +211,16 @@
   - Comprehensive test suite with 7 citation system tests
   - MCP tool integration ready for Phase 2 internet tools
   - All linting checks pass (ruff, mypy) with modern type annotations
-- ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - PLANNED
+- [x] **Issue #8: Render citation superscripts in TUI/dashboard**
+  - Unicode superscript support for citations in TUI and dashboard
+  - Rich console integration for agent output
+  - FastAPI dashboard with dynamic citation loading and in-memory caching
+  - OWASP-compliant security sanitization for all citation fields
+  - ChromaDB citation storage with optimized schema and performance profiling
+  - Comprehensive unit and integration tests for citation manager, dashboard, and security
+  - All ruff and mypy checks pass (no errors)
+  - Demo citations for dashboard testing and user experience
+  - Clean CI-ready codebase with robust type annotations and linting
 
 ### 📋 Epic E-02: Continuous Mode (Planned)
 - **Issue #9**: Add `--continuous` CLI flag (autonomy)
