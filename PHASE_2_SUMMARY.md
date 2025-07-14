@@ -88,7 +88,14 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - **Comprehensive Testing**: 13 tests covering security validation, quality filtering, storage, and integration
   - **MCP Integration**: Proper tool registration with type annotations and error handling
   - **Performance**: Optimized for local operation with mocked embeddings in tests
-- ⏳ **Issue #7: Prompt template — add citation tokens** - Source attribution
+- ✅ **Issue #7: Prompt template — add citation tokens** - COMPLETED
+  - Citation tracking system with `tools/citation_manager.py` for source management
+  - Enhanced planning prompt with `[[n]]` citation markers in JSON descriptions
+  - Citation state persistence in `AgentState` schema (`citations` and `citation_counter`)
+  - Comprehensive test suite with 7 citation system tests covering manager, extraction, and integration
+  - MCP tool integration ready for Phase 2 internet tools with proper type annotations
+  - All linting checks pass (ruff, mypy) with modern union syntax and return type annotations
+  - Foundation for Issue #8 citation rendering in TUI/dashboard
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - User experience
 
 #### **Key Milestones:**
@@ -96,6 +103,7 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
 - **12 Jul**: HTML→text extractor ✅
 - **17 Jul**: Safety filters + ingest ✅
 - **19 Jul**: Security-first web content extraction ✅
+- **22 Jul**: Citation tracking system ✅
 
 ---
 
@@ -220,7 +228,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 ## 📊 Performance & Quality Targets
 
 ### **Quality Gates:**
-- **Test Coverage**: ≥ 50% (currently 80 tests with comprehensive coverage)
+- **Test Coverage**: ≥ 50% (currently 99 tests with comprehensive coverage)
 - **Performance**: Benchmarks in CI
 - **Security**: Rate limiting, domain filtering, and SSRF prevention
 - **Reliability**: Structured logging and error handling
@@ -244,6 +252,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **SerpAPI Integration** (Issue #2) - COMPLETED
 - ✅ **HTML→Text Extractor** (Issue #3) - COMPLETED
 - ✅ **Security-First Web Content Extraction** (Issue #6) - COMPLETED
+- ✅ **Citation Tracking System** (Issue #7) - COMPLETED
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -261,6 +270,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Web Integration**: SerpAPI search with rate limiting and safety controls
 - ✅ **Content Extraction**: Security-first HTML→Text extractor with quality scoring and ChromaDB storage
 - ✅ **Content Extraction**: HTML→Text extractor with hybrid architecture
+- ✅ **Citation System**: Source tracking and citation management for Phase 2 internet tools
 - ⏳ **Continuous Mode**: Unattended execution capabilities
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard

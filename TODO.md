@@ -204,7 +204,13 @@
   - Robust fallback strategies with og:title prioritization
   - MCP tool integration with JSON output format
   - 74% test coverage with 13 comprehensive test scenarios
-- ⏳ **Issue #7: Prompt template — add citation tokens** - PLANNED
+- ✅ **Issue #7: Prompt template — add citation tokens** - COMPLETED
+  - Citation tracking system with `tools/citation_manager.py`
+  - Enhanced planning prompt with `[[n]]` citation markers
+  - Citation state persistence in `AgentState` schema
+  - Comprehensive test suite with 7 citation system tests
+  - MCP tool integration ready for Phase 2 internet tools
+  - All linting checks pass (ruff, mypy) with modern type annotations
 - ⏳ **Issue #8: Render citation superscripts in TUI/dashboard** - PLANNED
 
 ### 📋 Epic E-02: Continuous Mode (Planned)
@@ -233,7 +239,7 @@
 - **Issue #23**: Security scanners (safety)
 
 ### 📊 Phase 2 Quality Targets
-- **Test Coverage**: ≥ 50% (currently 39%)
+- **Test Coverage**: ≥ 50% (currently 99 tests with comprehensive coverage)
 - **Performance**: Benchmarks in CI
 - **Security**: Rate limiting and domain filtering
 - **Reliability**: Structured logging and error handling 
