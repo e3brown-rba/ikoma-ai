@@ -105,10 +105,10 @@ SANDBOX_PATH=agent/ikoma_sandbox
 source venv/bin/activate
 
 # Test core functionality
-python test_agent_phase1b.py
+python -m pytest tests/test_agent_phase1b.py
 
 # Test memory persistence
-python test_persistence_vector_store.py
+python -m pytest tests/test_persistence_vector_store.py
 ```
 
 ### Check Code Formatting
@@ -212,7 +212,7 @@ mkdir -p agent/memory/vector_store
 - [ ] Environment file configured (`.env`)
 - [ ] LM Studio installed and running on port 11434
 - [ ] Model downloaded in LM Studio
-- [ ] Tests passing (`python test_agent_phase1b.py`)
+- [ ] Tests passing (`python -m pytest tests/test_agent_phase1b.py`)
 - [ ] Agent runs successfully (`python run_agent.py`)
 
 ## 🎯 Next Steps

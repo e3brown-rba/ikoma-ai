@@ -187,7 +187,7 @@ def check_tests():
     """Check if tests can run."""
     print_header("Test Availability")
 
-    test_files = ["test_agent_phase1b.py", "test_persistence_vector_store.py"]
+    test_files = ["tests/test_agent_phase1b.py", "tests/test_persistence_vector_store.py"]
 
     for test_file in test_files:
         if Path(test_file).exists():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Simple test script for domain filter functionality.
-Run with: python3 test_domain_filter_simple.py
+Run with: python3 -m pytest tests/test_domain_filter_simple.py
 """
 
 import os

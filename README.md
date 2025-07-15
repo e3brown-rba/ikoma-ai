@@ -188,8 +188,8 @@ iKOMA/
 │   └── snippets/             # Cursor code snippets
 ├── reflect.py               # Nightly reflection and learning script
 ├── run_agent.py             # Main agent execution script
-├── test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
-├── test_persistence_vector_store.py  # Memory persistence tests
+├── tests/test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
+├── tests/test_persistence_vector_store.py  # Memory persistence tests
 ├── requirements.txt         # Python dependencies (inc. langgraph, chromadb)
 ├── config.env.template      # Environment configuration template
 ├── pyproject.toml           # Project configuration and metadata
@@ -213,7 +213,7 @@ The project includes comprehensive tests for the Phase 1-B plan-execute-reflect 
 
 Run tests with coverage:
 ```bash
-python -m pytest test_agent_phase1b.py --cov=agent --cov=tools --cov-report=term
+python -m pytest tests/test_agent_phase1b.py --cov=agent --cov=tools --cov-report=term
 ```
 
 ## ⚙️ Configuration
@@ -312,7 +312,7 @@ Add to your crontab for automated learning:
 Run the comprehensive plan-execute-reflect test suite:
 
 ```bash
-python -m pytest test_agent_phase1b.py -v
+python -m pytest tests/test_agent_phase1b.py -v
 ```
 
 ### Original Test Suite
@@ -320,7 +320,7 @@ python -m pytest test_agent_phase1b.py -v
 Run the foundational test suite:
 
 ```bash
-python test_agent_modern.py
+python tests/test_agent_modern.py
 ```
 
 ### Test Coverage
@@ -347,7 +347,7 @@ Tests cover:
 The long-term memory now uses a **Chromadb-backed persistent vector store**.
 
 1. **Swap-in Complete** – `tools.vector_store.get_vector_store()` provides a singleton Chromadb client; both the agent and the nightly reflection script use it.
-2. **Survives Restarts** – A regression test (`test_persistence_vector_store.py`) writes a memory, tears down the store, instantiates a new client, and confirms the memory is still present.
+2. **Survives Restarts** – A regression test (`tests/test_persistence_vector_store.py`) writes a memory, tears down the store, instantiates a new client, and confirms the memory is still present.
 3. **One-click Reset** – Run `python tools/vector_store.py --reset` to wipe all memories.
 4. **Environment Sanity** – A lightweight `check_env()` helper warns at startup if critical variables are missing or paths don't exist.
 

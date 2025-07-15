@@ -82,7 +82,7 @@ jobs:
       - run: pip install pytest pytest-cov
       - name: Run tests & enforce 50 %+ coverage
         run: |
-          pytest --cov --cov-report=xml
+          pytest tests/ --cov --cov-report=xml
           coverage xml -o coverage.xml --fail-under=50
       - uses: actions/upload-artifact@v4
         with:
