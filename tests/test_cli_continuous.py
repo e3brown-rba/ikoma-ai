@@ -25,16 +25,18 @@ class TestCLIContinuous:
             reflection=None,
             continue_planning=True,
             max_iterations=25,
-            current_iteration=5,
+            current_iteration=5,  # Under the limit
             start_time=1000.0,
             time_limit_secs=600,
             citations=[],
             citation_counter=1,
-            reflection_json=None,
+            reflection_json=None,  # No goal satisfaction
             reflection_failures=None,
         )
 
-        assert should_abort_continuous(state) is False
+        # Mock time.time to ensure we're within the time limit
+        with patch("time.time", return_value=1200.0):  # 200 seconds later (under 600 limit)
+            assert should_abort_continuous(state) is False
 
     def test_should_abort_continuous_iteration_limit_met(self) -> None:
         """Test that should_abort_continuous returns True when iteration limit is met."""

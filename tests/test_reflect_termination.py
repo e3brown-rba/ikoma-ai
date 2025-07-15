@@ -19,8 +19,12 @@ class TestReflectTermination:
             '{"task_completed": false, "next_action": "continue", "reasoning": "test"}'
         )
 
+        # Create a mock message
+        mock_message = Mock()
+        mock_message.content = "Test user request"
+
         state = AgentState(
-            messages=[],
+            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -41,7 +45,9 @@ class TestReflectTermination:
         config = {"configurable": {"user_id": "test"}}
         mock_store = Mock()
 
-        result = reflect_node(state, config, store=mock_store, llm=mock_llm)
+        # Mock time.time to ensure we're within the time limit
+        with patch("time.time", return_value=1200.0):  # 200 seconds later (under 600 limit)
+            result = reflect_node(state, config, store=mock_store, llm=mock_llm)
 
         # Should continue planning
         assert result["continue_planning"] is True
@@ -59,8 +65,12 @@ class TestReflectTermination:
             '{"task_completed": true, "next_action": "end", "reasoning": "test"}'
         )
 
+        # Create a mock message
+        mock_message = Mock()
+        mock_message.content = "Test user request"
+
         state = AgentState(
-            messages=[],
+            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -99,8 +109,12 @@ class TestReflectTermination:
             '{"task_completed": false, "next_action": "continue", "reasoning": "test"}'
         )
 
+        # Create a mock message
+        mock_message = Mock()
+        mock_message.content = "Test user request"
+
         state = AgentState(
-            messages=[],
+            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -139,8 +153,12 @@ class TestReflectTermination:
             '{"task_completed": false, "next_action": "continue", "reasoning": "test"}'
         )
 
+        # Create a mock message
+        mock_message = Mock()
+        mock_message.content = "Test user request"
+
         state = AgentState(
-            messages=[],
+            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
