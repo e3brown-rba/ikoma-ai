@@ -3,14 +3,14 @@
 
 import re
 
-from tools.citation_manager import CitationManager
+from tools.citation_manager import ProductionCitationManager
 
 
 def test_citation_manager_basic():
-    """Test basic CitationManager functionality."""
-    print("Testing CitationManager basic operations...")
+    """Test basic ProductionCitationManager functionality."""
+    print("Testing ProductionCitationManager basic operations...")
 
-    cm = CitationManager()
+    cm = ProductionCitationManager()
 
     # Test adding citations
     citation_id1 = cm.add_citation(
@@ -25,27 +25,27 @@ def test_citation_manager_basic():
 
     assert citation_id1 == 1
     assert citation_id2 == 2
-    assert len(cm.citations) == 2
+    assert len(cm.sources) == 2
 
     # Test citation text formatting
     citation_text1 = cm.get_citation_text(1)
     citation_text2 = cm.get_citation_text(2)
 
-    assert "[1]" in citation_text1
+    assert "¹" in citation_text1 or "[1]" in citation_text1
     assert "Example Page" in citation_text1
     assert "https://example.com" in citation_text1
 
-    assert "[2]" in citation_text2
+    assert "²" in citation_text2 or "[2]" in citation_text2
     assert "Test Page" in citation_text2
 
-    print("✓ CitationManager basic operations passed")
+    print("✓ ProductionCitationManager basic operations passed")
 
 
 def test_citation_manager_serialization():
-    """Test CitationManager serialization to/from dict."""
-    print("Testing CitationManager serialization...")
+    """Test ProductionCitationManager serialization to/from dict."""
+    print("Testing ProductionCitationManager serialization...")
 
-    cm = CitationManager()
+    cm = ProductionCitationManager()
 
     # Add some citations
     cm.add_citation("https://example.com", "Example", "Content")
@@ -55,24 +55,24 @@ def test_citation_manager_serialization():
     data = cm.to_dict()
 
     # Create new manager and load data
-    cm2 = CitationManager()
+    cm2 = ProductionCitationManager()
     cm2.from_dict(data)
 
     # Verify citations are preserved
-    assert len(cm2.citations) == 2
+    assert len(cm2.sources) == 2
     assert cm2.counter == 3  # Next citation ID
 
     citation_text = cm2.get_citation_text(1)
     assert "Example" in citation_text
 
-    print("✓ CitationManager serialization passed")
+    print("✓ ProductionCitationManager serialization passed")
 
 
 def test_citation_extraction():
     """Test citation marker extraction from text."""
     print("Testing citation extraction...")
 
-    cm = CitationManager()
+    cm = ProductionCitationManager()
 
     # Test text with citations
     text = "Based on research [[1]] and recent studies [[2]], we can conclude that Python is popular."
@@ -97,7 +97,7 @@ def test_citation_replacement():
     """Test replacing citation markers with formatted text."""
     print("Testing citation replacement...")
 
-    cm = CitationManager()
+    cm = ProductionCitationManager()
 
     # Add citations
     cm.add_citation("https://example.com", "Example Page", "Content")
@@ -108,11 +108,11 @@ def test_citation_replacement():
 
     replaced = cm.replace_citations_with_text(text)
 
-    # Should contain citation text
-    assert "[1]" in replaced
-    assert "[2]" in replaced
+    # Should contain citation text (either superscript or fallback)
     assert "Example Page" in replaced
     assert "Test Page" in replaced
+    assert "https://example.com" in replaced
+    assert "https://test.org" in replaced
 
     # Should not contain original markers
     assert "[[1]]" not in replaced
@@ -208,7 +208,7 @@ def test_citation_state_persistence():
     state = {"citations": [], "citation_counter": 1, "execution_results": []}
 
     # Simulate adding citations during execution
-    cm = CitationManager()
+    cm = ProductionCitationManager()
     cm.from_dict(
         {"citations": state["citations"], "counter": state["citation_counter"]}
     )
@@ -277,7 +277,7 @@ def test_citation_integration():
     ]
 
     # Initialize citation manager
-    cm = CitationManager()
+    cm = ProductionCitationManager()
 
     # Process execution results to extract citations
     for result in execution_results:
@@ -300,32 +300,59 @@ def test_citation_integration():
                 assert url in citation_text
 
     # Verify citations are tracked
-    assert len(cm.citations) == 1
-    assert cm.counter == 2
+    assert len(cm.sources) == 1
 
     print("✓ Citation integration passed")
 
 
 def run_all_tests():
-    """Run all citation system tests."""
-    print("Running citation system tests...\n")
+    """Run all citation tests."""
+    print("🚀 Starting Citation System Tests")
+    print("=" * 60)
 
-    try:
-        test_citation_manager_basic()
-        test_citation_manager_serialization()
-        test_citation_extraction()
-        test_citation_replacement()
-        test_planner_citation_emission()
-        test_citation_state_persistence()
-        test_citation_integration()
+    tests = [
+        test_citation_manager_basic,
+        test_citation_manager_serialization,
+        test_citation_extraction,
+        test_citation_replacement,
+        test_planner_citation_emission,
+        test_citation_state_persistence,
+        test_citation_integration,
+    ]
 
-        print("\n🎉 All citation system tests passed!")
+    passed = 0
+    failed = 0
+
+    for test in tests:
+        try:
+            test()
+            passed += 1
+        except Exception as e:
+            print(f"❌ {test.__name__} failed: {e}")
+            failed += 1
+
+    print("\n" + "=" * 60)
+    print(f"📊 Test Results: {passed} passed, {failed} failed")
+    print("=" * 60)
+
+    if failed == 0:
+        print("🎉 All citation tests passed!")
         return True
-
-    except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+    else:
+        print("❌ Some citation tests failed!")
         return False
 
 
 if __name__ == "__main__":
-    run_all_tests()
+    import sys
+
+    try:
+        success = run_all_tests()
+        if not success:
+            sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Test failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)

@@ -43,4 +43,7 @@ gitpython>=3.1.41  # Security fix for PYSEC-2024-4, PYSEC-2022-42992, PYSEC-2023
 yamllint
 bandit>=1.8.6  # Security scanning tool
 pytest-cov>=6.2.1  # Coverage testing for CI/CD
-types-beautifulsoup4>=4.12.0.20250516  # Type stubs for BeautifulSoup 
+types-beautifulsoup4>=4.12.0.20250516  # Type stubs for BeautifulSoup
+
+# Rich Console Support (for citation superscripts)
+rich>=13.0.0  # Terminal formatting and Unicode superscript support 

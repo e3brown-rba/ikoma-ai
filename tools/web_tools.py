@@ -16,8 +16,9 @@ from typing import Any
 import requests
 from langchain.tools import tool
 
+from .citation_manager import CitationSource
 from .content_extractor import get_content_extractor
-from .vector_store import get_vector_store
+from .vector_store import get_vector_store, store_citation_with_metadata
 from .web_security import enforce_web_rate_limit, get_web_filter, validate_web_url
 
 # Global instances for performance
@@ -74,6 +75,7 @@ def extract_web_content(url_and_options: str) -> str:
             return f"Content quality too low: {extracted.quality_score:.2f} < {min_quality} (extracted via {extracted.extraction_method})"
 
         # Store in ChromaDB if requested
+        citation_id = None
         if store_in_memory:
             store = get_vector_store()
             namespace = ("web_content", "default")  # Separate collection
@@ -95,7 +97,25 @@ def extract_web_content(url_and_options: str) -> str:
                 }
                 store.put(namespace, memory_id, memory_entry)
 
-        # Success response with quality metrics
+            # Register citation for the extraction (first chunk as canonical)
+            citation = CitationSource(
+                id=uuid.uuid4().int % 10**8,  # 8-digit int for display
+                url=extracted.url,
+                title=extracted.title or "Untitled Web Page",
+                timestamp=extracted.timestamp,
+                domain=extracted.metadata["domain"],
+                confidence_score=extracted.quality_score,
+                content_preview=extracted.text_chunks[0][:200]
+                if extracted.text_chunks
+                else "",
+                source_type="web",
+            )
+            store_citation_with_metadata(
+                citation, extracted.text_chunks[0] if extracted.text_chunks else ""
+            )
+            citation_id = citation.id
+
+        # Success response with quality metrics and citation ID
         return f"""🔍 **Web Content Extraction Results**
 
 📊 Quality Metrics:
@@ -104,7 +124,9 @@ def extract_web_content(url_and_options: str) -> str:
 • Method: {extracted.extraction_method}
 • Chunks: {len(extracted.text_chunks)}
 
-📝 Preview: {extracted.text_chunks[0][:200]}..."""
+📝 Preview: {extracted.text_chunks[0][:200]}...
+
+🔗 Citation ID: [[{citation_id}]]"""
 
     except ValueError as e:
         return f"❌ Security validation failed: {e}"
