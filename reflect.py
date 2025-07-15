@@ -52,7 +52,7 @@ class PatchedOpenAIEmbeddings(OpenAIEmbeddings):
 class ReflectionEngine:
     """Engine for analyzing conversations and generating insights."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the reflection engine with LLM and memory store."""
         # Get environment variables
         self.base_url = os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:11434/v1")
@@ -391,7 +391,7 @@ class ReflectionEngine:
         return summary
 
 
-def main():
+def main() -> int:
     """Main function for command-line usage."""
     parser = argparse.ArgumentParser(
         description="Run nightly reflection on conversation data"

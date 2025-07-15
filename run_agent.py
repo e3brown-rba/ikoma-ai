@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 
-def main():
+def main() -> int:
     # Get the project root directory
     project_root = Path(__file__).parent
     venv_path = project_root / "venv"

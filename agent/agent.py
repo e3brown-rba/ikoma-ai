@@ -1,5 +1,8 @@
+import argparse
 import json
 import os
+import sys
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +16,8 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 from langgraph.graph.message import add_messages
+from rich.console import Console
+from rich.panel import Panel
 
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
@@ -36,8 +41,27 @@ class AgentState(TypedDict):
     continue_planning: bool
     max_iterations: int
     current_iteration: int
+    start_time: float | None  # New: for continuous mode time tracking
+    time_limit_secs: int | None  # New: for continuous mode time limit
     citations: list[dict[str, Any]] | None  # New: citation tracking
     citation_counter: int | None  # New: tracks next citation ID
+
+
+# --- Continuous Mode Safety Functions ---
+def should_abort_continuous(state: AgentState) -> bool:
+    """Check if continuous mode should be aborted due to time or iteration limits."""
+    start_time = state.get("start_time")
+    if start_time is None:
+        return False
+
+    time_limit_secs = state.get("time_limit_secs", 600) or 600
+    max_iterations = state.get("max_iterations", 25) or 25
+    current_iteration = state.get("current_iteration", 0) or 0
+
+    return (
+        time.time() - start_time >= time_limit_secs
+        or current_iteration >= max_iterations
+    )
 
 
 # --- File Tools moved to tools/fs_tools.py ---
@@ -528,6 +552,10 @@ def reflect_node(
         # Increment iteration counter
         state["current_iteration"] = state.get("current_iteration", 0) + 1
 
+        # Hard safety stop for continuous mode
+        if should_abort_continuous(state):
+            state["continue_planning"] = False
+
         # Format execution results for reflection
         results_summary = []
         for result in state.get("execution_results", []):  # type: ignore
@@ -752,10 +780,36 @@ def create_agent() -> Any:
     return app
 
 
-# --- Main Loop ---
-if __name__ == "__main__":
-    agent = create_agent()
+def _render_final_response(result: dict) -> None:
+    """Render the final response with citations using Rich."""
+    # Get the last AI message
+    ai_messages = [
+        msg for msg in result["messages"] if hasattr(msg, "type") and msg.type == "ai"
+    ]
+    if ai_messages:
+        output = ai_messages[-1].content
 
+        # Initialize citation manager for this conversation
+        citation_mgr = ProductionCitationManager()
+
+        # Load citation state from result if available
+        if result.get("citations"):
+            citation_mgr.from_dict(
+                {
+                    "citations": result["citations"],
+                    "counter": result.get("citation_counter", 1),
+                }
+            )
+
+        # Render response with citations using Rich
+        print("🤖 Ikoma: ", end="")
+        citation_mgr.render_response_with_citations(output)
+    else:
+        print("🤖 Ikoma: I apologize, but I had trouble processing that request.")
+
+
+def interactive_chat(agent: Any) -> None:
+    """Run interactive chat mode."""
     print(
         "🤖 Ikoma: Hello! I'm your AI assistant with enhanced plan-execute-reflect capabilities."
     )
@@ -799,40 +853,14 @@ if __name__ == "__main__":
                 "continue_planning": False,
                 "max_iterations": 3,
                 "current_iteration": 0,
+                "start_time": None,
+                "time_limit_secs": None,
                 "citations": [],  # Initialize citation tracking
                 "citation_counter": 1,  # Initialize citation counter
             }
 
             result = agent.invoke(initial_state, config)
-
-            # Get the last AI message
-            ai_messages = [
-                msg
-                for msg in result["messages"]
-                if hasattr(msg, "type") and msg.type == "ai"
-            ]
-            if ai_messages:
-                output = ai_messages[-1].content
-
-                # Initialize citation manager for this conversation
-                citation_mgr = ProductionCitationManager()
-
-                # Load citation state from result if available
-                if result.get("citations"):
-                    citation_mgr.from_dict(
-                        {
-                            "citations": result["citations"],
-                            "counter": result.get("citation_counter", 1),
-                        }
-                    )
-
-                # Render response with citations using Rich
-                print("🤖 Ikoma: ", end="")
-                citation_mgr.render_response_with_citations(output)
-            else:
-                print(
-                    "🤖 Ikoma: I apologize, but I had trouble processing that request."
-                )
+            _render_final_response(result)
 
         except Exception as e:
             print(f"🤖 Ikoma: I encountered an issue: {e}")
@@ -841,3 +869,88 @@ if __name__ == "__main__":
             )
 
         print("-" * 70)
+
+
+def main() -> None:
+    """Main entry point with CLI argument parsing."""
+    parser = argparse.ArgumentParser(
+        prog="ikoma",
+        description="Ikoma – local autonomous AI assistant",
+    )
+    parser.add_argument(
+        "--continuous",
+        action="store_true",
+        help="Run unattended plan-execute-reflect loop",
+    )
+    parser.add_argument(
+        "--goal",
+        type=str,
+        help="High-level goal for continuous mode (required with --continuous)",
+    )
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=25,
+        help="Iteration cap in continuous mode (default: 25)",
+    )
+    parser.add_argument(
+        "--time-limit",
+        type=int,
+        default=10,
+        metavar="MIN",
+        help="Time cap in minutes (default: 10)",
+    )
+    args = parser.parse_args()
+
+    agent = create_agent()
+
+    # ---------- Continuous mode ----------
+    if args.continuous:
+        if not args.goal:
+            parser.error("--goal is required when --continuous is set")
+
+        console = Console()
+        console.print(
+            Panel(
+                f"[bold yellow]⚠  Continuous mode activated[/bold yellow]\n"
+                f"Ikoma will pursue the goal:\n\n[italic]{args.goal}[/italic]\n\n"
+                f"Max iterations: {args.max_iterations} · "
+                f"Time limit: {args.time_limit} min\n"
+                "Press [red]Ctrl-C[/red] to abort at any time.",
+                title="Ikoma Autonomy",
+                border_style="yellow",
+            )
+        )
+
+        initial_state = {
+            "messages": [HumanMessage(content=args.goal)],
+            "memory_context": None,
+            "user_profile": None,
+            "session_summary": None,
+            "current_plan": None,
+            "execution_results": None,
+            "reflection": None,
+            "continue_planning": False,
+            "max_iterations": args.max_iterations,
+            "current_iteration": 0,
+            "start_time": time.time(),
+            "time_limit_secs": args.time_limit * 60,
+            "citations": [],
+            "citation_counter": 1,
+        }
+
+        try:
+            result = agent.invoke(initial_state)
+            _render_final_response(result)
+        except KeyboardInterrupt:
+            console.print("[red]⏹  Aborted by user[/red]")
+            sys.exit(1)
+        sys.exit(0)
+
+    # ---------- Interactive chat ----------
+    interactive_chat(agent)
+
+
+# --- Main Loop ---
+if __name__ == "__main__":
+    main()
