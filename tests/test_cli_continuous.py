@@ -78,7 +78,7 @@ class TestContinuousModeSafety:
         assert should_abort_continuous(state) is False
 
     def test_should_abort_continuous_no_start_time(self) -> None:
-        """Test that continuous mode doesn't abort when start_time is None."""
+        """Test that continuous mode doesn't abort when start_time is None and iteration is within limit."""
         state = AgentState(
             messages=[],
             memory_context=None,
@@ -89,7 +89,7 @@ class TestContinuousModeSafety:
             reflection=None,
             continue_planning=True,
             max_iterations=25,
-            current_iteration=30,
+            current_iteration=5,  # Within iteration limit
             start_time=None,  # No start time
             time_limit_secs=600,
             citations=[],

@@ -134,10 +134,11 @@ python agent/agent.py --continuous --goal "Create a web application project stru
 ```
 
 **Safety Features:**
-- ⏱️ **Time Limit**: Maximum 10 minutes (configurable)
-- 🔄 **Iteration Cap**: Maximum 25 iterations (configurable)  
+- ⏱️ **Time Limit**: Maximum 10 minutes (configurable via `IKOMA_MAX_MINS` or `--time-limit`)
+- 🔄 **Iteration Cap**: Maximum 25 iterations (configurable)
 - 🛑 **Kill Switch**: Press `Ctrl-C` to abort anytime
 - ⚠️ **Safety Banner**: Clear warnings before autonomous execution
+- 🧩 **Unified Criteria Engine**: Both limits are checked together at each cycle for robust safety
 
 ### Mathematical Problem Solving
 
@@ -249,8 +250,9 @@ CHROMA_TELEMETRY=false  # Disable Chroma telemetry to avoid spam
 SANDBOX_PATH=agent/ikoma_sandbox
 
 # Agent Configuration
-MAX_ITERATIONS=3
-MEMORY_LIMIT=1000
+MAX_ITERATIONS=25
+# Maximum wall-clock time (minutes) for continuous mode (default: 10)
+IKOMA_MAX_MINS=10
 
 # Debug Configuration
 DEBUG_MODE=false
@@ -462,3 +464,9 @@ The v0.2.0 architecture provides a solid foundation for:
 ---
 
 **iKOMA**: Your intelligent AI assistant that plans, executes, and learns! 🚀
+
+## 📝 Changelog
+
+### 0.3.1
+- Added wall-clock time termination heuristic; env `IKOMA_MAX_MINS`
+- Unified criteria engine for continuous mode safety
