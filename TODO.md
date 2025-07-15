@@ -241,8 +241,20 @@
   - Comprehensive test suite with 11 tests covering logic, env overrides, and CLI integration
   - Full mypy strict compliance with `Mapping[str, Any]` type signatures
   - All ruff lint and format checks pass
-- **Issue #11**: Termination heuristic — goal-satisfaction (autonomy)
-- **Issue #12**: Termination heuristic — time-limit (autonomy)
+- ✅ **Issue #11**: Termination heuristic — wall-clock time limit (autonomy) - COMPLETED
+  - `TimeLimitCriterion` class with proper type safety and `Mapping[str, Any]` interface
+  - Unified criteria engine in `reflect_node` (IterationLimitCriterion + TimeLimitCriterion)
+  - Environment variable `IKOMA_MAX_MINS` with CLI `--time-limit` override
+  - Comprehensive test suite with 7 unit tests and 4 integration tests
+  - Full mypy compliance with explicit type annotations and bool conversion
+  - All ruff lint and format checks pass
+  - Documentation updates in README, config template, and continuous mode docs
+- ✅ **Issue #12**: Termination heuristic — goal-satisfaction (autonomy) - COMPLETED
+  - Implements `GoalSatisfiedCriterion` for agent stop when goal is met (reflection_json: task_completed/next_action)
+  - Unified criteria engine in `reflect_node` and `should_abort_continuous` (all criteria checked together)
+  - Persists raw reflection JSON in agent state for robust, extensible checks
+  - Adds robust error handling with failure tracking (reflection_failures history)
+  - Comprehensive unit and integration tests for all stop conditions and error cases
 - **Issue #13**: Human checkpoint — confirm continuation (ux)
 
 ### 📋 Epic E-03: Short-term Checkpointer (Planned)

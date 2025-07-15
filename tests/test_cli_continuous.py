@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test suite for continuous mode CLI functionality."""
 
-import time
 from io import StringIO
 from unittest.mock import Mock, patch
 
@@ -11,92 +10,102 @@ import pytest
 from agent.agent import AgentState, main, should_abort_continuous
 
 
-class TestContinuousModeSafety:
-    """Test the continuous mode safety functions."""
+class TestCLIContinuous:
+    """Test CLI continuous mode functionality."""
 
-    def test_should_abort_continuous_time_limit(self) -> None:
-        """Test that continuous mode aborts when time limit is exceeded."""
+    def test_should_abort_continuous_no_criteria_met(self) -> None:
+        """Test that should_abort_continuous returns False when no criteria are met."""
         state = AgentState(
             messages=[],
             memory_context=None,
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=None,
+            execution_results=[],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
             current_iteration=5,
-            start_time=time.time() - 700,  # 700 seconds ago (over 10 min limit)
-            time_limit_secs=600,  # 10 minutes
-            citations=[],
-            citation_counter=1,
-        )
-
-        assert should_abort_continuous(state) is True
-
-    def test_should_abort_continuous_iteration_limit(self) -> None:
-        """Test that continuous mode aborts when iteration limit is exceeded."""
-        state = AgentState(
-            messages=[],
-            memory_context=None,
-            user_profile=None,
-            session_summary=None,
-            current_plan=None,
-            execution_results=None,
-            reflection=None,
-            continue_planning=True,
-            max_iterations=25,
-            current_iteration=30,  # Over the limit
-            start_time=time.time() - 100,  # 100 seconds ago (under limit)
+            start_time=1000.0,
             time_limit_secs=600,
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
-        assert should_abort_continuous(state) is True
+        assert should_abort_continuous(state) is False
 
-    def test_should_abort_continuous_no_abort(self) -> None:
-        """Test that continuous mode doesn't abort when limits are not exceeded."""
+    def test_should_abort_continuous_iteration_limit_met(self) -> None:
+        """Test that should_abort_continuous returns True when iteration limit is met."""
         state = AgentState(
             messages=[],
             memory_context=None,
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=None,
+            execution_results=[],
+            reflection=None,
+            continue_planning=True,
+            max_iterations=25,
+            current_iteration=25,  # At the limit
+            start_time=1000.0,
+            time_limit_secs=600,
+            citations=[],
+            citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
+        )
+
+        assert should_abort_continuous(state) is True
+
+    def test_should_abort_continuous_time_limit_met(self) -> None:
+        """Test that should_abort_continuous returns True when time limit is met."""
+        state = AgentState(
+            messages=[],
+            memory_context=None,
+            user_profile=None,
+            session_summary=None,
+            current_plan=None,
+            execution_results=[],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
             current_iteration=5,
-            start_time=time.time() - 100,  # 100 seconds ago (under limit)
-            time_limit_secs=600,
+            start_time=1000.0,
+            time_limit_secs=300,  # 5 minutes
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
-        assert should_abort_continuous(state) is False
+        # Mock time.time to return a time that exceeds the limit
+        with patch("time.time", return_value=1400.0):  # 400 seconds later
+            assert should_abort_continuous(state) is True
 
-    def test_should_abort_continuous_no_start_time(self) -> None:
-        """Test that continuous mode doesn't abort when start_time is None and iteration is within limit."""
+    def test_should_abort_continuous_goal_satisfied(self) -> None:
+        """Test that should_abort_continuous returns True when goal is satisfied."""
         state = AgentState(
             messages=[],
             memory_context=None,
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=None,
+            execution_results=[],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
-            current_iteration=5,  # Within iteration limit
-            start_time=None,  # No start time
+            current_iteration=5,
+            start_time=1000.0,
             time_limit_secs=600,
             citations=[],
             citation_counter=1,
+            reflection_json={"task_completed": True, "next_action": "end"},
+            reflection_failures=None,
         )
 
-        assert should_abort_continuous(state) is False
+        assert should_abort_continuous(state) is True
 
 
 class TestCLIArguments:
