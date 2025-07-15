@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Integration tests for goal satisfaction termination heuristic."""
 
-import pytest
 from unittest.mock import Mock, patch
 
 from agent.agent import AgentState, reflect_node
@@ -23,7 +22,9 @@ class TestGoalSatisfactionIntegration:
         mock_message.content = "Test user request"
 
         state = AgentState(
-            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
+            messages=[
+                mock_message
+            ],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -74,7 +75,9 @@ class TestGoalSatisfactionIntegration:
         mock_message.content = "Test user request"
 
         state = AgentState(
-            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
+            messages=[
+                mock_message
+            ],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -103,7 +106,9 @@ class TestGoalSatisfactionIntegration:
         mock_store = Mock()
 
         # Mock time.time to ensure we're within the time limit
-        with patch("time.time", return_value=1200.0):  # 200 seconds later (under 600 limit)
+        with patch(
+            "time.time", return_value=1200.0
+        ):  # 200 seconds later (under 600 limit)
             result = reflect_node(state, config, store=mock_store, llm=mock_llm)
 
         # Should continue planning
@@ -127,7 +132,9 @@ class TestGoalSatisfactionIntegration:
         mock_message.content = "Test user request"
 
         state = AgentState(
-            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
+            messages=[
+                mock_message
+            ],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -178,7 +185,9 @@ class TestGoalSatisfactionIntegration:
         mock_message.content = "Test user request"
 
         state = AgentState(
-            messages=[mock_message],  # Add a message so reflect_node can access messages[-1]
+            messages=[
+                mock_message
+            ],  # Add a message so reflect_node can access messages[-1]
             memory_context=None,
             user_profile=None,
             session_summary=None,
@@ -207,7 +216,9 @@ class TestGoalSatisfactionIntegration:
         mock_store = Mock()
 
         # Mock time.time to ensure we're within the time limit
-        with patch("time.time", return_value=1200.0):  # 200 seconds later (under 600 limit)
+        with patch(
+            "time.time", return_value=1200.0
+        ):  # 200 seconds later (under 600 limit)
             result = reflect_node(state, config, store=mock_store, llm=mock_llm)
 
         # Should stop planning due to JSON parsing error

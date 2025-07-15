@@ -35,7 +35,9 @@ class TestCLIContinuous:
         )
 
         # Mock time.time to ensure we're within the time limit
-        with patch("time.time", return_value=1200.0):  # 200 seconds later (under 600 limit)
+        with patch(
+            "time.time", return_value=1200.0
+        ):  # 200 seconds later (under 600 limit)
             assert should_abort_continuous(state) is False
 
     def test_should_abort_continuous_iteration_limit_met(self) -> None:
