@@ -61,7 +61,7 @@ jobs:
           python-version: '3.13'
       - run: pip install -e .
       - run: pip install mypy
-      - run: mypy agent/ tools/
+      - run: mypy agent/ tools/ --explicit-package-bases
 
   test:
     needs: typecheck

@@ -71,7 +71,7 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - **MCP Integration**: Proper tool registration with type annotations and error handling
   - **Performance**: Optimized for local operation with mocked embeddings in tests
 
-#### **In Progress:**
+#### **Completed Deliverables:**
 - ✅ **Issue #2: SerpAPI search tool** - COMPLETED
 - ✅ **Issue #3: HTML→Text extractor utility** - COMPLETED
   - Hybrid trafilatura/selectolax architecture for optimal performance
@@ -106,6 +106,15 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - All ruff and mypy checks pass (no errors)
   - Demo citations for dashboard testing and user experience
   - Clean CI-ready codebase with robust type annotations and linting
+- ✅ **Issue #10: Termination heuristic — iteration-count (autonomy)** - COMPLETED
+  - Pluggable heuristic system with `TerminationCriterion` base class
+  - `IterationLimitCriterion` implementation for iteration-based termination
+  - Environment variable override via `IKOMA_MAX_ITER`
+  - CLI argument `--max-iter` with priority over environment and `--max-iterations`
+  - Integration with `reflect_node` using heuristic engine (open for future criteria)
+  - Comprehensive test suite with 11 tests covering logic, env overrides, and CLI integration
+  - Full mypy strict compliance with `Mapping[str, Any]` type signatures
+  - All ruff lint and format checks pass
 
 #### **Key Milestones:**
 - **10 Jul**: SerpAPI spike
@@ -113,6 +122,7 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
 - **17 Jul**: Safety filters + ingest ✅
 - **19 Jul**: Security-first web content extraction ✅
 - **22 Jul**: Citation tracking system ✅
+- **25 Jul**: Iteration termination heuristic ✅
 
 ---
 
@@ -310,6 +320,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Citation Tracking System** (Issue #7) - COMPLETED
 - ✅ **Citation Rendering** (Issue #8) - COMPLETED
 - ✅ **Continuous Mode** (Issue #9) - COMPLETED
+- ✅ **Iteration Termination Heuristic** (Issue #10) - COMPLETED
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -329,6 +340,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Content Extraction**: HTML→Text extractor with hybrid architecture
 - ✅ **Citation System**: Source tracking and citation management for Phase 2 internet tools
 - ✅ **Continuous Mode**: Unattended execution capabilities with safety guardrails
+- ✅ **Termination Heuristics**: Pluggable iteration-based termination system
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
 
