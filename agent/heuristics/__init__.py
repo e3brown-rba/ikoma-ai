@@ -2,5 +2,6 @@
 
 from .base import TerminationCriterion
 from .iteration import IterationLimitCriterion
+from .time import TimeLimitCriterion
 
-__all__ = ["TerminationCriterion", "IterationLimitCriterion"]
+__all__ = ["TerminationCriterion", "IterationLimitCriterion", "TimeLimitCriterion"]

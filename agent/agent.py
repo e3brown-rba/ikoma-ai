@@ -19,8 +19,8 @@ from langgraph.graph.message import add_messages
 from rich.console import Console
 from rich.panel import Panel
 
-from agent.constants import MAX_ITER
-from agent.heuristics import IterationLimitCriterion
+from agent.constants import MAX_ITER, MAX_MINS
+from agent.heuristics import IterationLimitCriterion, TimeLimitCriterion
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
@@ -51,19 +51,12 @@ class AgentState(TypedDict):
 
 # --- Continuous Mode Safety Functions ---
 def should_abort_continuous(state: AgentState) -> bool:
-    """Check if continuous mode should be aborted due to time or iteration limits."""
-    start_time = state.get("start_time")
-    if start_time is None:
-        return False
+    """Check if continuous mode should be aborted due to time or iteration limits.
 
-    time_limit_secs = state.get("time_limit_secs", 600) or 600
-    max_iterations = state.get("max_iterations", 25) or 25
-    current_iteration = state.get("current_iteration", 0) or 0
-
-    return (
-        time.time() - start_time >= time_limit_secs
-        or current_iteration >= max_iterations
-    )
+    TODO remove in v0.4 - this is now a thin wrapper that delegates to criteria.
+    """
+    criteria = [IterationLimitCriterion(), TimeLimitCriterion()]
+    return any(c.should_stop(state) for c in criteria)
 
 
 # --- File Tools moved to tools/fs_tools.py ---
@@ -554,9 +547,7 @@ def reflect_node(
         # Increment iteration counter
         state["current_iteration"] = state.get("current_iteration", 0) + 1
 
-        # Hard safety stop for continuous mode
-        if should_abort_continuous(state):
-            state["continue_planning"] = False
+        # Termination criteria are now fully centralised
 
         # Format execution results for reflection
         results_summary = []
@@ -612,7 +603,8 @@ Return only the JSON, no other text."""
 
             # Initialize termination criteria
             criteria = [
-                IterationLimitCriterion(),  # future: GoalSatisfiedCriterion(), TimeLimitCriterion()
+                IterationLimitCriterion(),
+                TimeLimitCriterion(),
             ]
 
             # Check if any termination criterion is met
@@ -908,9 +900,9 @@ def main() -> None:
     parser.add_argument(
         "--time-limit",
         type=int,
-        default=10,
+        default=MAX_MINS,
         metavar="MIN",
-        help="Time cap in minutes (default: 10)",
+        help=f"Time cap in minutes (default: {MAX_MINS})",
     )
     args = parser.parse_args()
 

@@ -2,6 +2,14 @@
 
 Ikoma's continuous mode allows the AI assistant to run autonomously, pursuing a high-level goal through multiple plan-execute-reflect cycles without human intervention.
 
+---
+
+**New in v0.3.1:**
+- Continuous mode now enforces both an **iteration limit** and a **wall-clock time limit** using a unified, extensible criteria engine.
+- The time limit is configurable via the `IKOMA_MAX_MINS` environment variable or the `--time-limit` CLI flag.
+
+---
+
 ## Quick Start
 
 ```bash
@@ -16,7 +24,8 @@ python agent/agent.py --continuous --goal "Create a project plan for a web appli
 
 ### Hard Limits
 - **Iteration Cap**: Maximum 25 iterations by default (configurable)
-- **Time Limit**: Maximum 10 minutes by default (configurable)
+- **Time Limit**: Maximum 10 minutes by default (configurable via `IKOMA_MAX_MINS` or `--time-limit`)
+- **Unified Criteria Engine**: Both limits are checked together at each cycle for robust safety
 - **Kill Switch**: Press `Ctrl-C` to abort at any time
 
 ### Safety Banner
@@ -41,7 +50,7 @@ When continuous mode is activated, Ikoma displays a clear warning banner:
 | `--continuous` | flag | - | Enable continuous mode |
 | `--goal` | string | required | High-level goal to pursue |
 | `--max-iterations` | integer | 25 | Maximum iteration count |
-| `--time-limit` | integer | 10 | Time limit in minutes |
+| `--time-limit` | integer | 10 | Time limit in minutes (overrides `IKOMA_MAX_MINS`) |
 
 ## Examples
 
@@ -64,82 +73,18 @@ python agent/agent.py --continuous --goal "Analyze the codebase and identify pot
 
 1. **Goal Setting**: The `--goal` parameter becomes the initial user message
 2. **Autonomous Execution**: Ikoma runs through plan-execute-reflect cycles
-3. **Safety Monitoring**: Each iteration checks against time and iteration limits
-4. **Automatic Termination**: Stops when goal is achieved or limits are reached
+3. **Safety Monitoring**: Each iteration checks against both time and iteration limits using a unified criteria engine
+4. **Automatic Termination**: Stops when goal is achieved or either limit is reached
+
+---
+
+### Environment Variable
+- `IKOMA_MAX_MINS`: Sets the default wall-clock time limit (in minutes) for continuous mode. Can be overridden by `--time-limit`.
+
+---
 
 ## Exit Codes
 
 - `0`: Successful completion
 - `1`: User interruption (Ctrl-C) or error
-- `2`: Invalid arguments (e.g., missing `--goal` with `--continuous`)
-
-## Best Practices
-
-### Goal Formulation
-- **Be Specific**: "Create a REST API with authentication" vs "make an app"
-- **Include Constraints**: "Research Python frameworks suitable for small teams"
-- **Set Scope**: "Analyze the first 100 lines of code" vs "analyze everything"
-
-### Safety Considerations
-- **Start Small**: Use lower iteration/time limits for new goals
-- **Monitor Progress**: Check intermediate results in the sandbox
-- **Test Goals**: Verify goal clarity before long-running sessions
-
-### Resource Management
-- **LM Studio**: Ensure your local LLM server is stable
-- **Disk Space**: Monitor sandbox directory growth
-- **Memory**: Large tasks may consume significant resources
-
-## Troubleshooting
-
-### Common Issues
-
-**Goal too vague**
-```
-Error: Agent keeps planning without progress
-Solution: Make goals more specific and measurable
-```
-
-**Time limit too short**
-```
-Error: Task incomplete when time limit reached
-Solution: Increase --time-limit or break into smaller goals
-```
-
-**Iteration limit too low**
-```
-Error: Complex task needs more planning cycles
-Solution: Increase --max-iterations for complex goals
-```
-
-### Debug Mode
-For development and debugging, you can run with verbose output:
-```bash
-python agent/agent.py --continuous --goal "test goal" --max-iterations 2
-```
-
-## Integration with Existing Features
-
-### Memory Persistence
-Continuous mode sessions are stored in the same memory system as interactive sessions, allowing for:
-- Context preservation across runs
-- Citation tracking and management
-- Long-term learning from autonomous sessions
-
-### Tool Access
-Continuous mode has access to all available tools:
-- File operations in the sandbox
-- Web search and extraction
-- Mathematical calculations
-- Content creation and analysis
-
-### Safety Sanitization
-All web content and user inputs are sanitized according to the existing security policies, ensuring safe autonomous operation.
-
-## Future Enhancements
-
-Planned improvements for continuous mode:
-- **Dynamic Limits**: Adaptive iteration/time limits based on task complexity
-- **Human Checkpoints**: Periodic prompts for user approval
-- **Goal Satisfaction**: Automatic detection of goal completion
-- **Progress Tracking**: Real-time progress indicators and metrics 
+- `
