@@ -131,6 +131,12 @@ python agent/agent.py --continuous --goal "Research and summarize Python best pr
 
 # Custom limits for complex tasks
 python agent/agent.py --continuous --goal "Create a web application project structure" --max-iterations 15 --time-limit 20
+
+# Human checkpoint every 3 iterations (default is 5)
+python agent/agent.py --continuous --goal "Refactor utils" --checkpoint-every 3
+
+# Disable all prompts (headless/CI mode)
+python agent/agent.py --continuous --goal "Run unattended" --auto
 ```
 
 **Safety Features:**
@@ -139,6 +145,12 @@ python agent/agent.py --continuous --goal "Create a web application project stru
 - 🛑 **Kill Switch**: Press `Ctrl-C` to abort anytime
 - ⚠️ **Safety Banner**: Clear warnings before autonomous execution
 - 🧩 **Unified Criteria Engine**: Both limits are checked together at each cycle for robust safety
+- 👤 **Human Checkpoints**: In continuous mode, the agent pauses every N iterations (default 5) and prompts the operator to continue. Use `--checkpoint-every N` or `IKOMA_CHECKPOINT_EVERY` to adjust interval. Use `--auto` or `IKOMA_DISABLE_CHECKPOINT` to disable all prompts (for CI/headless runs).
+
+**How Human Checkpoints Work:**
+- After every N iterations, Ikoma displays a summary panel and asks if you want to continue.
+- If running in a non-interactive environment, it auto-continues.
+- To disable all prompts, use `--auto` or set `IKOMA_DISABLE_CHECKPOINT=1` in your environment.
 
 ### Mathematical Problem Solving
 

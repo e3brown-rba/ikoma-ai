@@ -42,6 +42,8 @@ class TestReflectTermination:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -92,6 +94,8 @@ class TestReflectTermination:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -138,6 +142,8 @@ class TestReflectTermination:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -184,6 +190,8 @@ class TestReflectTermination:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
         )
 
         config = {"configurable": {"user_id": "test"}}

@@ -50,6 +50,8 @@ class AgentState(TypedDict):
     reflection_failures: (
         list[dict[str, Any]] | None
     )  # New: history of reflection failures
+    checkpoint_every: int | None  # New: for human checkpoint intervals
+    last_checkpoint_iter: int | None  # New: tracks last checkpoint iteration
 
 
 # --- Continuous Mode Safety Functions ---
@@ -551,6 +553,16 @@ def reflect_node(
         # Increment iteration counter
         state["current_iteration"] = state.get("current_iteration", 0) + 1
 
+        # Check for human checkpoint
+        from agent.heuristics import CHECKPOINT_CRITERION
+
+        if CHECKPOINT_CRITERION.should_checkpoint(state):
+            from agent.ui import prompt_user_confirm
+
+            if not prompt_user_confirm(state):
+                state["continue_planning"] = False
+                return state
+
         # Ensure reflection_failures is initialized
         if "reflection_failures" not in state or state["reflection_failures"] is None:
             state["reflection_failures"] = []
@@ -865,6 +877,8 @@ def interactive_chat(agent: Any) -> None:
                 "time_limit_secs": None,
                 "citations": [],  # Initialize citation tracking
                 "citation_counter": 1,  # Initialize citation counter
+                "checkpoint_every": None,  # No checkpoints in interactive mode
+                "last_checkpoint_iter": 0,
             }
 
             result = agent.invoke(initial_state, config)
@@ -913,6 +927,18 @@ def main() -> None:
         metavar="MIN",
         help=f"Time cap in minutes (default: {MAX_MINS})",
     )
+    parser.add_argument(
+        "--checkpoint-every",
+        "-c",
+        type=int,
+        default=5,
+        help="Human checkpoint every N iterations (default: 5, use --auto to disable)",
+    )
+    parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Disable all human prompts (auto-continue mode)",
+    )
     args = parser.parse_args()
 
     agent = create_agent()
@@ -923,12 +949,22 @@ def main() -> None:
             parser.error("--goal is required when --continuous is set")
 
         console = Console()
+        # Determine checkpoint configuration
+        checkpoint_info = ""
+        if args.auto:
+            checkpoint_info = "Auto-continue mode (no checkpoints)"
+        else:
+            checkpoint_info = (
+                f"Human checkpoints every {args.checkpoint_every} iterations"
+            )
+
         console.print(
             Panel(
                 f"[bold yellow]⚠  Continuous mode activated[/bold yellow]\n"
                 f"Ikoma will pursue the goal:\n\n[italic]{args.goal}[/italic]\n\n"
                 f"Max iterations: {args.max_iterations} · "
-                f"Time limit: {args.time_limit} min\n"
+                f"Time limit: {args.time_limit} min · "
+                f"{checkpoint_info}\n"
                 "Press [red]Ctrl-C[/red] to abort at any time.",
                 title="Ikoma Autonomy",
                 border_style="yellow",
@@ -950,6 +986,8 @@ def main() -> None:
             "time_limit_secs": args.time_limit * 60,
             "citations": [],
             "citation_counter": 1,
+            "checkpoint_every": None if args.auto else args.checkpoint_every,
+            "last_checkpoint_iter": 0,
         }
 
         try:
