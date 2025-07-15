@@ -188,33 +188,45 @@ iKOMA/
 │   └── snippets/             # Cursor code snippets
 ├── reflect.py               # Nightly reflection and learning script
 ├── run_agent.py             # Main agent execution script
-├── tests/test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
-├── tests/test_persistence_vector_store.py  # Memory persistence tests
+├── tests/                   # All test files and test documentation
+│   ├── test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
+│   ├── test_persistence_vector_store.py  # Memory persistence tests
+│   ├── ... (other test_*.py files)
+│   └── README.md            # Test organization and instructions
 ├── requirements.txt         # Python dependencies (inc. langgraph, chromadb)
 ├── config.env.template      # Environment configuration template
 ├── pyproject.toml           # Project configuration and metadata
 ├── PHASE_1B_SUMMARY.md      # Detailed Phase 1-B implementation guide
 ├── CHROMA_MEMORY_SETUP.md   # Memory system setup guide
-├── TODO.md                  # ✅ All development tasks completed
+├── TODO.md                  # Iterative TODO list
 └── README.md               # This file
 ```
 
+> **Note:** All tests are now organized in the `tests/` directory. See `tests/README.md` for a categorized list and instructions for running specific test suites.
+
 ## 🧪 Testing & Coverage
 
-The project includes comprehensive tests for the Phase 1-B plan-execute-reflect architecture:
+The project includes comprehensive tests for the plan-execute-reflect architecture. All test files are located in the `tests/` directory.
 
 - **Test Coverage: 39%** (652 statements, 398 missed - comprehensive plan-execute-reflect testing)
-- **16 tests passing** with 0 failures
+- **128 tests passing** with 0 failures
 - **Key modules covered**:
   - `agent/agent.py`: 35% coverage
   - `tools/tool_loader.py`: 53% coverage  
   - `tools/vector_store.py`: 49% coverage
   - `tools/fs_tools.py`: 16% coverage
 
-Run tests with coverage:
+Run all tests with coverage:
 ```bash
-python -m pytest tests/test_agent_phase1b.py --cov=agent --cov=tools --cov-report=term
+python -m pytest tests/ --cov=agent --cov=tools --cov-report=term
 ```
+
+Run a specific test file:
+```bash
+python -m pytest tests/test_agent_phase1b.py -v
+```
+
+See `tests/README.md` for more details and categorized test instructions.
 
 ## ⚙️ Configuration
 
@@ -320,7 +332,7 @@ python -m pytest tests/test_agent_phase1b.py -v
 Run the foundational test suite:
 
 ```bash
-python tests/test_agent_modern.py
+python -m pytest tests/test_agent_modern.py
 ```
 
 ### Test Coverage
