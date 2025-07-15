@@ -33,6 +33,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=600,  # 10 minutes
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -59,6 +61,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=600,  # 10 minutes
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -81,6 +85,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=600,
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -109,6 +115,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=None,  # Should use default
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -137,6 +145,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=None,  # Should use custom default
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         # Create criterion with 3 minute default (180 seconds)
@@ -164,6 +174,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=600,  # 10 minutes
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -192,6 +204,8 @@ class TestTimeLimitCriterion:
             time_limit_secs=600,  # 10 minutes
             citations=[],
             citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
         )
 
         criterion = TimeLimitCriterion()

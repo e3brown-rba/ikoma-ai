@@ -39,6 +39,10 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 
 ### Heuristics & Iteration Control Tests
 - `test_iteration_limit.py` - Tests for the iteration-count termination heuristic, including CLI/env overrides and integration
+- `test_goal_criterion.py` - Unit tests for the goal satisfaction termination criterion
+- `test_time_limit_criterion.py` - Unit tests for the time limit termination criterion
+- `test_reflect_termination.py` - Integration tests for reflect/termination logic
+- `test_goal_satisfaction_integration.py` - Integration tests for goal satisfaction and agent termination
 
 ## Running Tests
 

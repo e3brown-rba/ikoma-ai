@@ -9,7 +9,7 @@ from pathlib import Path
 
 # Checkpoint functionality temporarily disabled due to langgraph version changes
 # from langgraph_checkpoint.sqlite import SqliteSaver
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, TypedDict, cast
 
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
@@ -20,7 +20,6 @@ from rich.console import Console
 from rich.panel import Panel
 
 from agent.constants import MAX_ITER, MAX_MINS
-from agent.heuristics import IterationLimitCriterion, TimeLimitCriterion
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
@@ -47,6 +46,10 @@ class AgentState(TypedDict):
     time_limit_secs: int | None  # New: for continuous mode time limit
     citations: list[dict[str, Any]] | None  # New: citation tracking
     citation_counter: int | None  # New: tracks next citation ID
+    reflection_json: dict[str, Any] | None  # New: raw reflection data for heuristics
+    reflection_failures: (
+        list[dict[str, Any]] | None
+    )  # New: history of reflection failures
 
 
 # --- Continuous Mode Safety Functions ---
@@ -55,8 +58,9 @@ def should_abort_continuous(state: AgentState) -> bool:
 
     TODO remove in v0.4 - this is now a thin wrapper that delegates to criteria.
     """
-    criteria = [IterationLimitCriterion(), TimeLimitCriterion()]
-    return any(c.should_stop(state) for c in criteria)
+    from agent.heuristics import DEFAULT_CRITERIA
+
+    return any(c.should_stop(state) for c in DEFAULT_CRITERIA)
 
 
 # --- File Tools moved to tools/fs_tools.py ---
@@ -547,6 +551,10 @@ def reflect_node(
         # Increment iteration counter
         state["current_iteration"] = state.get("current_iteration", 0) + 1
 
+        # Ensure reflection_failures is initialized
+        if "reflection_failures" not in state or state["reflection_failures"] is None:
+            state["reflection_failures"] = []
+
         # Termination criteria are now fully centralised
 
         # Format execution results for reflection
@@ -597,22 +605,13 @@ Return only the JSON, no other text."""
 
             reflection_data = json.loads(reflection_text)
 
-            # Determine next action
-            task_completed = reflection_data.get("task_completed", False)
-            next_action = reflection_data.get("next_action", "end")
+            # Persist reflection for downstream heuristics
+            state["reflection_json"] = reflection_data
 
-            # Initialize termination criteria
-            criteria = [
-                IterationLimitCriterion(),
-                TimeLimitCriterion(),
-            ]
+            # Unified stop-check using all criteria
+            from agent.heuristics import DEFAULT_CRITERIA
 
-            # Check if any termination criterion is met
-            should_stop = (
-                task_completed
-                or next_action == "end"
-                or any(c.should_stop(state) for c in criteria)
-            )
+            should_stop = any(c.should_stop(state) for c in DEFAULT_CRITERIA)
 
             if should_stop:
                 state["continue_planning"] = False
@@ -658,8 +657,18 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
             )
 
         except (json.JSONDecodeError, ValueError) as e:
-            print(f"Error parsing reflection: {e}")
-            # Fallback decision
+            # Record failure
+            failure_record = {
+                "error": str(e),
+                "raw_response": response.content,
+                "prompt": reflection_prompt,
+                "timestamp": time.time(),
+            }
+            if state["reflection_failures"] is None:
+                state["reflection_failures"] = []
+            failures = cast(list[dict[str, Any]], state["reflection_failures"])
+            failures.append(failure_record)
+            state["reflection_failures"] = failures
             state["continue_planning"] = False
 
             # Create fallback response

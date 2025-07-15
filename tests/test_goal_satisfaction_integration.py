@@ -1,18 +1,69 @@
 #!/usr/bin/env python3
-"""Test suite for reflect_node termination behavior."""
+"""Integration tests for goal satisfaction termination heuristic."""
 
 from unittest.mock import Mock, patch
-
-import pytest
 
 from agent.agent import AgentState, reflect_node
 
 
-class TestReflectTermination:
-    """Test reflect_node termination behavior with unified criteria."""
+class TestGoalSatisfactionIntegration:
+    """Integration tests for goal satisfaction termination heuristic."""
 
-    def test_reflect_node_continues_when_no_criteria_met(self) -> None:
-        """Test that reflect_node continues when no termination criteria are met."""
+    def test_reflect_node_stops_when_goal_satisfied(self) -> None:
+        """Test that reflect_node stops when goal satisfaction criterion is met."""
+        # Mock LLM response that indicates completion
+        mock_llm = Mock()
+        mock_llm.invoke.return_value.content = (
+            '{"task_completed": true, "next_action": "end", "reasoning": "test"}'
+        )
+
+        # Create a mock message
+        mock_message = Mock()
+        mock_message.content = "Test user request"
+
+        state = AgentState(
+            messages=[
+                mock_message
+            ],  # Add a message so reflect_node can access messages[-1]
+            memory_context=None,
+            user_profile=None,
+            session_summary=None,
+            current_plan=None,
+            execution_results=[
+                {
+                    "status": "success",
+                    "step": 1,
+                    "description": "Test",
+                    "result": "OK",
+                }
+            ],
+            reflection=None,
+            continue_planning=True,
+            max_iterations=25,
+            current_iteration=5,
+            start_time=1000.0,
+            time_limit_secs=600,
+            citations=[],
+            citation_counter=1,
+            reflection_json=None,
+            reflection_failures=None,
+        )
+
+        config = {"configurable": {"user_id": "test"}}
+        mock_store = Mock()
+
+        result = reflect_node(state, config, store=mock_store, llm=mock_llm)
+
+        # Should stop planning
+        assert result["continue_planning"] is False
+        assert result["reflection_json"] == {
+            "task_completed": True,
+            "next_action": "end",
+            "reasoning": "test",
+        }
+
+    def test_reflect_node_continues_when_goal_not_satisfied(self) -> None:
+        """Test that reflect_node continues when goal satisfaction criterion is not met."""
         # Mock LLM response that doesn't indicate completion
         mock_llm = Mock()
         mock_llm.invoke.return_value.content = (
@@ -31,7 +82,14 @@ class TestReflectTermination:
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=[],
+            execution_results=[
+                {
+                    "status": "success",
+                    "step": 1,
+                    "description": "Test",
+                    "result": "OK",
+                }
+            ],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
@@ -61,12 +119,12 @@ class TestReflectTermination:
             "reasoning": "test",
         }
 
-    def test_reflect_node_stops_when_goal_satisfied(self) -> None:
-        """Test that reflect_node stops when goal satisfaction criterion is met."""
-        # Mock LLM response that indicates completion
+    def test_reflect_node_handles_next_action_end(self) -> None:
+        """Test that reflect_node stops when next_action is 'end' even if task_completed is false."""
+        # Mock LLM response with next_action: "end" but task_completed: false
         mock_llm = Mock()
         mock_llm.invoke.return_value.content = (
-            '{"task_completed": true, "next_action": "end", "reasoning": "test"}'
+            '{"task_completed": false, "next_action": "end", "reasoning": "test"}'
         )
 
         # Create a mock message
@@ -81,7 +139,14 @@ class TestReflectTermination:
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=[],
+            execution_results=[
+                {
+                    "status": "success",
+                    "step": 1,
+                    "description": "Test",
+                    "result": "OK",
+                }
+            ],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
@@ -99,20 +164,20 @@ class TestReflectTermination:
 
         result = reflect_node(state, config, store=mock_store, llm=mock_llm)
 
-        # Should stop planning
+        # Should stop planning due to next_action: "end"
         assert result["continue_planning"] is False
         assert result["reflection_json"] == {
-            "task_completed": True,
+            "task_completed": False,
             "next_action": "end",
             "reasoning": "test",
         }
 
-    def test_reflect_node_stops_when_iteration_limit_reached(self) -> None:
-        """Test that reflect_node stops when iteration limit criterion is met."""
-        # Mock LLM response that doesn't indicate completion
+    def test_reflect_node_handles_malformed_json_gracefully(self) -> None:
+        """Test that reflect_node handles malformed JSON responses gracefully."""
+        # Mock LLM response with malformed JSON
         mock_llm = Mock()
         mock_llm.invoke.return_value.content = (
-            '{"task_completed": false, "next_action": "continue", "reasoning": "test"}'
+            '{"task_completed": true, "next_action": "end", "reasoning": "test"'
         )
 
         # Create a mock message
@@ -127,11 +192,18 @@ class TestReflectTermination:
             user_profile=None,
             session_summary=None,
             current_plan=None,
-            execution_results=[],
+            execution_results=[
+                {
+                    "status": "success",
+                    "step": 1,
+                    "description": "Test",
+                    "result": "OK",
+                }
+            ],
             reflection=None,
             continue_planning=True,
             max_iterations=25,
-            current_iteration=25,  # At the limit
+            current_iteration=5,
             start_time=1000.0,
             time_limit_secs=600,
             citations=[],
@@ -143,64 +215,20 @@ class TestReflectTermination:
         config = {"configurable": {"user_id": "test"}}
         mock_store = Mock()
 
-        result = reflect_node(state, config, store=mock_store, llm=mock_llm)
-
-        # Should stop planning due to iteration limit
-        assert result["continue_planning"] is False
-        assert result["reflection_json"] == {
-            "task_completed": False,
-            "next_action": "continue",
-            "reasoning": "test",
-        }
-
-    def test_reflect_node_stops_when_time_limit_reached(self) -> None:
-        """Test that reflect_node stops when time limit criterion is met."""
-        # Mock LLM response that doesn't indicate completion
-        mock_llm = Mock()
-        mock_llm.invoke.return_value.content = (
-            '{"task_completed": false, "next_action": "continue", "reasoning": "test"}'
-        )
-
-        # Create a mock message
-        mock_message = Mock()
-        mock_message.content = "Test user request"
-
-        state = AgentState(
-            messages=[
-                mock_message
-            ],  # Add a message so reflect_node can access messages[-1]
-            memory_context=None,
-            user_profile=None,
-            session_summary=None,
-            current_plan=None,
-            execution_results=[],
-            reflection=None,
-            continue_planning=True,
-            max_iterations=25,
-            current_iteration=5,
-            start_time=1000.0,
-            time_limit_secs=300,  # 5 minutes
-            citations=[],
-            citation_counter=1,
-            reflection_json=None,
-            reflection_failures=None,
-        )
-
-        config = {"configurable": {"user_id": "test"}}
-        mock_store = Mock()
-
-        # Mock time.time to return a time that exceeds the limit
-        with patch("time.time", return_value=1400.0):  # 400 seconds later
+        # Mock time.time to ensure we're within the time limit
+        with patch(
+            "time.time", return_value=1200.0
+        ):  # 200 seconds later (under 600 limit)
             result = reflect_node(state, config, store=mock_store, llm=mock_llm)
 
-        # Should stop planning due to time limit
+        # Should stop planning due to JSON parsing error
         assert result["continue_planning"] is False
-        assert result["reflection_json"] == {
-            "task_completed": False,
-            "next_action": "continue",
-            "reasoning": "test",
-        }
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+        # Should have recorded the failure
+        assert result["reflection_failures"] is not None
+        assert len(result["reflection_failures"]) == 1
+        failure = result["reflection_failures"][0]
+        assert "error" in failure
+        assert "raw_response" in failure
+        assert "prompt" in failure
+        assert "timestamp" in failure
+        assert failure["raw_response"].startswith('{"task_completed"')

@@ -115,6 +115,20 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Comprehensive test suite with 11 tests covering logic, env overrides, and CLI integration
   - Full mypy strict compliance with `Mapping[str, Any]` type signatures
   - All ruff lint and format checks pass
+- ✅ **Issue #11: Termination heuristic — wall-clock time limit (autonomy)** - COMPLETED
+  - `TimeLimitCriterion` class with proper type safety and `Mapping[str, Any]` interface
+  - Unified criteria engine in `reflect_node` (IterationLimitCriterion + TimeLimitCriterion)
+  - Environment variable `IKOMA_MAX_MINS` with CLI `--time-limit` override
+  - Comprehensive test suite with 7 unit tests and 4 integration tests
+  - Full mypy compliance with explicit type annotations and bool conversion
+  - All ruff lint and format checks pass
+  - Documentation updates in README, config template, and continuous mode docs
+- ✅ **Issue #12**: Termination heuristic — goal-satisfaction (autonomy) - COMPLETED
+  - Implements `GoalSatisfiedCriterion` for agent stop when goal is met (reflection_json: task_completed/next_action)
+  - Unified criteria engine in `reflect_node` and `should_abort_continuous` (all criteria checked together)
+  - Persists raw reflection JSON in agent state for robust, extensible checks
+  - Adds robust error handling with failure tracking (reflection_failures history)
+  - Comprehensive unit and integration tests for all stop conditions and error cases
 
 #### **Key Milestones:**
 - **10 Jul**: SerpAPI spike
@@ -123,6 +137,7 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
 - **19 Jul**: Security-first web content extraction ✅
 - **22 Jul**: Citation tracking system ✅
 - **25 Jul**: Iteration termination heuristic ✅
+- **Current**: Wall-clock time termination heuristic ✅
 
 ---
 
@@ -164,6 +179,29 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Full mypy compliance for core functionality
   - Clean separation of interactive vs continuous modes
   - Documentation with examples and troubleshooting guide
+- ✅ **Issue #10**: Termination heuristic — iteration-count (autonomy) - COMPLETED
+  - Pluggable heuristic system with `TerminationCriterion` base class
+  - `IterationLimitCriterion` implementation for iteration-based termination
+  - Environment variable override via `IKOMA_MAX_ITER`
+  - CLI argument `--max-iter` with priority over environment and `--max-iterations`
+  - Integration with `reflect_node` using heuristic engine (open for future criteria)
+  - Comprehensive test suite with 11 tests covering logic, env overrides, and CLI integration
+  - Full mypy strict compliance with `Mapping[str, Any]` type signatures
+  - All ruff lint and format checks pass
+- ✅ **Issue #11**: Termination heuristic — wall-clock time limit (autonomy) - COMPLETED
+  - `TimeLimitCriterion` class with proper type safety and `Mapping[str, Any]` interface
+  - Unified criteria engine in `reflect_node` (IterationLimitCriterion + TimeLimitCriterion)
+  - Environment variable `IKOMA_MAX_MINS` with CLI `--time-limit` override
+  - Comprehensive test suite with 7 unit tests and 4 integration tests
+  - Full mypy compliance with explicit type annotations and bool conversion
+  - All ruff lint and format checks pass
+  - Documentation updates in README, config template, and continuous mode docs
+- ✅ **Issue #12**: Termination heuristic — goal-satisfaction (autonomy) - COMPLETED
+  - Implements `GoalSatisfiedCriterion` for agent stop when goal is met (reflection_json: task_completed/next_action)
+  - Unified criteria engine in `reflect_node` and `should_abort_continuous` (all criteria checked together)
+  - Persists raw reflection JSON in agent state for robust, extensible checks
+  - Adds robust error handling with failure tracking (reflection_failures history)
+  - Comprehensive unit and integration tests for all stop conditions and error cases
 
 #### **Key Features Implemented:**
 - **Safety Guardrails**: Hard limits on iterations (25) and time (10 minutes)
@@ -340,7 +378,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Content Extraction**: HTML→Text extractor with hybrid architecture
 - ✅ **Citation System**: Source tracking and citation management for Phase 2 internet tools
 - ✅ **Continuous Mode**: Unattended execution capabilities with safety guardrails
-- ✅ **Termination Heuristics**: Pluggable iteration-based termination system
+- ✅ **Termination Heuristics**: Pluggable iteration-based and goal-satisfaction termination system
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
 
