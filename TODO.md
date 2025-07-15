@@ -232,7 +232,15 @@
   - Full mypy compliance for core functionality
   - Clean separation of interactive vs continuous modes
   - Documentation with examples and troubleshooting guide
-- **Issue #10**: Termination heuristic — iteration-count (autonomy)
+- ✅ **Issue #10**: Termination heuristic — iteration-count (autonomy) - COMPLETED
+  - Pluggable heuristic system with `TerminationCriterion` base class
+  - `IterationLimitCriterion` implementation for iteration-based termination
+  - Environment variable override via `IKOMA_MAX_ITER`
+  - CLI argument `--max-iter` with priority over environment and `--max-iterations`
+  - Integration with `reflect_node` using heuristic engine (open for future criteria)
+  - Comprehensive test suite with 11 tests covering logic, env overrides, and CLI integration
+  - Full mypy strict compliance with `Mapping[str, Any]` type signatures
+  - All ruff lint and format checks pass
 - **Issue #11**: Termination heuristic — goal-satisfaction (autonomy)
 - **Issue #12**: Termination heuristic — time-limit (autonomy)
 - **Issue #13**: Human checkpoint — confirm continuation (ux)
