@@ -19,6 +19,8 @@ from langgraph.graph.message import add_messages
 from rich.console import Console
 from rich.panel import Panel
 
+from agent.constants import MAX_ITER
+from agent.heuristics import IterationLimitCriterion
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
@@ -607,15 +609,20 @@ Return only the JSON, no other text."""
             # Determine next action
             task_completed = reflection_data.get("task_completed", False)
             next_action = reflection_data.get("next_action", "end")
-            max_iterations = state.get("max_iterations", 3)
-            current_iteration = state.get("current_iteration", 1)
 
-            # Decision logic
-            if (
+            # Initialize termination criteria
+            criteria = [
+                IterationLimitCriterion(),  # future: GoalSatisfiedCriterion(), TimeLimitCriterion()
+            ]
+
+            # Check if any termination criterion is met
+            should_stop = (
                 task_completed
                 or next_action == "end"
-                or current_iteration >= max_iterations
-            ):
+                or any(c.should_stop(state) for c in criteria)
+            )
+
+            if should_stop:
                 state["continue_planning"] = False
 
                 # Create final response with citation support
@@ -851,7 +858,7 @@ def interactive_chat(agent: Any) -> None:
                 "execution_results": None,
                 "reflection": None,
                 "continue_planning": False,
-                "max_iterations": 3,
+                "max_iterations": MAX_ITER,
                 "current_iteration": 0,
                 "start_time": None,
                 "time_limit_secs": None,
@@ -894,6 +901,11 @@ def main() -> None:
         help="Iteration cap in continuous mode (default: 25)",
     )
     parser.add_argument(
+        "--max-iter",
+        type=int,
+        help="Override iteration cap (overrides --max-iterations and environment)",
+    )
+    parser.add_argument(
         "--time-limit",
         type=int,
         default=10,
@@ -931,7 +943,7 @@ def main() -> None:
             "execution_results": None,
             "reflection": None,
             "continue_planning": False,
-            "max_iterations": args.max_iterations,
+            "max_iterations": args.max_iter or args.max_iterations,
             "current_iteration": 0,
             "start_time": time.time(),
             "time_limit_secs": args.time_limit * 60,
