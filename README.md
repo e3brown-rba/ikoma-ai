@@ -2,7 +2,7 @@
 
 **iKOMA is an intelligent local AI assistant that uses a plan-execute-reflect architecture, persistent memory, and dynamic tool integration to automate complex multi-step tasks with reliability and learning.**
 
-[![Test Coverage](https://img.shields.io/badge/coverage-39%25-yellow.svg)](https://github.com/your-repo/iKOMA) [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/your-repo/iKOMA/releases)
+[![Test Coverage](https://img.shields.io/badge/coverage-39%25-yellow.svg)](https://github.com/your-repo/iKOMA) [![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/your-repo/iKOMA/releases)
 
 A sophisticated local AI assistant powered by LangGraph with advanced **plan-execute-reflect** capabilities, persistent memory, and continuous learning. Transform complex tasks into intelligent, multi-step execution plans.
 
@@ -20,6 +20,7 @@ A sophisticated local AI assistant powered by LangGraph with advanced **plan-exe
 - 🔍 **Semantic Search**: Find relevant memories and context by meaning, not just keywords
 - 🏗️ **Modern Architecture**: Built on LangGraph for reliable, scalable agent workflows with 60% improved performance
 - 🌐 **Security-First Web Content Extraction**: OWASP-compliant domain filtering, high-quality HTML→Text extraction, and ChromaDB storage with quality scoring
+- 🤖 **Continuous Mode**: Autonomous execution with safety guardrails (25 iterations, 10-minute limits)
 
 ## 🏗️ Architecture Overview
 
@@ -103,7 +104,7 @@ pip install -r requirements.txt
 
 ## 🎯 Usage Examples
 
-### Intelligent Multi-Step Planning
+### Interactive Chat Mode
 
 ```
 🧑‍💻 You: "List all files, read the first one, and create a summary file"
@@ -121,6 +122,22 @@ Execution Results:
 
 Task completed! Successfully processed files and created summary.
 ```
+
+### Continuous Mode (Autonomous)
+
+```bash
+# Run autonomously with safety limits
+python agent/agent.py --continuous --goal "Research and summarize Python best practices"
+
+# Custom limits for complex tasks
+python agent/agent.py --continuous --goal "Create a web application project structure" --max-iterations 15 --time-limit 20
+```
+
+**Safety Features:**
+- ⏱️ **Time Limit**: Maximum 10 minutes (configurable)
+- 🔄 **Iteration Cap**: Maximum 25 iterations (configurable)  
+- 🛑 **Kill Switch**: Press `Ctrl-C` to abort anytime
+- ⚠️ **Safety Banner**: Clear warnings before autonomous execution
 
 ### Mathematical Problem Solving
 

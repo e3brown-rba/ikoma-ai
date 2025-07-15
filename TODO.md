@@ -222,8 +222,16 @@
   - Demo citations for dashboard testing and user experience
   - Clean CI-ready codebase with robust type annotations and linting
 
-### 📋 Epic E-02: Continuous Mode (Planned)
-- **Issue #9**: Add `--continuous` CLI flag (autonomy)
+### ✅ Epic E-02: Continuous Mode (COMPLETED)
+- ✅ **Issue #9**: Add `--continuous` CLI flag (autonomy) - COMPLETED
+  - Modern CLI architecture with argparse for clean argument parsing
+  - Safety guardrails with hard limits (25 iterations, 10 minutes default)
+  - Rich safety banner with clear warnings and kill-switch (Ctrl-C)
+  - Proper exit codes (0=success, 1=error, 2=argparse error)
+  - Comprehensive test coverage (10 tests) with safety function validation
+  - Full mypy compliance for core functionality
+  - Clean separation of interactive vs continuous modes
+  - Documentation with examples and troubleshooting guide
 - **Issue #10**: Termination heuristic — iteration-count (autonomy)
 - **Issue #11**: Termination heuristic — goal-satisfaction (autonomy)
 - **Issue #12**: Termination heuristic — time-limit (autonomy)
