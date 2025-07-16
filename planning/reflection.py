@@ -29,9 +29,7 @@ class PlanRepairFailure(Exception):
 
 
 def build_reflection_prompt(
-    invalid_plan: str,
-    validation_error: str,
-    schema_snippet: str | None = None
+    invalid_plan: str, validation_error: str, schema_snippet: str | None = None
 ) -> str:
     """Build a reflection prompt to help the LLM self-correct invalid plans.
 
@@ -76,7 +74,7 @@ def repair_plan(
     invalid_plan: str,
     validation_error: str,
     retries: int = 1,
-    schema_snippet: str | None = None
+    schema_snippet: str | None = None,
 ) -> str:
     """Prompt the LLM to self-correct an invalid plan JSON.
 
@@ -125,8 +123,7 @@ def repair_plan(
 
     # All attempts failed
     raise PlanRepairFailure(
-        f"Exceeded plan repair retries ({retries} attempts)",
-        attempts=retries
+        f"Exceeded plan repair retries ({retries} attempts)", attempts=retries
     )
 
 

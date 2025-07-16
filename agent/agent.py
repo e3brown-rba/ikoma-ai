@@ -300,7 +300,9 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
                 state["continue_planning"] = True
             except Exception as e:
                 # Self-reflection retry (Issue-18)
-                max_retries = get_max_plan_retries() - 1  # -1 because first attempt already failed
+                max_retries = (
+                    get_max_plan_retries() - 1
+                )  # -1 because first attempt already failed
                 try:
                     repaired_plan = repair_plan(
                         llm=llm,

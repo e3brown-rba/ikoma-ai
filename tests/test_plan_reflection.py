@@ -79,7 +79,10 @@ class TestPlanReflection:
 
         result = repair_plan(mock_llm, invalid_plan, validation_error, retries=1)
 
-        assert result == '{"plan": [{"step": 1, "tool_name": "test", "args": {}, "description": "test"}], "reasoning": "test"}'
+        assert (
+            result
+            == '{"plan": [{"step": 1, "tool_name": "test", "args": {}, "description": "test"}], "reasoning": "test"}'
+        )
         mock_llm.invoke.assert_called_once()
 
     def test_repair_plan_success_second_attempt(self):
@@ -98,7 +101,10 @@ class TestPlanReflection:
 
         result = repair_plan(mock_llm, invalid_plan, validation_error, retries=2)
 
-        assert result == '{"plan": [{"step": 1, "tool_name": "test", "args": {}, "description": "test"}], "reasoning": "test"}'
+        assert (
+            result
+            == '{"plan": [{"step": 1, "tool_name": "test", "args": {}, "description": "test"}], "reasoning": "test"}'
+        )
         assert mock_llm.invoke.call_count == 2
 
     def test_repair_plan_handles_markdown_code_blocks(self):
@@ -167,7 +173,9 @@ class TestPlanReflection:
         """Test that repair fails when LLM returns invalid JSON."""
         mock_llm = Mock()
         mock_response = Mock()
-        mock_response.content = '{"plan": [{"step": 1, "tool_name": "test"}]'  # Missing closing brace
+        mock_response.content = (
+            '{"plan": [{"step": 1, "tool_name": "test"}]'  # Missing closing brace
+        )
         mock_llm.invoke.return_value = mock_response
 
         invalid_plan = '{"plan": [{"step": 1}]}'
@@ -225,10 +233,10 @@ class TestPlanReflectionIntegration:
                     "step": 1,
                     "tool_name": "list_sandbox_files",
                     "args": {"query": ""},
-                    "description": "List available files"
+                    "description": "List available files",
                 }
             ],
-            "reasoning": "Start by exploring what files are available"
+            "reasoning": "Start by exploring what files are available",
         }
         mock_response.content = json.dumps(valid_plan)
         mock_llm.invoke.return_value = mock_response
