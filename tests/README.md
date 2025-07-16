@@ -8,6 +8,9 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 - `test_agent_citations.py` - Tests for agent citation functionality
 - `test_agent_phase1b.py` - Comprehensive agent functionality tests
 
+### Schema/Validation Tests
+- `test_plan_schema.py` - Plan schema and validation contract tests (strictness, roundtrip, error handling)
+
 ### Citation System Tests
 - `test_citations.py` - Core citation management tests
 - `test_citation_performance.py` - Performance tests for citation system
@@ -61,6 +64,9 @@ To run specific test categories:
 ```bash
 # Agent tests
 python -m pytest tests/test_agent_*.py -v
+
+# Schema/Validation tests
+python -m pytest tests/test_plan_schema.py -v
 
 # Citation tests
 python -m pytest tests/test_citation_*.py -v

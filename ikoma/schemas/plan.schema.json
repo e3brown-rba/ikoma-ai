@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ikoma.ai/plan.schema.json",
+  "version": "1.0.0",
+  "title": "iKOMA Plan Schema",
+  "description": "Schema for validating LLM-generated execution plans",
+  "type": "object",
+  "properties": {
+    "plan": {
+      "title": "Plan",
+      "description": "List of plan steps",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "title": "PlanStep",
+        "description": "A single step in a plan with tool execution details",
+        "type": "object",
+        "properties": {
+          "step": {
+            "title": "Step",
+            "description": "Step number (1-based)",
+            "type": "integer",
+            "minimum": 1
+          },
+          "tool_name": {
+            "title": "Tool Name",
+            "description": "Name of the tool to execute",
+            "type": "string"
+          },
+          "args": {
+            "title": "Args",
+            "description": "Arguments for the tool",
+            "type": "object"
+          },
+          "description": {
+            "title": "Description",
+            "description": "Human-readable description of what this step accomplishes",
+            "type": "string"
+          },
+          "citations": {
+            "title": "Citations",
+            "description": "Optional citation IDs for this step",
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "default": null
+          }
+        },
+        "required": ["step", "tool_name", "args", "description"],
+        "additionalProperties": false
+      }
+    },
+    "reasoning": {
+      "title": "Reasoning",
+      "description": "Explanation of why this plan will achieve the goal",
+      "type": "string"
+    }
+  },
+  "required": ["plan", "reasoning"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "plan": [
+        {
+          "step": 1,
+          "tool_name": "list_sandbox_files",
+          "args": {"query": ""},
+          "description": "List available files in sandbox"
+        }
+      ],
+      "reasoning": "Start by exploring what files are available"
+    }
+  ]
+} 

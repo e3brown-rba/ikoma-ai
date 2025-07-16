@@ -194,6 +194,10 @@ class ToolLoader:
         """Get the schema version."""
         return str(self.schema.get("version", "unknown"))
 
+    def get_tool_names(self) -> list[str]:
+        """Get list of available tool names from the schema."""
+        return [tool["name"] for tool in self.schema.get("tools", [])]
+
 
 # Global instance for single loading
 tool_loader = ToolLoader()
