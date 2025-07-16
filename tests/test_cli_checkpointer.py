@@ -104,9 +104,7 @@ class TestCheckpointCLI:
 
     def test_main_show_command_with_steps(self):
         """Test main function with show command and --steps flag."""
-        with patch(
-            "sys.argv", ["ikoma", "show", "test-run-id", "--steps"]
-        ):
+        with patch("sys.argv", ["ikoma", "show", "test-run-id", "--steps"]):
             with patch("agent.cli.checkpoint_cli.show_run") as mock_show:
                 with patch("sys.exit") as mock_exit:
                     main()
