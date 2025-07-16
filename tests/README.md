@@ -32,6 +32,7 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 
 ### Persistence Tests
 - `test_persistence_vector_store.py` - Vector store persistence tests
+- `test_checkpointer.py` - SQLite conversation-state backend tests for crash recovery and exact resumption
 
 ### CLI and Interface Tests
 - `test_cli_continuous.py` - Command-line interface continuous mode tests
@@ -65,6 +66,9 @@ python -m pytest tests/test_web_*.py -v
 
 # HTTP and network tests
 python -m pytest tests/test_http_*.py tests/test_domain_*.py -v
+
+# Persistence tests
+python -m pytest tests/test_persistence_*.py tests/test_checkpointer.py -v
 ```
 
 To run with coverage:

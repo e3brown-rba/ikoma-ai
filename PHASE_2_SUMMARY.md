@@ -202,6 +202,16 @@ Phase 2 delivers enhanced autonomy and internet integration capabilities, buildi
   - Persists raw reflection JSON in agent state for robust, extensible checks
   - Adds robust error handling with failure tracking (reflection_failures history)
   - Comprehensive unit and integration tests for all stop conditions and error cases
+- ✅ **Issue #13**: Human checkpoint — confirm continuation (ux) - COMPLETED
+  - Human checkpoint system with `HumanCheckpointCriterion` and `should_checkpoint` method
+  - CLI flags `--checkpoint-every/-c` and `--auto` for configuration
+  - Environment variables `IKOMA_CHECKPOINT_EVERY` and `IKOMA_DISABLE_CHECKPOINT`
+  - Rich UI prompt in `agent/ui.py` with `prompt_user_confirm` function
+  - Integration in `reflect_node` after iteration increment
+  - Non-interactive environment auto-continue for CI/headless runs
+  - Comprehensive unit and integration tests (22 tests)
+  - Updated documentation in README and `docs/continuous_mode.md`
+  - All tests pass, linting clean, type safety improved
 
 #### **Key Features Implemented:**
 - **Safety Guardrails**: Hard limits on iterations (25) and time (10 minutes)
@@ -225,24 +235,42 @@ python -m agent.agent --help
 
 #### **Key Milestones:**
 - **15 Jul**: `--continuous` flag ✅
-- **18 Jul**: Termination heuristics (planned)
-- **20 Jul**: Checkpoint UX (planned)
+- **18 Jul**: Termination heuristics ✅
+- **20 Jul**: Checkpoint UX ✅
 
 ---
 
-## 📋 Epic E-03: Short-term Checkpointer (Planned)
+## 🚧 Epic E-03: Short-term Checkpointer (In Progress)
 
-### **Status: 📋 PLANNED**
+### **Status: 🚧 ACTIVE DEVELOPMENT**
 
 **Objective**: Conversations survive restart; state stored in SQLite behind LangGraph memory manager.
 
+#### **Completed Deliverables:**
+- ✅ **Issue #14**: Schema & backend (memory) - COMPLETED
+  - SQLite conversation-state backend using `langgraph_checkpoint.sqlite.SqliteSaver`
+  - Fixed schema with `conversation_steps` table: `run_id`, `step`, `tool_calls` (JSON), timestamp
+  - Environment variable toggle `IKOMA_DISABLE_CHECKPOINTER` and CLI flag `--no-checkpoint`
+  - Single SQLite connection in WAL mode for thread safety
+  - Integration with agent's `create_agent` function for automatic instantiation
+  - Comprehensive test suite with CRUD operations and agent integration
+  - Documentation in `docs/checkpointer.md` and README updates
+  - All tests passing, linting clean, type safety maintained
+
 #### **Planned Deliverables:**
-- **Issue #14**: Schema & backend (memory)
 - **Issue #15**: CRUD API tests (testing)
 - **Issue #16**: `.env` toggle & docs (configuration)
 
+#### **Key Features Implemented:**
+- **Crash Recovery**: Conversations survive agent restarts with exact state resumption
+- **Thread Safety**: WAL mode SQLite with single connection for concurrent access
+- **Configurable**: Environment variable and CLI flag to disable checkpointer
+- **Integration**: Seamless integration with existing agent architecture
+- **Comprehensive Testing**: Full CRUD operations and agent integration tests
+- **Documentation**: Complete setup and usage documentation
+
 #### **Key Milestones:**
-- **24 Jul**: Schema & backend
+- **24 Jul**: Schema & backend ✅
 - **26 Jul**: CRUD API tests
 - **27 Jul**: `.env` toggle & docs
 
@@ -322,7 +350,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 
 1. **Internet Safety Layer**: Domain filtering and rate-limited HTTP client ✅
 2. **Continuous Operation**: Unattended execution with termination heuristics ✅
-3. **Enhanced Memory**: Short-term checkpointer for conversation persistence
+3. **Enhanced Memory**: Short-term checkpointer for conversation persistence 🚧
 4. **Improved Planning**: JSON schema validation and self-reflection
 5. **Better UX**: Live trace visualization and dashboard
 
@@ -359,6 +387,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Citation Rendering** (Issue #8) - COMPLETED
 - ✅ **Continuous Mode** (Issue #9) - COMPLETED
 - ✅ **Iteration Termination Heuristic** (Issue #10) - COMPLETED
+- 🚧 **Short-term Checkpointer** (Issue #14) - IN PROGRESS
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -379,6 +408,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Citation System**: Source tracking and citation management for Phase 2 internet tools
 - ✅ **Continuous Mode**: Unattended execution capabilities with safety guardrails
 - ✅ **Termination Heuristics**: Pluggable iteration-based and goal-satisfaction termination system
+- 🚧 **Short-term Memory**: SQLite conversation-state backend for crash recovery and exact resumption
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
 

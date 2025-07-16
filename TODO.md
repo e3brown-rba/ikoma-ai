@@ -255,10 +255,27 @@
   - Persists raw reflection JSON in agent state for robust, extensible checks
   - Adds robust error handling with failure tracking (reflection_failures history)
   - Comprehensive unit and integration tests for all stop conditions and error cases
-- **Issue #13**: Human checkpoint — confirm continuation (ux)
+- ✅ **Issue #13**: Human checkpoint — confirm continuation (ux) - COMPLETED
+  - Human checkpoint system with `HumanCheckpointCriterion` and `should_checkpoint` method
+  - CLI flags `--checkpoint-every/-c` and `--auto` for configuration
+  - Environment variables `IKOMA_CHECKPOINT_EVERY` and `IKOMA_DISABLE_CHECKPOINT`
+  - Rich UI prompt in `agent/ui.py` with `prompt_user_confirm` function
+  - Integration in `reflect_node` after iteration increment
+  - Non-interactive environment auto-continue for CI/headless runs
+  - Comprehensive unit and integration tests (22 tests)
+  - Updated documentation in README and `docs/continuous_mode.md`
+  - All tests pass, linting clean, type safety improved
 
-### 📋 Epic E-03: Short-term Checkpointer (Planned)
-- **Issue #14**: Schema & backend (memory)
+### 🚧 Epic E-03: Short-term Checkpointer (In Progress)
+- ✅ **Issue #14**: Schema & backend (memory) - COMPLETED
+  - SQLite conversation-state backend using `langgraph_checkpoint.sqlite.SqliteSaver`
+  - Fixed schema with `conversation_steps` table: `run_id`, `step`, `tool_calls` (JSON), timestamp
+  - Environment variable toggle `IKOMA_DISABLE_CHECKPOINTER` and CLI flag `--no-checkpoint`
+  - Single SQLite connection in WAL mode for thread safety
+  - Integration with agent's `create_agent` function for automatic instantiation
+  - Comprehensive test suite with CRUD operations and agent integration
+  - Documentation in `docs/checkpointer.md` and README updates
+  - All tests passing, linting clean, type safety maintained
 - **Issue #15**: CRUD API tests (testing)
 - **Issue #16**: `.env` toggle & docs (configuration)
 
