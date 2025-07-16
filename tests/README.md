@@ -10,6 +10,7 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 
 ### Schema/Validation Tests
 - `test_plan_schema.py` - Plan schema and validation contract tests (strictness, roundtrip, error handling)
+- `test_plan_reflection.py` - Plan self-reflection repair loop and retry logic for invalid plans
 
 ### Citation System Tests
 - `test_citations.py` - Core citation management tests
@@ -67,6 +68,7 @@ python -m pytest tests/test_agent_*.py -v
 
 # Schema/Validation tests
 python -m pytest tests/test_plan_schema.py -v
+python -m pytest tests/test_plan_reflection.py -v
 
 # Citation tests
 python -m pytest tests/test_citation_*.py -v

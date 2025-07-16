@@ -20,6 +20,7 @@ from rich.panel import Panel
 from agent.checkpointer import IkomaCheckpointer
 from agent.constants import MAX_ITER, MAX_MINS
 from ikoma.schemas.plan_models import MalformedPlanError, Plan
+from planning.reflection import PlanRepairFailure, get_max_plan_retries, repair_plan
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
@@ -52,6 +53,7 @@ class AgentState(TypedDict):
     )  # New: history of reflection failures
     checkpoint_every: int | None  # New: for human checkpoint intervals
     last_checkpoint_iter: int | None  # New: tracks last checkpoint iteration
+    stats: dict[str, Any] | None  # New: for tracking repair attempts and metrics
 
 
 # --- Continuous Mode Safety Functions ---
@@ -288,7 +290,7 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
             elif plan_text.startswith("```"):
                 plan_text = plan_text[3:-3].strip()
 
-            # Validate plan using schema
+            # Validate plan using schema with self-reflection retry (Issue-18)
             try:
                 validated_plan = Plan.model_validate_json(plan_text)
                 # Convert PlanStep objects back to dictionaries for state compatibility
@@ -297,7 +299,29 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
                 ]
                 state["continue_planning"] = True
             except Exception as e:
-                raise MalformedPlanError(str(e)) from e
+                # Self-reflection retry (Issue-18)
+                max_retries = get_max_plan_retries() - 1  # -1 because first attempt already failed
+                try:
+                    repaired_plan = repair_plan(
+                        llm=llm,
+                        invalid_plan=plan_text,
+                        validation_error=str(e),
+                        retries=max_retries,
+                    )
+                    # Validate the repaired plan
+                    validated_plan = Plan.model_validate_json(repaired_plan)
+                    state["current_plan"] = [
+                        step.model_dump() for step in validated_plan.plan
+                    ]
+                    state["continue_planning"] = True
+                    # Track repair success in state stats
+                    if state.get("stats") is None:
+                        state["stats"] = {}
+                    stats = cast(dict[str, Any], state["stats"])
+                    stats["plan_retries"] = stats.get("plan_retries", 0) + 1
+                except PlanRepairFailure:
+                    # Repair failed, fall back to original error
+                    raise MalformedPlanError(str(e)) from e
 
         except (json.JSONDecodeError, MalformedPlanError) as e:
             print(f"Error parsing plan: {e}")
