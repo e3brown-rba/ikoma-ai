@@ -74,7 +74,13 @@ class IkomaMemoryManager(BaseCheckpointSaver[Any]):
             return cast(CheckpointTuple, (config, checkpoint, metadata))
         return None
 
-    def put(self, config: RunnableConfig, checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: dict[str, str | int | float]) -> RunnableConfig:
+    def put(
+        self,
+        config: RunnableConfig,
+        checkpoint: Checkpoint,
+        metadata: CheckpointMetadata,
+        new_versions: dict[str, str | int | float],
+    ) -> RunnableConfig:
         """Store checkpoint with metadata."""
         if not config or "configurable" not in config:
             return config
@@ -89,11 +95,7 @@ class IkomaMemoryManager(BaseCheckpointSaver[Any]):
         # Extract state from LangGraph Checkpoint format
         state = checkpoint.get("channel_values", {})
 
-        record = CheckpointRecord(
-            run_id=thread_id,
-            step=step,
-            state=state
-        )
+        record = CheckpointRecord(run_id=thread_id, step=step, state=state)
 
         self.service.save_step(record)
         return config
@@ -104,7 +106,7 @@ class IkomaMemoryManager(BaseCheckpointSaver[Any]):
         *,
         filter: dict[str, Any] | None = None,
         before: RunnableConfig | None = None,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> Iterator[CheckpointTuple]:
         """List checkpoints for a config."""
         if not config or "configurable" not in config:
