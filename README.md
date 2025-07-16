@@ -271,6 +271,10 @@ IKOMA_MAX_MINS=10
 CHECKPOINTER_ENABLED=true
 # Set to 'false' to disable conversation-state persistence on restart
 
+# Plan Schema Configuration
+PLAN_SCHEMA_VERSION=1.0.0
+# Override plan schema version (advanced)
+
 # Debug Configuration
 DEBUG_MODE=false
 LOG_LEVEL=INFO

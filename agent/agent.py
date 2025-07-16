@@ -19,6 +19,7 @@ from rich.panel import Panel
 # Checkpoint functionality for conversation state persistence
 from agent.checkpointer import IkomaCheckpointer
 from agent.constants import MAX_ITER, MAX_MINS
+from ikoma.schemas.plan_models import MalformedPlanError, Plan
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
@@ -221,20 +222,7 @@ def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> Agent
 Available tools:
 {tool_descriptions}
 
-Your task is to analyze the user's request and create a JSON plan with the following structure:
-```json
-{{
-  "plan": [
-    {{
-      "step": 1,
-      "tool_name": "tool_name",
-      "args": {{"arg1": "value1", "arg2": "value2"}},
-      "description": "What this step accomplishes"
-    }}
-  ],
-  "reasoning": "Why this plan will achieve the user's goal"
-}}
-```
+Your task is to analyze the user's request and create a JSON plan that **conforms to the plan schema** (see below) and *nothing else*.
 
 Important guidelines:
 1. Break complex tasks into logical steps
@@ -254,27 +242,6 @@ Citation Guidelines:
 - The execute phase will populate actual citation details
 - For future web tools, include citations when referencing external information
 
-Example with citations:
-```json
-{{
-  "plan": [
-    {{
-      "step": 1,
-      "tool_name": "web_search",
-      "args": {{"query": "Python best practices 2025"}},
-      "description": "Search for current Python best practices [[1]]"
-    }},
-    {{
-      "step": 2,
-      "tool_name": "create_text_file",
-      "args": {{"filename_and_content": "best_practices.txt|||Based on recent research [[1]], here are the top Python practices..."}},
-      "description": "Create file with researched best practices citing source [[1]]"
-    }}
-  ],
-  "reasoning": "This plan searches for current information [[1]] and documents it properly"
-}}
-```
-
 Tool argument examples:
 - list_sandbox_files: {{"query": ""}} or {{"query": "search_term"}}
 - read_text_file: {{"filename": "file.txt"}}
@@ -284,7 +251,22 @@ Tool argument examples:
 
 User's request: {state["messages"][-1].content}
 
-Remember: Return ONLY valid JSON, no other text."""
+Return JSON that **conforms to the plan schema** and *nothing else*:
+
+```json
+{{
+  "plan": [
+    {{
+      "step": 1,
+      "tool_name": "tool_name",
+      "args": {{"arg1": "value1"}},
+      "description": "What this step accomplishes",
+      "citations": [1, 2]
+    }}
+  ],
+  "reasoning": "Why this plan will achieve the user's goal"
+}}
+```"""
 
         # Add memory context if available
         if state.get("memory_context"):
@@ -306,20 +288,18 @@ Remember: Return ONLY valid JSON, no other text."""
             elif plan_text.startswith("```"):
                 plan_text = plan_text[3:-3].strip()
 
-            plan_data = json.loads(plan_text)
-            plan = plan_data.get("plan", [])
+            # Validate plan using schema
+            try:
+                validated_plan = Plan.model_validate_json(plan_text)
+                # Convert PlanStep objects back to dictionaries for state compatibility
+                state["current_plan"] = [
+                    step.model_dump() for step in validated_plan.plan
+                ]
+                state["continue_planning"] = True
+            except Exception as e:
+                raise MalformedPlanError(str(e)) from e
 
-            # Validate plan structure
-            for step in plan:
-                if not all(
-                    key in step for key in ["step", "tool_name", "args", "description"]
-                ):
-                    raise ValueError("Invalid plan structure")
-
-            state["current_plan"] = plan
-            state["continue_planning"] = True
-
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, MalformedPlanError) as e:
             print(f"Error parsing plan: {e}")
             # Intelligent fallback based on request type
             user_request = state["messages"][-1].content.lower()
