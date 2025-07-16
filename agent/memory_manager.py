@@ -143,3 +143,11 @@ class IkomaMemoryManager(BaseCheckpointSaver[Any]):
 
         thread_id = configurable["thread_id"]
         self.service.delete_run(thread_id)
+
+    def remove(self, thread_id: str) -> None:
+        """Remove all checkpoints for a thread (alias for delete_thread)."""
+        self.service.delete_run(thread_id)
+
+    def delete_thread(self, thread_id: str) -> None:
+        """Delete all checkpoints for a thread."""
+        self.service.delete_run(thread_id)

@@ -86,54 +86,68 @@ class TestCheckpointCLI:
 
     def test_main_list_command(self):
         """Test main function with list command."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "list"]):
+        with patch("sys.argv", ["ikoma", "list"]):
             with patch("agent.cli.checkpoint_cli.list_runs") as mock_list:
-                main()
-                mock_list.assert_called_once()
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_list.assert_called_once()
+                    mock_exit.assert_not_called()
 
     def test_main_show_command(self):
         """Test main function with show command."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "show", "test-run-id"]):
+        with patch("sys.argv", ["ikoma", "show", "test-run-id"]):
             with patch("agent.cli.checkpoint_cli.show_run") as mock_show:
-                main()
-                mock_show.assert_called_once_with("test-run-id", False)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_show.assert_called_once_with("test-run-id", False)
+                    mock_exit.assert_not_called()
 
     def test_main_show_command_with_steps(self):
         """Test main function with show command and --steps flag."""
         with patch(
-            "sys.argv", ["ikoma", "checkpoint", "show", "test-run-id", "--steps"]
+            "sys.argv", ["ikoma", "show", "test-run-id", "--steps"]
         ):
             with patch("agent.cli.checkpoint_cli.show_run") as mock_show:
-                main()
-                mock_show.assert_called_once_with("test-run-id", True)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_show.assert_called_once_with("test-run-id", True)
+                    mock_exit.assert_not_called()
 
     def test_main_rm_command(self):
         """Test main function with rm command."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "rm", "test-run-id"]):
+        with patch("sys.argv", ["ikoma", "rm", "test-run-id"]):
             with patch("agent.cli.checkpoint_cli.remove_run") as mock_rm:
-                main()
-                mock_rm.assert_called_once_with("test-run-id", False)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_rm.assert_called_once_with("test-run-id", False)
+                    mock_exit.assert_not_called()
 
     def test_main_rm_command_with_force(self):
         """Test main function with rm command and --force flag."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "rm", "test-run-id", "--force"]):
+        with patch("sys.argv", ["ikoma", "rm", "test-run-id", "--force"]):
             with patch("agent.cli.checkpoint_cli.remove_run") as mock_rm:
-                main()
-                mock_rm.assert_called_once_with("test-run-id", True)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_rm.assert_called_once_with("test-run-id", True)
+                    mock_exit.assert_not_called()
 
     def test_main_clear_all_command(self):
         """Test main function with clear-all command."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "clear-all"]):
+        with patch("sys.argv", ["ikoma", "clear-all"]):
             with patch("agent.cli.checkpoint_cli.clear_all_runs") as mock_clear:
-                main()
-                mock_clear.assert_called_once_with(False)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_clear.assert_called_once_with(False)
+                    mock_exit.assert_not_called()
 
     def test_main_clear_all_command_with_force(self):
         """Test main function with clear-all command and --force flag."""
-        with patch("sys.argv", ["ikoma", "checkpoint", "clear-all", "--force"]):
+        with patch("sys.argv", ["ikoma", "clear-all", "--force"]):
             with patch("agent.cli.checkpoint_cli.clear_all_runs") as mock_clear:
-                main()
-                mock_clear.assert_called_once_with(True)
+                with patch("sys.exit") as mock_exit:
+                    main()
+                    mock_clear.assert_called_once_with(True)
+                    mock_exit.assert_not_called()
 
 
 class TestCheckpointCLIWithDatabase:
@@ -386,7 +400,9 @@ class TestCheckpointCLIErrorHandling:
             return_value="/nonexistent/path/db.sqlite",
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                list_runs()
+                with pytest.raises(SystemExit) as exc_info:
+                    list_runs()
+                assert exc_info.value.code == 1
                 captured = capsys.readouterr()
                 assert "Error listing runs" in captured.out
 
@@ -397,7 +413,9 @@ class TestCheckpointCLIErrorHandling:
             return_value="/nonexistent/path/db.sqlite",
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                show_run("test-run")
+                with pytest.raises(SystemExit) as exc_info:
+                    show_run("test-run")
+                assert exc_info.value.code == 1
                 captured = capsys.readouterr()
                 assert "Error showing run" in captured.out
 
@@ -408,7 +426,9 @@ class TestCheckpointCLIErrorHandling:
             return_value="/nonexistent/path/db.sqlite",
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                remove_run("test-run")
+                with pytest.raises(SystemExit) as exc_info:
+                    remove_run("test-run")
+                assert exc_info.value.code == 1
                 captured = capsys.readouterr()
                 assert "Error removing run" in captured.out
 
@@ -419,6 +439,8 @@ class TestCheckpointCLIErrorHandling:
             return_value="/nonexistent/path/db.sqlite",
         ):
             with patch("pathlib.Path.exists", return_value=True):
-                clear_all_runs()
+                with pytest.raises(SystemExit) as exc_info:
+                    clear_all_runs()
+                assert exc_info.value.code == 1
                 captured = capsys.readouterr()
                 assert "Error clearing all runs" in captured.out
