@@ -46,6 +46,16 @@ python run_agent.py
 | `IKOMA_DISABLE_CHECKPOINTER` | `false` | Disable SQLite persistence |
 | `CONVERSATION_DB_PATH` | `agent/memory/conversations.sqlite` | Database file path |
 
+### Future Environment Variables
+
+The following variables are planned for future releases:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IKOMA_CHECKPOINT_COMPRESSION` | `false` | Enable compression for large payloads |
+| `IKOMA_CHECKPOINT_CLEANUP_DAYS` | `30` | Auto-cleanup old checkpoints |
+| `IKOMA_CHECKPOINT_ENCRYPTION` | `false` | Enable encryption for sensitive data |
+
 ## Database Schema
 
 The checkpointer uses a single table with the following schema:
@@ -66,6 +76,50 @@ CREATE TABLE conversation_steps (
 - **`step`**: Sequential step number within the conversation
 - **`tool_calls`**: JSON-serialized tool call data
 - **`ts`**: Timestamp when the step was recorded
+
+## CLI Management
+
+Ikoma provides a command-line interface for managing checkpoints:
+
+### List Checkpoint Runs
+
+```bash
+# List all runs (default limit: 50)
+ikoma checkpoint list
+
+# List with custom limit
+ikoma checkpoint list --limit 100
+```
+
+### Show Run Details
+
+```bash
+# Show basic run information
+ikoma checkpoint show <run_id>
+
+# Show detailed step information
+ikoma checkpoint show <run_id> --steps
+```
+
+### Remove Runs
+
+```bash
+# Remove a specific run (with confirmation)
+ikoma checkpoint rm <run_id>
+
+# Remove without confirmation
+ikoma checkpoint rm <run_id> --force
+```
+
+### Clear All Runs
+
+```bash
+# Clear all runs (with confirmation)
+ikoma checkpoint clear-all
+
+# Clear all runs without confirmation
+ikoma checkpoint clear-all --force
+```
 
 ## Manual Database Management
 
@@ -189,14 +243,27 @@ app = workflow.compile(checkpointer=checkpointer)
 
 ## Architecture
 
+The checkpointer system consists of multiple layers:
+
+### Service Layer
+- **`CheckpointRecord`**: Pydantic model for type-safe checkpoint data
+- **`CheckpointerService`**: CRUD operations with thread-safe singleton pattern
+- **`SQLiteCRUDMixin`**: Low-level SQLite operations with proper parameterization
+
+### LangGraph Integration
+- **`IkomaMemoryManager`**: Implements LangGraph's `BaseCheckpointSaver` interface
+- **`IkomaCheckpointer`**: Legacy interface for backward compatibility
+
+### Data Flow
+
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Agent State   │───▶│  IkomaCheckpointer │───▶│  SQLite DB     │
-│                 │    │                  │    │                 │
-│ • Messages      │    │ • WAL Mode       │    │ • conversation_ │
-│ • Tool Calls    │    │ • Thread Safe    │    │   steps table   │
-│ • Context       │    │ • JSON Serialize │    │ • Indexed       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Agent State   │───▶│ IkomaMemoryManager │───▶│ CheckpointerService │───▶│  SQLite DB     │
+│                 │    │                  │    │                  │    │                 │
+│ • Messages      │    │ • LangGraph API  │    │ • CRUD Ops      │    │ • conversation_ │
+│ • Tool Calls    │    │ • State Mapping  │    │ • Thread Safe   │    │   steps table   │
+│ • Context       │    │ • Error Handling │    │ • Singleton     │    │ • Indexed       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 ### Data Flow
