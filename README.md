@@ -267,6 +267,10 @@ MAX_ITERATIONS=25
 # Maximum wall-clock time (minutes) for continuous mode (default: 10)
 IKOMA_MAX_MINS=10
 
+# Checkpointer Configuration
+CHECKPOINTER_ENABLED=true
+# Set to 'false' to disable conversation-state persistence on restart
+
 # Debug Configuration
 DEBUG_MODE=false
 LOG_LEVEL=INFO
@@ -276,9 +280,11 @@ LOG_LEVEL=INFO
 
 The agent automatically manages a sophisticated dual memory system:
 
-1. **Short-term Memory**: Conversation state (SQLite checkpointer coming in Phase 2)
+1. **Short-term Memory**: Conversation state persistence via SQLite checkpointer (enabled by default)
 2. **Long-term Memory**: Persistent Chromadb vector storage with semantic search
 3. **Plan Context**: Enhanced memory includes execution plans and reflection data
+
+**Checkpointer Toggle**: Set `CHECKPOINTER_ENABLED=false` in your `.env` file to disable conversation-state persistence and revert to in-memory sessions.
 
 No manual configuration required - the system initializes automatically with optimal performance.
 

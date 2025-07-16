@@ -724,6 +724,14 @@ def check_env() -> None:
                     f"ℹ️  INFO: VECTOR_STORE_PATH {store_path} does not exist yet – it will be created on first use."
                 )
 
+    # Validate CHECKPOINTER_ENABLED value
+    cpe = os.getenv("CHECKPOINTER_ENABLED")
+    if cpe and cpe.lower() not in {"0", "1", "true", "false", "yes", "no"}:
+        print(
+            f"⚠️  ENV WARNING: CHECKPOINTER_ENABLED value '{cpe}' is invalid – "
+            "defaulting to 'true'."
+        )
+
 
 # --- Agent Setup ---
 def create_agent(disable_checkpoint: bool = False) -> Any:
@@ -754,9 +762,20 @@ def create_agent(disable_checkpoint: bool = False) -> Any:
 
     store = get_vector_store()
 
-    # Initialize checkpointer for short-term memory (conversation state)
+    # --- Checkpointer feature gate ---
+    # Prefer new positive flag but honour legacy var for now
+    legacy_disabled = os.getenv("IKOMA_DISABLE_CHECKPOINTER")
+    if legacy_disabled:
+        print(
+            "⚠️  DEPRECATION: IKOMA_DISABLE_CHECKPOINTER detected – "
+            "use CHECKPOINTER_ENABLED=false instead (will be removed in Phase 3)."
+        )
+
+    enabled_env = os.getenv("CHECKPOINTER_ENABLED", "true").lower()
+    env_allows = enabled_env not in {"0", "false", "no"}
+
     checkpointer = None
-    if not disable_checkpoint and not os.getenv("IKOMA_DISABLE_CHECKPOINTER"):
+    if not disable_checkpoint and env_allows and not legacy_disabled:
         db_path = os.getenv("CONVERSATION_DB_PATH", "agent/memory/conversations.sqlite")
         checkpointer = IkomaCheckpointer(db_path)
 

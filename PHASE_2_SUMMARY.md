@@ -240,14 +240,24 @@ python -m agent.agent --help
 
 ---
 
-## 🚧 Epic E-03: Short-term Checkpointer (In Progress)
+## ✅ Epic E-03: Short-term Checkpointer (COMPLETED)
 
-### **Status: 🚧 ACTIVE DEVELOPMENT**
+### **Status: ✅ COMPLETED**
 
 **Objective**: Conversations survive restart; state stored in SQLite behind LangGraph memory manager.
 
 #### **Completed Deliverables:**
 - ✅ **Issue #14**: Schema & backend (memory) - COMPLETED
+- ✅ **Issue #15**: Short-term Checkpointer CRUD API and LangGraph integration - COMPLETED
+  - Typed CRUD service over SQLite with Pydantic models (`CheckpointRecord`)
+  - Integration with LangGraph's memory_manager API via `IkomaMemoryManager` class
+  - 100% unit test coverage with comprehensive edge case testing
+  - CLI tool for checkpoint management (`agent/cli/checkpoint_cli.py`)
+  - Documentation updates in `docs/checkpointer.md`
+  - Strict Python 3.10+ compatibility with Ruff linting and MyPy type checking
+  - JSON serialization for state storage with proper error handling
+  - Singleton service pattern for consistent database access
+  - All tests passing with proper mocking and error handling scenarios
   - SQLite conversation-state backend using `langgraph_checkpoint.sqlite.SqliteSaver`
   - Fixed schema with `conversation_steps` table: `run_id`, `step`, `tool_calls` (JSON), timestamp
   - Environment variable toggle `IKOMA_DISABLE_CHECKPOINTER` and CLI flag `--no-checkpoint`
@@ -257,9 +267,36 @@ python -m agent.agent --help
   - Documentation in `docs/checkpointer.md` and README updates
   - All tests passing, linting clean, type safety maintained
 
-#### **Planned Deliverables:**
-- **Issue #15**: CRUD API tests (testing)
-- **Issue #16**: `.env` toggle & docs (configuration)
+#### **Completed Deliverables:**
+- ✅ **Issue #14**: Schema & backend (memory) - COMPLETED
+- ✅ **Issue #15**: Short-term Checkpointer CRUD API and LangGraph integration - COMPLETED
+  - Typed CRUD service over SQLite with Pydantic models (`CheckpointRecord`)
+  - Integration with LangGraph's memory_manager API via `IkomaMemoryManager` class
+  - 100% unit test coverage with comprehensive edge case testing
+  - CLI tool for checkpoint management (`agent/cli/checkpoint_cli.py`)
+  - Documentation updates in `docs/checkpointer.md`
+  - Strict Python 3.10+ compatibility with Ruff linting and MyPy type checking
+  - JSON serialization for state storage with proper error handling
+  - Singleton service pattern for consistent database access
+  - All tests passing with proper mocking and error handling scenarios
+  - SQLite conversation-state backend using `langgraph_checkpoint.sqlite.SqliteSaver`
+  - Fixed schema with `conversation_steps` table: `run_id`, `step`, `tool_calls` (JSON), timestamp
+  - Environment variable toggle `IKOMA_DISABLE_CHECKPOINTER` and CLI flag `--no-checkpoint`
+  - Single SQLite connection in WAL mode for thread safety
+  - Integration with agent's `create_agent` function for automatic instantiation
+  - Comprehensive test suite with CRUD operations and agent integration
+  - Documentation in `docs/checkpointer.md` and README updates
+  - All tests passing, linting clean, type safety maintained
+- ✅ **Issue #16**: `.env` toggle & docs (configuration) - COMPLETED
+  - New `CHECKPOINTER_ENABLED` environment variable (default `true`) for positive boolean control
+  - Legacy `IKOMA_DISABLE_CHECKPOINTER` compatibility with deprecation warning
+  - CLI `--no-checkpoint` flag takes precedence over both environment variables
+  - Environment validation with warnings for invalid `CHECKPOINTER_ENABLED` values
+  - Updated `config.env.template` with commented configuration entry
+  - Enhanced README documentation with Quick-Start table and toggle instructions
+  - Updated `docs/checkpointer.md` with Configuration section and precedence order
+  - Comprehensive test suite with 16 tests covering all toggle scenarios
+  - All tests passing with Python 3.11 compatibility
 
 #### **Key Features Implemented:**
 - **Crash Recovery**: Conversations survive agent restarts with exact state resumption
@@ -271,8 +308,8 @@ python -m agent.agent --help
 
 #### **Key Milestones:**
 - **24 Jul**: Schema & backend ✅
-- **26 Jul**: CRUD API tests
-- **27 Jul**: `.env` toggle & docs
+- **26 Jul**: CRUD API tests ✅
+- **27 Jul**: `.env` toggle & docs ✅
 
 ---
 
@@ -350,7 +387,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 
 1. **Internet Safety Layer**: Domain filtering and rate-limited HTTP client ✅
 2. **Continuous Operation**: Unattended execution with termination heuristics ✅
-3. **Enhanced Memory**: Short-term checkpointer for conversation persistence 🚧
+3. **Enhanced Memory**: Short-term checkpointer for conversation persistence ✅
 4. **Improved Planning**: JSON schema validation and self-reflection
 5. **Better UX**: Live trace visualization and dashboard
 
@@ -387,7 +424,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Citation Rendering** (Issue #8) - COMPLETED
 - ✅ **Continuous Mode** (Issue #9) - COMPLETED
 - ✅ **Iteration Termination Heuristic** (Issue #10) - COMPLETED
-- 🚧 **Short-term Checkpointer** (Issue #14) - IN PROGRESS
+- ✅ **Short-term Checkpointer** (Issues #14, #15, #16) - COMPLETED
 
 ### **Quality Process:**
 - **Code Review**: All changes require PR review
@@ -408,7 +445,7 @@ retrieve_memory → plan → execute → reflect → {plan|store_memory}
 - ✅ **Citation System**: Source tracking and citation management for Phase 2 internet tools
 - ✅ **Continuous Mode**: Unattended execution capabilities with safety guardrails
 - ✅ **Termination Heuristics**: Pluggable iteration-based and goal-satisfaction termination system
-- 🚧 **Short-term Memory**: SQLite conversation-state backend for crash recovery and exact resumption
+- ✅ **Short-term Memory**: SQLite conversation-state backend for crash recovery and exact resumption
 - ⏳ **Enhanced Planning**: JSON schema validation
 - ⏳ **Improved UX**: Live trace and dashboard
 

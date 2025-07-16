@@ -24,13 +24,18 @@ python run_agent.py
 python run_agent.py --no-checkpoint
 ```
 
+## Configuration
+
 ### Environment Variables
 
 Configure the checkpointer via environment variables:
 
 ```bash
-# Disable checkpointer globally
-export IKOMA_DISABLE_CHECKPOINTER=true
+# Enable/disable checkpointer (recommended)
+export CHECKPOINTER_ENABLED=true
+
+# Legacy variable (deprecated - will be removed in Phase 3)
+export IKOMA_DISABLE_CHECKPOINTER=false
 
 # Custom database path
 export CONVERSATION_DB_PATH=/path/to/conversations.sqlite
@@ -43,8 +48,19 @@ python run_agent.py
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `IKOMA_DISABLE_CHECKPOINTER` | `false` | Disable SQLite persistence |
+| `CHECKPOINTER_ENABLED` | `true` | Enable/disable conversation persistence |
+| `IKOMA_DISABLE_CHECKPOINTER` | `false` | Legacy disable flag (deprecated) |
 | `CONVERSATION_DB_PATH` | `agent/memory/conversations.sqlite` | Database file path |
+
+### Evaluation Order
+
+The checkpointer follows this precedence order:
+
+1. **CLI Flag**: `--no-checkpoint` (highest priority)
+2. **Legacy Variable**: `IKOMA_DISABLE_CHECKPOINTER` (any truthy value disables)
+3. **New Variable**: `CHECKPOINTER_ENABLED` (defaults to `true`)
+
+**Note**: The legacy `IKOMA_DISABLE_CHECKPOINTER` variable will be removed in Phase 3. Use `CHECKPOINTER_ENABLED=false` instead.
 
 ## Database Schema
 
