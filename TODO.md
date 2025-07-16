@@ -266,7 +266,7 @@
   - Updated documentation in README and `docs/continuous_mode.md`
   - All tests pass, linting clean, type safety improved
 
-### 🚧 Epic E-03: Short-term Checkpointer (In Progress)
+### ✅ Epic E-03: Short-term Checkpointer (COMPLETED)
 - ✅ **Issue #14**: Schema & backend (memory) - COMPLETED
   - SQLite conversation-state backend using `langgraph_checkpoint.sqlite.SqliteSaver`
   - Fixed schema with `conversation_steps` table: `run_id`, `step`, `tool_calls` (JSON), timestamp
@@ -276,8 +276,26 @@
   - Comprehensive test suite with CRUD operations and agent integration
   - Documentation in `docs/checkpointer.md` and README updates
   - All tests passing, linting clean, type safety maintained
-- **Issue #15**: CRUD API tests (testing)
-- **Issue #16**: `.env` toggle & docs (configuration)
+- ✅ **Issue #15**: Short-term Checkpointer CRUD API and LangGraph integration - COMPLETED
+  - Typed CRUD service over SQLite with Pydantic models (`CheckpointRecord`)
+  - Integration with LangGraph's memory_manager API via `IkomaMemoryManager` class
+  - 100% unit test coverage with comprehensive edge case testing
+  - CLI tool for checkpoint management (`agent/cli/checkpoint_cli.py`)
+  - Documentation updates in `docs/checkpointer.md`
+  - Strict Python 3.10+ compatibility with Ruff linting and MyPy type checking
+  - JSON serialization for state storage with proper error handling
+  - Singleton service pattern for consistent database access
+  - All tests passing with proper mocking and error handling scenarios
+- ✅ **Issue #16**: `.env` toggle & docs (configuration) - COMPLETED
+  - New `CHECKPOINTER_ENABLED` environment variable (default `true`) for positive boolean control
+  - Legacy `IKOMA_DISABLE_CHECKPOINTER` compatibility with deprecation warning
+  - CLI `--no-checkpoint` flag takes precedence over both environment variables
+  - Environment validation with warnings for invalid `CHECKPOINTER_ENABLED` values
+  - Updated `config.env.template` with commented configuration entry
+  - Enhanced README documentation with Quick-Start table and toggle instructions
+  - Updated `docs/checkpointer.md` with Configuration section and precedence order
+  - Comprehensive test suite with 16 tests covering all toggle scenarios
+  - All tests passing with Python 3.11 compatibility
 
 ### 📋 Epic E-04: Planner Enhancements (Planned)
 - **Issue #17**: JSON schema + validator (planning)
