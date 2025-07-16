@@ -927,6 +927,17 @@ def main() -> None:
         prog="ikoma",
         description="Ikoma – local autonomous AI assistant",
     )
+
+    # Add checkpoint subcommand
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Checkpoint subcommand
+    from agent.cli.checkpoint_cli import create_checkpoint_parser
+
+    checkpoint_parser = create_checkpoint_parser()
+    subparsers.add_parser(
+        "checkpoint", parents=[checkpoint_parser], help="Manage checkpoints"
+    )
     parser.add_argument(
         "--continuous",
         action="store_true",
@@ -973,6 +984,13 @@ def main() -> None:
         help="Disable SQLite conversation state persistence",
     )
     args = parser.parse_args()
+
+    # Handle checkpoint subcommand
+    if args.command == "checkpoint":
+        from agent.cli.checkpoint_cli import main as checkpoint_main
+
+        checkpoint_main()
+        return
 
     agent = create_agent(disable_checkpoint=args.no_checkpoint)
 
