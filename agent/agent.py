@@ -6,9 +6,6 @@ import time
 import uuid
 from datetime import datetime
 from pathlib import Path
-
-# Checkpoint functionality temporarily disabled due to langgraph version changes
-# from langgraph_checkpoint.sqlite import SqliteSaver
 from typing import Annotated, Any, TypedDict, cast
 
 from dotenv import load_dotenv
@@ -19,6 +16,8 @@ from langgraph.graph.message import add_messages
 from rich.console import Console
 from rich.panel import Panel
 
+# Checkpoint functionality for conversation state persistence
+from agent.checkpointer import IkomaCheckpointer
 from agent.constants import MAX_ITER, MAX_MINS
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
@@ -727,8 +726,12 @@ def check_env() -> None:
 
 
 # --- Agent Setup ---
-def create_agent() -> Any:
-    """Create and configure the enhanced plan-execute-reflect agent."""
+def create_agent(disable_checkpoint: bool = False) -> Any:
+    """Create and configure the enhanced plan-execute-reflect agent.
+
+    Args:
+        disable_checkpoint: If True, disable SQLite conversation state persistence
+    """
     # Perform environment sanity check once at startup
     check_env()
 
@@ -752,7 +755,10 @@ def create_agent() -> Any:
     store = get_vector_store()
 
     # Initialize checkpointer for short-term memory (conversation state)
-    # checkpointer = SqliteSaver("agent/memory/conversations.sqlite")  # Temporarily disabled
+    checkpointer = None
+    if not disable_checkpoint and not os.getenv("IKOMA_DISABLE_CHECKPOINTER"):
+        db_path = os.getenv("CONVERSATION_DB_PATH", "agent/memory/conversations.sqlite")
+        checkpointer = IkomaCheckpointer(db_path)
 
     # Create closures that capture the shared instances
     def retrieve_memory_with_store(state, config):  # type: ignore[no-untyped-def]
@@ -794,8 +800,11 @@ def create_agent() -> Any:
     # Set entry point
     workflow.set_entry_point("retrieve_memory")
 
-    # Compile the graph
-    app = workflow.compile()  # LangGraph 0.5.1+ doesn't need store parameter
+    # Compile the graph with checkpointer if enabled
+    if checkpointer:
+        app = workflow.compile(checkpointer=checkpointer)
+    else:
+        app = workflow.compile()
 
     return app
 
@@ -939,9 +948,14 @@ def main() -> None:
         action="store_true",
         help="Disable all human prompts (auto-continue mode)",
     )
+    parser.add_argument(
+        "--no-checkpoint",
+        action="store_true",
+        help="Disable SQLite conversation state persistence",
+    )
     args = parser.parse_args()
 
-    agent = create_agent()
+    agent = create_agent(disable_checkpoint=args.no_checkpoint)
 
     # ---------- Continuous mode ----------
     if args.continuous:

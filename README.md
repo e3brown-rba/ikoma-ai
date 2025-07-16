@@ -11,6 +11,7 @@ A sophisticated local AI assistant powered by LangGraph with advanced **plan-exe
 - 🧠 **Plan-Execute-Reflect Architecture**: Intelligent task breakdown with iterative execution and reflection
 - 🎯 **Smart Planning**: JSON-structured multi-step plans with tool validation and fallback handling
 - ⚡ **Persistent Memory**: Vector search powered by Chroma via tools/vector_store.py
+- 💾 **Short-term Memory (SQLite)**: Conversation state persistence for crash recovery and resume capability
 - 🛠️ **Dynamic Tool Loading**: MCP schema-based tool registration loaded once at startup for optimal performance
 - 🤖 **Conversational AI**: Natural interactions with your local LLM (LM Studio/Ollama)
 - 🧮 **Math Calculations**: Solve complex mathematical problems with step-by-step reasoning
