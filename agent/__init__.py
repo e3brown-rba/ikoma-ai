@@ -1,1 +1,1 @@
-"""iKOMA Agent Package.""" 
+"""iKOMA Agent Package."""
