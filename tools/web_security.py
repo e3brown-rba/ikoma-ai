@@ -80,25 +80,12 @@ class SecureWebFilter:
         """Comprehensive URL validation with SSRF prevention."""
         parsed = urlparse(url)
 
-        # Quick check for obviously blocked domains before validation
-        if parsed.hostname:
-            domain = parsed.hostname.lower()
-            for blocked in self.config.blocked_domains:
-                if blocked.startswith("*."):
-                    if domain.endswith(blocked[2:]):
-                        raise ValueError(f"Domain blocked: {domain}")
-                elif blocked.startswith("*"):
-                    if domain.endswith(blocked[1:]):
-                        raise ValueError(f"Domain blocked: {domain}")
-                elif domain == blocked:
-                    raise ValueError(f"Domain blocked: {domain}")
-
-        # Now validate URL format (except for blocked domains)
+        # Now validate URL format
         if validators is None:
             if not url.startswith(("http://", "https://")):
                 raise ValueError(f"Invalid URL format: {url}")
         else:
-            if not validators.url(url):  # type: ignore[unreachable]
+            if not validators.url(url):
                 raise ValueError(f"Invalid URL format: {url}")
 
         # Scheme validation
@@ -135,24 +122,23 @@ class SecureWebFilter:
             elif domain == blocked:
                 raise ValueError(f"Domain blocked: {domain}")
 
-        # If allowlist is defined, check it
-        if self.config.allowed_domains:
-            allowed = False
-            for allowed_domain in self.config.allowed_domains:
-                if allowed_domain.startswith("*."):
-                    if domain.endswith(allowed_domain[2:]):
-                        allowed = True
-                        break
-                elif allowed_domain.startswith("*"):
-                    if domain.endswith(allowed_domain[1:]):
-                        allowed = True
-                        break
-                elif domain == allowed_domain:
-                    allowed = True
-                    break
+        # If allowlist is empty, allow all domains
+        if not self.config.allowed_domains:
+            return  # No allowlist configured, domain is allowed
 
-            if not allowed:
-                raise ValueError(f"Domain not in allowlist: {domain}")
+        # Check against allowlist
+        for allowed_domain in self.config.allowed_domains:
+            if allowed_domain.startswith("*."):
+                if domain.endswith(allowed_domain[2:]):
+                    return  # Domain is allowed
+            elif allowed_domain.startswith("*"):
+                if domain.endswith(allowed_domain[1:]):
+                    return  # Domain is allowed
+            elif domain == allowed_domain:
+                return  # Domain is allowed
+
+        # If we reach here, no domain matched the allowlist
+        raise ValueError(f"Domain not in allowlist: {domain}")  # type: ignore[unreachable]
 
     def enforce_rate_limit(self, domain: str) -> None:
         """Token bucket rate limiting per domain."""

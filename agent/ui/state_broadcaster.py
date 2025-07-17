@@ -5,17 +5,17 @@ from typing import Any
 
 
 class AgentStateBroadcaster:
-    def __init__(self):
+    def __init__(self) -> None:
         self.listeners: dict[str, list[Callable]] = defaultdict(list)
-        self.current_state = {}
+        self.current_state: dict[str, Any] = {}
         self._lock = threading.Lock()
 
-    def subscribe(self, event_type: str, callback: Callable):
+    def subscribe(self, event_type: str, callback: Callable) -> None:
         """Subscribe to agent state updates"""
         with self._lock:
             self.listeners[event_type].append(callback)
 
-    def broadcast(self, event_type: str, data: dict[str, Any]):
+    def broadcast(self, event_type: str, data: dict[str, Any]) -> None:
         """Broadcast state update to all listeners"""
         with self._lock:
             self.current_state[event_type] = data

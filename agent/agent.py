@@ -27,8 +27,10 @@ from tools.tool_loader import tool_loader
 # Add import for TUI broadcaster
 try:
     from agent.ui.state_broadcaster import broadcaster
+
+    tui_broadcaster: Any = broadcaster
 except ImportError:
-    broadcaster: Any = None
+    tui_broadcaster = None
 
 # Load environment variables from .env file
 load_dotenv()
@@ -222,11 +224,11 @@ def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> Agent
     """Optimized plan_node that uses shared LLM instance."""
     try:
         # TUI Integration: planning_start
-        if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             print(
                 f"[AGENT DEBUG] Broadcasting planning_start: {state['messages'][-1].content}"
             )
-            broadcaster.broadcast(
+            tui_broadcaster.broadcast(
                 "planning_start",
                 {
                     "user_request": state["messages"][-1].content,
@@ -389,10 +391,10 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
             state["continue_planning"] = True
 
         # After plan is generated
-        if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             plan = state.get("current_plan") or []
             print(f"[AGENT DEBUG] Broadcasting plan_generated: {len(plan)} steps")
-            broadcaster.broadcast(
+            tui_broadcaster.broadcast(
                 "plan_generated", {"plan": plan, "step_count": len(plan)}
             )
 
@@ -436,9 +438,9 @@ def execute_node(
             description = step["description"]
 
             # TUI Integration: step_start
-            if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
                 print(f"[AGENT DEBUG] Broadcasting step_start: {tool_name}")
-                broadcaster.broadcast(
+                tui_broadcaster.broadcast(
                     "step_start",
                     {
                         "step_index": step.get("step", 0),
@@ -572,11 +574,11 @@ def execute_node(
         state["execution_results"] = execution_results
 
         # After execution result
-        if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             print(
                 f"[AGENT DEBUG] Broadcasting step_complete: {execution_results[-1]['status']}"
             )
-            broadcaster.broadcast(
+            tui_broadcaster.broadcast(
                 "step_complete",
                 {
                     "step_index": step.get("step", 0),
@@ -661,8 +663,8 @@ Return only the JSON, no other text."""
 
         # Guard against empty response
         if not response.content.strip():
-            if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
-                broadcaster.broadcast(
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
                     "reflection_error", {"error": "Empty response from LLM"}
                 )
             raise ValueError("Empty response from LLM")
@@ -678,8 +680,8 @@ Return only the JSON, no other text."""
             reflection_data = json.loads(reflection_text)
 
             # Broadcast reflection reasoning and summary
-            if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
-                broadcaster.broadcast(
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
                     "reflection",
                     {
                         "reasoning": reflection_data.get("reasoning", ""),
@@ -756,8 +758,8 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
             state["continue_planning"] = False
 
             # Broadcast reflection error
-            if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
-                broadcaster.broadcast(
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
                     "reflection_error",
                     {"error": str(e), "raw_response": response.content},
                 )
@@ -778,8 +780,8 @@ Let me know if you need anything else!"""
             AIMessage(content=f"I encountered an error while reflecting: {e}")
         )
         # Broadcast reflection error
-        if os.getenv("IKOMA_TUI_MODE") == "true" and broadcaster:
-            broadcaster.broadcast("reflection_error", {"error": str(e)})
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+            tui_broadcaster.broadcast("reflection_error", {"error": str(e)})
 
     return state
 
@@ -973,7 +975,7 @@ def interactive_chat(agent: Any) -> None:
             config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
 
             # Invoke agent with plan-execute-reflect capabilities
-            initial_state = {
+            initial_state: AgentState = {
                 "messages": [HumanMessage(content=user_input)],
                 "memory_context": None,
                 "user_profile": None,

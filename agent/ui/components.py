@@ -13,18 +13,20 @@ class StatusIndicator(Enum):
 
 
 class PlanStatusTable:
-    def __init__(self):
+    def __init__(self) -> None:
         self.table = Table(title="Execution Plan")
         self.setup_columns()
 
-    def setup_columns(self):
+    def setup_columns(self) -> None:
         self.table.add_column("Step", style="cyan", width=4)
         self.table.add_column("Tool", style="magenta", width=15)
         self.table.add_column("Description", style="white", min_width=30)
         self.table.add_column("Status", style="green", width=12)
         self.table.add_column("Result", style="yellow", width=20)
 
-    def update_plan(self, plan_steps: list[dict], execution_results: list[dict]):
+    def update_plan(
+        self, plan_steps: list[dict], execution_results: list[dict]
+    ) -> None:
         """Update table with current plan and execution status"""
         self.table = Table(title="Execution Plan")
         self.setup_columns()
@@ -43,7 +45,9 @@ class PlanStatusTable:
                 result_text,
             )
 
-    def _get_step_status(self, step: dict, results: list[dict], step_index: int):
+    def _get_step_status(
+        self, step: dict, results: list[dict], step_index: int
+    ) -> tuple[str, str]:
         """Determine step status with color coding"""
         if step_index < len(results):
             result = results[step_index]
@@ -53,14 +57,16 @@ class PlanStatusTable:
                 return StatusIndicator.ERROR.value
         return StatusIndicator.IDLE.value
 
-    def _get_step_result(self, results: list[dict], step_index: int):
+    def _get_step_result(self, results: list[dict], step_index: int) -> str:
         if step_index < len(results):
             return str(results[step_index].get("result", ""))
         return ""
 
 
 class InternetStatusBadge:
-    def render(self, internet_enabled: bool, rate_limit_info: dict | None = None):
+    def render(
+        self, internet_enabled: bool, rate_limit_info: dict | None = None
+    ) -> str:
         """Render internet connectivity badge"""
         if internet_enabled:
             badge_text = "🌐 ONLINE"

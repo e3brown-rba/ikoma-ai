@@ -1,7 +1,7 @@
 from rich.layout import Layout
 
 
-def create_main_layout():
+def create_main_layout() -> Layout:
     layout = Layout()
     layout.split_column(
         Layout(name="header", size=3),

@@ -14,19 +14,19 @@ from agent.ui.components import InternetStatusBadge, PlanStatusTable
 from agent.ui.state_broadcaster import broadcaster
 
 
-def safe_get(d, key, default=None):
+def safe_get(d: dict[str, Any], key: str, default: Any = None) -> Any:
     return d[key] if d and key in d else default
 
 
 class AsyncLogger:
-    def __init__(self, filename="ikoma_agent.log"):
+    def __init__(self, filename: str = "ikoma_agent.log") -> None:
         self.filename = filename
-        self.log_queue = queue.Queue()
+        self.log_queue: queue.Queue[str] = queue.Queue()
         self.running = True
         self.thread = threading.Thread(target=self._log_worker, daemon=True)
         self.thread.start()
 
-    def _log_worker(self):
+    def _log_worker(self) -> None:
         with open(self.filename, "a", encoding="utf-8") as f:
             while self.running:
                 try:
@@ -37,28 +37,28 @@ class AsyncLogger:
                 except queue.Empty:
                     continue
 
-    def log(self, level, message, data=None):
+    def log(self, level: str, message: str, data: Any = None) -> None:
         entry = f"{level}: {message}"
         if data:
             entry += f" | Data: {data}"
         self.log_queue.put(entry)
 
-    def stop(self):
+    def stop(self) -> None:
         self.running = False
 
 
 class IkomaTUI:
-    def __init__(self, refresh_rate: int = 4):
+    def __init__(self, refresh_rate: int = 4) -> None:
         self.console = Console()
         self.refresh_rate = refresh_rate
         self.layout = Layout()
         self.agent_state: dict[str, Any] = {}
-        self.execution_history = deque(maxlen=50)
-        self.changelog = deque(maxlen=30)  # New: running changelog
+        self.execution_history: deque[dict[str, Any]] = deque(maxlen=50)
+        self.changelog: deque[str] = deque(maxlen=30)  # New: running changelog
         self.internet_enabled = False
         self.start_time = time.time()
-        self.plan_steps = []
-        self.execution_results = []
+        self.plan_steps: list[dict[str, Any]] = []
+        self.execution_results: list[dict[str, Any]] = []
 
         # Setup async logging
         self.async_logger = AsyncLogger()
@@ -67,7 +67,7 @@ class IkomaTUI:
         self.setup_layout()
         self.subscribe_events()
 
-    def setup_layout(self):
+    def setup_layout(self) -> None:
         """Create responsive layout matching action plan requirements"""
         self.layout.split_column(
             Layout(name="header", size=3),
@@ -80,7 +80,7 @@ class IkomaTUI:
             Layout(name="plan_status", ratio=2), Layout(name="context", ratio=1)
         )
 
-    def subscribe_events(self):
+    def subscribe_events(self) -> None:
         print("[TUI DEBUG] Subscribing to events")  # Console debug
         broadcaster.subscribe("planning_start", self.on_planning_start)
         broadcaster.subscribe("plan_generated", self.on_plan_generated)
@@ -90,7 +90,7 @@ class IkomaTUI:
         broadcaster.subscribe("reflection_error", self.on_reflection_error)
         print("[TUI DEBUG] Event subscriptions complete")  # Console debug
 
-    def on_planning_start(self, data):
+    def on_planning_start(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Planning started: {data}")  # Console debug
         self.async_logger.log(
             "PLANNING_START", f"Planning started: {data.get('user_request', '')}", data
@@ -103,7 +103,7 @@ class IkomaTUI:
         message = f"Planning started: {data.get('user_request', '')}"
         self.changelog.appendleft(message)
 
-    def on_plan_generated(self, data):
+    def on_plan_generated(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Plan generated: {data}")  # Console debug
         self.async_logger.log(
             "PLAN_GENERATED",
@@ -121,7 +121,7 @@ class IkomaTUI:
             self.changelog.appendleft(reasoning_msg)
             self.async_logger.log("PLAN_REASONING", data["reasoning"])
 
-    def on_step_start(self, data):
+    def on_step_start(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Step start: {data}")  # Console debug
         self.async_logger.log(
             "STEP_START",
@@ -134,7 +134,7 @@ class IkomaTUI:
         message = f"Step {data.get('step_index')} started: {data.get('tool_name')} - {data.get('description')}"
         self.changelog.appendleft(message)
 
-    def on_step_complete(self, data):
+    def on_step_complete(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Step complete: {data}")  # Console debug
         self.async_logger.log(
             "STEP_COMPLETE",
@@ -153,7 +153,7 @@ class IkomaTUI:
         message = f"Step {idx} {status}: {result}"
         self.changelog.appendleft(message)
 
-    def on_reflection(self, data):
+    def on_reflection(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Reflection: {data}")  # Console debug
         self.async_logger.log(
             "REFLECTION",
@@ -176,7 +176,7 @@ class IkomaTUI:
             message = status
             self.changelog.appendleft(message)
 
-    def on_reflection_error(self, data):
+    def on_reflection_error(self, data: dict[str, Any]) -> None:
         print(f"[TUI DEBUG] Reflection error: {data}")  # Console debug
         self.async_logger.log(
             "REFLECTION_ERROR", f"Reflection error: {data.get('error')}", data
@@ -187,7 +187,7 @@ class IkomaTUI:
             raw_msg = f"Raw Response: {data['raw_response']}"
             self.changelog.appendleft(raw_msg)
 
-    def update_display(self):
+    def update_display(self) -> None:
         # Header
         self.layout["header"].update(
             Panel(
@@ -219,7 +219,7 @@ class IkomaTUI:
         badge = InternetStatusBadge().render(self.internet_enabled)
         self.layout["footer"].update(Panel(badge, title="Status"))
 
-    def start_monitoring(self, agent_state_callback=None):
+    def start_monitoring(self, agent_state_callback: Any = None) -> None:
         """Start TUI monitoring with live updates"""
         print("[TUI DEBUG] TUI monitoring started")  # Console debug
         self.async_logger.log("TUI_START", "TUI monitoring started")
@@ -231,6 +231,6 @@ class IkomaTUI:
                 live.update(self.layout)
                 time.sleep(1.0 / self.refresh_rate)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if hasattr(self, "async_logger"):
             self.async_logger.stop()

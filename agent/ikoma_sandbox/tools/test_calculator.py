@@ -4,18 +4,25 @@ Description: A simple calculator tool that adds two numbers
 Created in sandbox environment
 """
 
+from collections.abc import Callable
+from typing import Any
+
 try:
     from langchain.tools import tool  # LangChain <=0.1.x
+
+    langchain_tool = tool
 except ImportError:
     try:
         from langchain_core.tools import tool  # New location
+
+        langchain_tool = tool
     except ImportError:
         # Fallback for demo environment
-        def tool(func):
+        def langchain_tool(func: Callable[..., Any]) -> Callable[..., Any]:  # type: ignore[misc]
             return func
 
 
-@tool
+@langchain_tool
 def test_calculator() -> str:
     """A simple calculator tool that adds two numbers"""
     try:
