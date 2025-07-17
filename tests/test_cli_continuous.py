@@ -225,7 +225,7 @@ class TestContinuousModeIntegration:
             mock_create_agent.return_value = mock_agent
 
             # Mock agent to simulate a task that would continue indefinitely
-            def mock_invoke(initial_state: dict) -> dict:
+            def mock_invoke(initial_state: dict, config: dict) -> dict:
                 # Simulate the agent always wanting to continue
                 return {
                     "messages": [Mock(content="Test response")],
