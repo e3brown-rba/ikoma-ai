@@ -8,6 +8,10 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 - `test_agent_citations.py` - Tests for agent citation functionality
 - `test_agent_phase1b.py` - Comprehensive agent functionality tests
 
+### Sandbox and Tool Tests
+- `test_sandbox_tools.py` - Tests for sandbox tool creation and loading functionality
+- `test_tui_demo.py` - TUI demo test script for simple sandbox operations
+
 ### Schema/Validation Tests
 - `test_plan_schema.py` - Plan schema and validation contract tests (strictness, roundtrip, error handling)
 - `test_plan_reflection.py` - Plan self-reflection repair loop and retry logic for invalid plans
@@ -65,6 +69,10 @@ To run specific test categories:
 ```bash
 # Agent tests
 python -m pytest tests/test_agent_*.py -v
+
+# Sandbox and tool tests
+python -m pytest tests/test_sandbox_tools.py -v
+python -m pytest tests/test_tui_demo.py -v
 
 # Schema/Validation tests
 python -m pytest tests/test_plan_schema.py -v

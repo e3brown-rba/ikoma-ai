@@ -44,6 +44,7 @@ class TestReflectTermination:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -96,6 +97,7 @@ class TestReflectTermination:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -144,6 +146,7 @@ class TestReflectTermination:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         config = {"configurable": {"user_id": "test"}}
@@ -192,6 +195,7 @@ class TestReflectTermination:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         config = {"configurable": {"user_id": "test"}}

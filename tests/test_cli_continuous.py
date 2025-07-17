@@ -32,6 +32,9 @@ class TestCLIContinuous:
             citation_counter=1,
             reflection_json=None,  # No goal satisfaction
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         # Mock time.time to ensure we're within the time limit
@@ -59,6 +62,9 @@ class TestCLIContinuous:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         assert should_abort_continuous(state) is True
@@ -82,6 +88,9 @@ class TestCLIContinuous:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         # Mock time.time to return a time that exceeds the limit
@@ -107,6 +116,9 @@ class TestCLIContinuous:
             citation_counter=1,
             reflection_json={"task_completed": True, "next_action": "end"},
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         assert should_abort_continuous(state) is True
@@ -213,7 +225,7 @@ class TestContinuousModeIntegration:
             mock_create_agent.return_value = mock_agent
 
             # Mock agent to simulate a task that would continue indefinitely
-            def mock_invoke(initial_state: dict) -> dict:
+            def mock_invoke(initial_state: dict, config: dict) -> dict:
                 # Simulate the agent always wanting to continue
                 return {
                     "messages": [Mock(content="Test response")],

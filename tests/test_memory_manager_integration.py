@@ -275,7 +275,7 @@ class TestMemoryManagerIntegration:
         new_versions = {}
 
         # Should not raise ValueError, just return the config unchanged
-        result = memory_manager.put(config, checkpoint, metadata, new_versions)
+        result = memory_manager.put(config, checkpoint, metadata, new_versions)  # type: ignore
         assert result == config
 
     def test_complex_state_round_trip(self, memory_manager):

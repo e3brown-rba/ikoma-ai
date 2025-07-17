@@ -192,7 +192,7 @@ def test_planner_citation_emission():
 
     # Check for citation markers
     citation_pattern = r"\[\[(\d+)\]\]"
-    citations = re.findall(citation_pattern, all_text)
+    citations = list(re.findall(citation_pattern, all_text))
 
     assert len(citations) > 0, "No citation markers found in plan"
     assert "1" in citations, "Citation marker [[1]] not found"

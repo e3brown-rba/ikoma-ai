@@ -62,6 +62,67 @@
       "category": "file_system"
     },
     {
+      "name": "scan_sandbox_files",
+      "description": "Scan sandbox files for specific patterns (like TODO, FIXME comments).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Regex pattern to search for (default: TODO|FIXME)",
+            "default": "TODO|FIXME"
+          },
+          "file_extension": {
+            "type": "string",
+            "description": "Comma-separated file extensions to scan (default: .py,.md,.txt)",
+            "default": ".py,.md,.txt"
+          }
+        },
+        "required": []
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "create_tool",
+      "description": "Create a new tool dynamically within the sandbox environment to extend agent capabilities.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tool_definition": {
+            "type": "string",
+            "description": "JSON string with tool name, description, and implementation"
+          }
+        },
+        "required": ["tool_definition"]
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "list_sandbox_tools",
+      "description": "List all tools available in the sandbox environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "category": "file_system"
+    },
+    {
+      "name": "load_sandbox_tool",
+      "description": "Load and execute a tool from the sandbox environment.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "description": "Name of the tool to load (without .py extension)"
+          }
+        },
+        "required": ["tool_name"]
+      },
+      "category": "file_system"
+    },
+    {
       "name": "Calculator",
       "description": "Perform mathematical calculations and solve math problems",
       "parameters": {
@@ -319,7 +380,7 @@
     }
   ],
   "categories": {
-    "file_system": "Tools for file operations in the sandbox environment",
+    "file_system": "Tools for file operations and dynamic tool creation in the sandbox environment",
     "math": "Tools for mathematical calculations",
     "internet": "Tools for safe internet access and web operations",
     "http": "Tools for rate-limited HTTP requests with domain filtering",

@@ -24,6 +24,14 @@ from planning.reflection import PlanRepairFailure, get_max_plan_retries, repair_
 from tools.citation_manager import ProductionCitationManager
 from tools.tool_loader import tool_loader
 
+# Add import for TUI broadcaster
+try:
+    from agent.ui.state_broadcaster import broadcaster
+
+    tui_broadcaster: Any = broadcaster
+except ImportError:
+    tui_broadcaster = None
+
 # Load environment variables from .env file
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = "sk-dummy"
@@ -215,6 +223,18 @@ def should_continue_planning(state: AgentState) -> str:
 def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> AgentState:
     """Optimized plan_node that uses shared LLM instance."""
     try:
+        # TUI Integration: planning_start
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+            print(
+                f"[AGENT DEBUG] Broadcasting planning_start: {state['messages'][-1].content}"
+            )
+            tui_broadcaster.broadcast(
+                "planning_start",
+                {
+                    "user_request": state["messages"][-1].content,
+                    "memory_context": state.get("memory_context"),
+                },
+            )
         # Get tool descriptions
         tool_descriptions = tool_loader.get_tool_descriptions()
 
@@ -370,6 +390,14 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
                 ]
             state["continue_planning"] = True
 
+        # After plan is generated
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+            plan = state.get("current_plan") or []
+            print(f"[AGENT DEBUG] Broadcasting plan_generated: {len(plan)} steps")
+            tui_broadcaster.broadcast(
+                "plan_generated", {"plan": plan, "step_count": len(plan)}
+            )
+
     except Exception as e:
         print(f"Error in plan_node: {e}")
         state["current_plan"] = []
@@ -409,6 +437,17 @@ def execute_node(
             args = step["args"]
             description = step["description"]
 
+            # TUI Integration: step_start
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                print(f"[AGENT DEBUG] Broadcasting step_start: {tool_name}")
+                tui_broadcaster.broadcast(
+                    "step_start",
+                    {
+                        "step_index": step.get("step", 0),
+                        "tool_name": tool_name,
+                        "description": description,
+                    },
+                )
             # Find the tool (handle name mapping for math tools)
             tool = None
             for t in tools:
@@ -534,6 +573,20 @@ def execute_node(
 
         state["execution_results"] = execution_results
 
+        # After execution result
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+            print(
+                f"[AGENT DEBUG] Broadcasting step_complete: {execution_results[-1]['status']}"
+            )
+            tui_broadcaster.broadcast(
+                "step_complete",
+                {
+                    "step_index": step.get("step", 0),
+                    "status": execution_results[-1]["status"],
+                    "result": execution_results[-1]["result"],
+                },
+            )
+
     except Exception as e:
         print(f"Error in execute_node: {e}")
         state["execution_results"] = [
@@ -610,6 +663,10 @@ Return only the JSON, no other text."""
 
         # Guard against empty response
         if not response.content.strip():
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
+                    "reflection_error", {"error": "Empty response from LLM"}
+                )
             raise ValueError("Empty response from LLM")
 
         # Parse reflection
@@ -621,6 +678,18 @@ Return only the JSON, no other text."""
                 reflection_text = reflection_text[3:-3].strip()
 
             reflection_data = json.loads(reflection_text)
+
+            # Broadcast reflection reasoning and summary
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
+                    "reflection",
+                    {
+                        "reasoning": reflection_data.get("reasoning", ""),
+                        "summary": reflection_data.get("summary", ""),
+                        "success_rate": reflection_data.get("success_rate", ""),
+                        "task_completed": reflection_data.get("task_completed", None),
+                    },
+                )
 
             # Persist reflection for downstream heuristics
             state["reflection_json"] = reflection_data
@@ -688,6 +757,13 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
             state["reflection_failures"] = failures
             state["continue_planning"] = False
 
+            # Broadcast reflection error
+            if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+                tui_broadcaster.broadcast(
+                    "reflection_error",
+                    {"error": str(e), "raw_response": response.content},
+                )
+
             # Create fallback response
             fallback_response = f"""I've completed the requested tasks. Here are the results:
 
@@ -703,6 +779,9 @@ Let me know if you need anything else!"""
         state["messages"].append(
             AIMessage(content=f"I encountered an error while reflecting: {e}")
         )
+        # Broadcast reflection error
+        if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
+            tui_broadcaster.broadcast("reflection_error", {"error": str(e)})
 
     return state
 
@@ -896,7 +975,7 @@ def interactive_chat(agent: Any) -> None:
             config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
 
             # Invoke agent with plan-execute-reflect capabilities
-            initial_state = {
+            initial_state: AgentState = {
                 "messages": [HumanMessage(content=user_input)],
                 "memory_context": None,
                 "user_profile": None,
@@ -913,6 +992,9 @@ def interactive_chat(agent: Any) -> None:
                 "citation_counter": 1,  # Initialize citation counter
                 "checkpoint_every": None,  # No checkpoints in interactive mode
                 "last_checkpoint_iter": 0,
+                "stats": {},  # Ensure stats is always present
+                "reflection_json": None,
+                "reflection_failures": [],
             }
 
             result = agent.invoke(initial_state, config)
@@ -989,7 +1071,74 @@ def main() -> None:
         action="store_true",
         help="Disable SQLite conversation state persistence",
     )
+    parser.add_argument(
+        "--tui",
+        action="store_true",
+        help="Enable rich TUI interface for real-time monitoring",
+    )
+    parser.add_argument(
+        "--demo",
+        nargs="?",
+        const="online",
+        choices=["online", "offline", "continuous"],
+        help="Run demo mode with pre-loaded task and TUI enabled (online/offline/continuous)",
+    )
     args = parser.parse_args()
+
+    # Handle demo mode - pre-loads specific tasks and enables TUI
+    if getattr(args, "demo", False):
+        os.environ["IKOMA_TUI_MODE"] = "true"
+        args.tui = True
+        args.continuous = True
+        args.auto = True
+
+        demo_script = args.demo if args.demo else "online"
+        if demo_script == "online":
+            args.goal = (
+                "Track the latest policy proposals on U.S. federal EV tax credits, "
+                "summarise the changes since 2023, list three credible sources, "
+                "store the summary to long-term memory, and add a weekly watch-task "
+                "that pings me if legislation status changes."
+            )
+            args.max_iterations = 15
+            print("🎬 Demo mode: Online Research & Monitoring")
+
+        elif demo_script == "offline":
+            args.goal = (
+                "Scan the repo for TODO & FIXME comments, group them by file, "
+                "output a docs/todo_report.md, and schedule a daily reminder."
+            )
+            args.max_iterations = 8
+            os.environ["IKOMA_DISABLE_INTERNET"] = "true"
+            print("🎬 Demo mode: Offline Repository Intelligence")
+
+        elif demo_script == "continuous":
+            args.goal = (
+                "Count word frequencies across all .md files in docs/, "
+                "write word_freq.csv, and stop when top 1000 words are written."
+            )
+            args.max_iterations = 25
+            args.time_limit = 10
+            os.environ["IKOMA_DISABLE_INTERNET"] = "true"
+            print("🎬 Demo mode: Continuous Batch + Checkpoint Recovery")
+
+        print(f"Goal: {args.goal}")
+        print("TUI enabled for real-time monitoring")
+        print("-" * 70)
+
+    # Set TUI mode environment variable and launch TUI if requested
+    if getattr(args, "tui", False):
+        os.environ["IKOMA_TUI_MODE"] = "true"
+        try:
+            import threading
+
+            from agent.ui.tui import IkomaTUI
+
+            tui = IkomaTUI()
+            tui_thread = threading.Thread(target=tui.start_monitoring, daemon=True)
+            tui_thread.start()
+        except ImportError:
+            print("[TUI] IkomaTUI could not be imported. TUI will not be shown.")
 
     # Handle checkpoint subcommand
     if args.command == "checkpoint":
@@ -1045,10 +1194,18 @@ def main() -> None:
             "citation_counter": 1,
             "checkpoint_every": None if args.auto else args.checkpoint_every,
             "last_checkpoint_iter": 0,
+            "stats": {},  # Ensure stats is always present
+            "reflection_json": None,
+            "reflection_failures": [],
         }
 
+        # Prepare config with user and thread identification
+        user_id = "default_user"
+        thread_id = f"thread_{user_id}_{uuid.uuid4().hex[:8]}"
+        config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
+
         try:
-            result = agent.invoke(initial_state)
+            result = agent.invoke(initial_state, config)
             _render_final_response(result)
         except KeyboardInterrupt:
             console.print("[red]⏹  Aborted by user[/red]")

@@ -37,6 +37,7 @@ class TestTimeLimitCriterion:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -67,6 +68,7 @@ class TestTimeLimitCriterion:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -93,6 +95,7 @@ class TestTimeLimitCriterion:
             reflection_failures=None,
             checkpoint_every=None,
             last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -123,6 +126,9 @@ class TestTimeLimitCriterion:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -153,6 +159,9 @@ class TestTimeLimitCriterion:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         # Create criterion with 3 minute default (180 seconds)
@@ -182,6 +191,9 @@ class TestTimeLimitCriterion:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
@@ -212,6 +224,9 @@ class TestTimeLimitCriterion:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         criterion = TimeLimitCriterion()
