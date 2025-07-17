@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 try:
     import validators
 except ImportError:
-    validators = None
+    validators = None  # type: ignore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -95,11 +95,11 @@ class SecureWebFilter:
 
         # Now validate URL format (except for blocked domains)
         if validators is None:
-            # Fallback validation when validators is not available
             if not url.startswith(("http://", "https://")):
                 raise ValueError(f"Invalid URL format: {url}")
-        elif not validators.url(url):
-            raise ValueError(f"Invalid URL format: {url}")
+        else:
+            if not validators.url(url):  # type: ignore[unreachable]
+                raise ValueError(f"Invalid URL format: {url}")
 
         # Scheme validation
         if (

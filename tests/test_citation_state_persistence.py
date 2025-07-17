@@ -35,6 +35,9 @@ class TestCitationStatePersistence:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         assert state["citations"] == []
@@ -59,6 +62,9 @@ class TestCitationStatePersistence:
             citation_counter=1,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         # Simulate adding a citation
@@ -106,6 +112,9 @@ class TestCitationStatePersistence:
             citation_counter=2,
             reflection_json=None,
             reflection_failures=None,
+            checkpoint_every=None,
+            last_checkpoint_iter=0,
+            stats=None,
         )
 
         # Simulate agent iteration (state should persist)
@@ -114,8 +123,9 @@ class TestCitationStatePersistence:
 
         # Verify citation state is preserved
         assert persisted_state["citations"] is not None
-        assert len(persisted_state["citations"]) == 1
-        assert persisted_state["citations"][0]["id"] == 1
+        if persisted_state["citations"] is not None:
+            assert len(persisted_state["citations"]) == 1
+            assert persisted_state["citations"][0]["id"] == 1
         assert persisted_state["citation_counter"] == 2
 
         # Simulate adding another citation
@@ -134,9 +144,10 @@ class TestCitationStatePersistence:
 
         # Verify both citations are present
         assert persisted_state["citations"] is not None
-        assert len(persisted_state["citations"]) == 2
-        assert persisted_state["citations"][0]["id"] == 1
-        assert persisted_state["citations"][1]["id"] == 2
+        if persisted_state["citations"] is not None:
+            assert len(persisted_state["citations"]) == 2
+            assert persisted_state["citations"][0]["id"] == 1
+            assert persisted_state["citations"][1]["id"] == 2
         assert persisted_state["citation_counter"] == 3
 
 
@@ -163,6 +174,9 @@ def test_citation_state_storage():
         citation_counter=2,
         reflection_json=None,
         reflection_failures=None,
+        checkpoint_every=None,
+        last_checkpoint_iter=0,
+        stats=None,
     )
 
     # Test config
@@ -179,32 +193,3 @@ def test_citation_state_storage():
     # The actual verification would depend on the implementation details
     # For now, we just verify the function doesn't crash
     assert result is not None
-
-
-def test_memory_initialization():
-    """Test that memory is properly initialized with citation tracking."""
-    # Test that the memory structure includes citation fields
-    memory_structure = {
-        "messages": [],
-        "memory_context": None,
-        "user_profile": None,
-        "session_summary": None,
-        "current_plan": None,
-        "execution_results": [],
-        "reflection": None,
-        "continue_planning": False,
-        "max_iterations": 25,
-        "current_iteration": 0,
-        "start_time": None,
-        "time_limit_secs": None,
-        "citations": [],  # Initialize citation tracking
-        "citation_counter": 1,  # Initialize citation counter
-        "reflection_json": None,
-        "reflection_failures": None,
-    }
-
-    # Verify the structure has the expected fields
-    assert "citations" in memory_structure
-    assert "citation_counter" in memory_structure
-    assert "reflection_json" in memory_structure
-    assert "reflection_failures" in memory_structure
