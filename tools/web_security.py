@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 try:
     import validators
 except ImportError:
-    validators = None  # type: ignore
+    validators = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -138,7 +138,7 @@ class SecureWebFilter:
                 return  # Domain is allowed
 
         # If we reach here, no domain matched the allowlist
-        raise ValueError(f"Domain not in allowlist: {domain}")  # type: ignore[unreachable]
+        raise ValueError(f"Domain not in allowlist: {domain}")
 
     def enforce_rate_limit(self, domain: str) -> None:
         """Token bucket rate limiting per domain."""
