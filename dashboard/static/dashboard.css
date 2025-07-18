@@ -1,0 +1,54 @@
+/* Dashboard-specific styles */
+.event-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.event-item {
+    border-left: 4px solid #3b82f6;
+    background-color: #f9fafb;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.event-timestamp {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.event-type {
+    font-weight: 500;
+    margin: 4px 0;
+}
+
+.event-data {
+    font-size: 0.875rem;
+    color: #374151;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+/* Status indicators */
+.status-connected {
+    color: #059669;
+}
+
+.status-disconnected {
+    color: #dc2626;
+}
+
+.status-error {
+    color: #dc2626;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .event-data {
+        font-size: 0.75rem;
+    }
+} 

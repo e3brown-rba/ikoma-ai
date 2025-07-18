@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ikoma Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="/static/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-6">Ikoma Agent Dashboard</h1>
+        
+        <!-- Status Panel -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Agent Status</h2>
+            <div id="status-panel" class="text-green-600">
+                ● Connected
+            </div>
+        </div>
+        
+        <!-- Live Events -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Live Events</h2>
+            <div id="events-container" class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- Events will be populated via WebSocket -->
+            </div>
+        </div>
+        
+        <!-- Plans Table (HTMX) -->
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">Recent Plans</h2>
+            <div hx-get="/api/v1/plans" hx-trigger="load" hx-target="#plans-table">
+                <div id="plans-table">Loading plans...</div>
+            </div>
+        </div>
+        
+        <!-- Execution Traces -->
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">Execution Traces</h2>
+            <div class="mb-4">
+                <input type="text" id="execution-id" placeholder="Enter execution ID" 
+                       class="border rounded px-3 py-2 mr-2">
+                <button onclick="loadTrace()" 
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Load Trace
+                </button>
+            </div>
+            <div id="trace-container">
+                <!-- Trace will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/websocket.js"></script>
+    <script>
+        function loadTrace() {
+            const executionId = document.getElementById('execution-id').value;
+            if (executionId) {
+                fetch(`/api/v1/trace/${executionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const container = document.getElementById('trace-container');
+                        if (data.error) {
+                            container.innerHTML = `<div class="text-red-600">${data.error}</div>`;
+                        } else {
+                            container.innerHTML = `
+                                <div class="text-sm text-gray-600">Execution ID: ${data.execution_id}</div>
+                                <div class="mt-2">${JSON.stringify(data.trace_events, null, 2)}</div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('trace-container').innerHTML = 
+                            `<div class="text-red-600">Error loading trace: ${error}</div>`;
+                    });
+            }
+        }
+    </script>
+</body>
+</html> 

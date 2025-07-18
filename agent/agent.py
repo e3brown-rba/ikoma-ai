@@ -1083,6 +1083,17 @@ def main() -> None:
         choices=["online", "offline", "continuous"],
         help="Run demo mode with pre-loaded task and TUI enabled (online/offline/continuous)",
     )
+    parser.add_argument(
+        "--dashboard",
+        action="store_true",
+        help="Launch dashboard server alongside agent",
+    )
+    parser.add_argument(
+        "--dashboard-port",
+        type=int,
+        default=8000,
+        help="Dashboard server port (default: 8000)",
+    )
     args = parser.parse_args()
 
     # Handle demo mode - pre-loads specific tasks and enables TUI
@@ -1139,6 +1150,31 @@ def main() -> None:
             tui_thread.start()
         except ImportError:
             print("[TUI] IkomaTUI could not be imported. TUI will not be shown.")
+
+    # Launch dashboard if requested
+    if getattr(args, "dashboard", False):
+        try:
+            import threading
+
+            import uvicorn
+
+            from dashboard.server import app
+
+            def run_dashboard() -> None:
+                host = os.getenv("IKOMA_DASHBOARD_HOST", "127.0.0.1")
+                port = args.dashboard_port
+                uvicorn.run(app, host=host, port=port, log_level="info")
+
+            dashboard_thread = threading.Thread(target=run_dashboard, daemon=True)
+            dashboard_thread.start()
+            print(
+                f"🌐 Dashboard running at http://{os.getenv('IKOMA_DASHBOARD_HOST', '127.0.0.1')}:{args.dashboard_port}"
+            )
+        except ImportError as e:
+            print(f"[Dashboard] Dashboard could not be imported: {e}")
+            print("[Dashboard] Make sure FastAPI and uvicorn are installed")
+        except Exception as e:
+            print(f"[Dashboard] Failed to start dashboard: {e}")
 
     # Handle checkpoint subcommand
     if args.command == "checkpoint":
