@@ -13,18 +13,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ────────── Matrix builds (3.10-3.13) ──────────
   lint:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
       - run: pip install -e .
       - run: pip install ruff
       - run: ruff check .
@@ -37,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
       - run: pip install yamllint jsonschema
       - run: yamllint .github/workflows/ci.yml
       - name: Validate MCP schema
@@ -58,10 +53,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
       - run: pip install -e .
-      - run: pip install mypy
-      - run: mypy agent/ tools/ --explicit-package-bases
+      - run: pip install mypy types-beautifulsoup4
+      - run: mypy agent tools --explicit-package-bases
 
   test:
     needs: typecheck
@@ -70,7 +65,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
       # Cache both pip downloads & .venv for speed
       - uses: actions/cache@v4
         with:
@@ -82,7 +77,9 @@ jobs:
       - run: pip install pytest pytest-cov
       - name: Run tests & enforce 50 %+ coverage
         run: |
-          pytest tests/ --cov --cov-report=xml
+          # Exclude dashboard tests from CI as they require a running server
+          # Dashboard tests can be run locally with: pytest tests/ -m dashboard
+          pytest tests/ -m "not dashboard" --cov --cov-report=xml
           coverage xml -o coverage.xml --fail-under=50
       - uses: actions/upload-artifact@v4
         with:
@@ -96,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
       - run: pip install "pip-audit>=2.9.0" bandit trufflehog
       - run: pip install "gitpython>=3.1.41"  # Ensure secure version
       - name: Security audit
@@ -123,7 +120,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
       - run: pip install -e .
       - run: pip install build
       - run: python -m build --sdist --wheel --outdir dist/

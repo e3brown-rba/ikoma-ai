@@ -97,6 +97,10 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=xml"
 ]
+markers = [
+    "asyncio: mark test as asyncio",
+    "dashboard: mark test as dashboard integration test"
+]
 
 [tool.ruff]
 target-version = "py311"
