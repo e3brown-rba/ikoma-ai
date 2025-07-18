@@ -90,7 +90,9 @@ async def get_plans(stores: Any = Depends(get_stores)) -> dict[str, Any]:
 
 
 @app.get("/api/v1/trace/{execution_id}")
-async def get_trace(execution_id: str, stores: Any = Depends(get_stores)) -> dict[str, Any]:
+async def get_trace(
+    execution_id: str, stores: Any = Depends(get_stores)
+) -> dict[str, Any]:
     """Get execution trace from existing stores"""
     try:
         vector_store = stores["vector_store"]

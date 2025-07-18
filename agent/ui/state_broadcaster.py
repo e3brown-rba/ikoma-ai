@@ -11,7 +11,9 @@ class AgentStateBroadcaster:
     def __init__(self) -> None:
         self.listeners: dict[str, list[Callable]] = defaultdict(list)
         self.current_state: dict[str, Any] = {}
-        self.event_cache: deque[AgentEvent] = deque(maxlen=500)  # Ring buffer for dashboard
+        self.event_cache: deque[AgentEvent] = deque(
+            maxlen=500
+        )  # Ring buffer for dashboard
         self._lock = threading.Lock()
 
     def subscribe(self, event_type: str, callback: Callable) -> None:
