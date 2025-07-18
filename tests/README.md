@@ -49,6 +49,7 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 - `test_cli_continuous.py` - Command-line interface continuous mode tests
 - `test_cli_checkpointer.py` - CLI interface tests for checkpoint management commands
 - `test_dashboard_caching.py` - Dashboard caching functionality tests
+- `test_dashboard.py` - Dashboard functionality and WebSocket integration tests
 
 ### Heuristics & Iteration Control Tests
 - `test_iteration_limit.py` - Tests for the iteration-count termination heuristic, including CLI/env overrides and integration
