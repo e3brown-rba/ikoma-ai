@@ -1,82 +1,334 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ikoma Dashboard</title>
-    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <title>Ikoma AI Dashboard</title>
+    
+    <!-- HTMX 2.0 -->
+    <script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/htmx.min.js"></script>
+    
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="/static/dashboard.css" rel="stylesheet">
+    
+    <!-- Alpine.js for minimal client-side logic -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX Security Configuration -->
+    <script>
+        htmx.config.selfRequestsOnly = true;
+        htmx.config.allowScriptTags = false;
+        htmx.config.allowEval = false;
+        htmx.config.historyCacheSize = 0;
+    </script>
+    
+    <style>
+        /* Custom styles for responsive layout */
+        @media (max-width: 768px) {
+            .panel-desktop { display: none; }
+            .panel-mobile { display: block; }
+        }
+        
+        @media (min-width: 1024px) {
+            .panel-mobile { display: none; }
+            .panel-desktop { display: block; }
+        }
+        
+        /* SSE connection status indicator */
+        .sse-status {
+            transition: all 0.3s ease;
+        }
+        
+        .sse-connected {
+            background-color: #10b981;
+        }
+        
+        .sse-disconnected {
+            background-color: #ef4444;
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-6">Ikoma Agent Dashboard</h1>
-        
-        <!-- Status Panel -->
-        <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 class="text-xl font-semibold mb-4">Agent Status</h2>
-            <div id="status-panel" class="text-green-600">
-                ● Connected
+<body class="bg-base-100">
+    <!-- Mobile Navigation (visible on small screens) -->
+    <div class="panel-mobile lg:hidden">
+        <div class="navbar bg-base-200">
+            <div class="navbar-start">
+                <div class="dropdown">
+                    <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                        <li><a href="#agents">Agents</a></li>
+                        <li><a href="#plans">Plans</a></li>
+                        <li><a href="#metrics">Metrics</a></li>
+                        <li><a href="#logs">Logs</a></li>
+                    </ul>
+                </div>
+                <a class="btn btn-ghost text-xl">Ikoma AI</a>
             </div>
-        </div>
-        
-        <!-- Live Events -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-semibold mb-4">Live Events</h2>
-            <div id="events-container" class="space-y-2 max-h-96 overflow-y-auto">
-                <!-- Events will be populated via WebSocket -->
-            </div>
-        </div>
-        
-        <!-- Plans Table (HTMX) -->
-        <div class="bg-white rounded-lg shadow p-6 mt-6">
-            <h2 class="text-xl font-semibold mb-4">Recent Plans</h2>
-            <div hx-get="/api/v1/plans" hx-trigger="load" hx-target="#plans-table">
-                <div id="plans-table">Loading plans...</div>
-            </div>
-        </div>
-        
-        <!-- Execution Traces -->
-        <div class="bg-white rounded-lg shadow p-6 mt-6">
-            <h2 class="text-xl font-semibold mb-4">Execution Traces</h2>
-            <div class="mb-4">
-                <input type="text" id="execution-id" placeholder="Enter execution ID" 
-                       class="border rounded px-3 py-2 mr-2">
-                <button onclick="loadTrace()" 
-                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Load Trace
-                </button>
-            </div>
-            <div id="trace-container">
-                <!-- Trace will be loaded here -->
+            <div class="navbar-end">
+                <div class="badge badge-primary">SSE Connected</div>
             </div>
         </div>
     </div>
-    
-    <script src="/static/websocket.js"></script>
+
+    <!-- Main Dashboard Layout -->
+    <div class="grid grid-cols-10 gap-4 h-screen">
+        <!-- Navigation Panel (Left) -->
+        <div id="nav-panel" class="col-span-10 md:col-span-3 lg:col-span-2 panel-desktop">
+            <nav class="bg-base-200 h-full p-4">
+                <div class="flex flex-col h-full">
+                    <!-- Logo/Brand -->
+                    <div class="mb-6">
+                        <h1 class="text-xl font-bold text-primary">Ikoma AI</h1>
+                        <p class="text-sm text-base-content/70">AI Assistant Dashboard</p>
+                    </div>
+                    
+                    <!-- Navigation Menu -->
+                    <div class="menu menu-vertical flex-1">
+                        <li class="menu-title">
+                            <span>Navigation</span>
+                        </li>
+                        <li><a href="#agents" class="menu-item">Agents</a></li>
+                        <li><a href="#plans" class="menu-item">Plans</a></li>
+                        <li><a href="#metrics" class="menu-item">Metrics</a></li>
+                        <li><a href="#logs" class="menu-item">Logs</a></li>
+                    </div>
+                    
+                    <!-- Settings Section -->
+                    <div class="mt-auto">
+                        <div class="divider">Settings</div>
+                        
+                        <!-- Internet Toggle Control -->
+                        <div class="form-control">
+                            <label class="label cursor-pointer">
+                                <span class="label-text">Internet Access</span>
+                                <input type="checkbox" 
+                                       class="toggle toggle-primary"
+                                       hx-post="/settings/internet-toggle"
+                                       hx-trigger="change"
+                                       hx-swap="none"
+                                       hx-headers='{"X-Requested-With": "XMLHttpRequest"}'
+                                       {% if agent_config.internet_enabled %}checked{% endif %}>
+                            </label>
+                        </div>
+                        
+                        <!-- SSE Connection Status -->
+                        <div class="mt-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full sse-status sse-connected" id="sse-indicator"></div>
+                                <span class="text-sm" id="sse-status-text">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Agent List Panel (Center) -->
+        <div id="agent-list" class="col-span-10 md:col-span-7 lg:col-span-3">
+            <div class="h-full p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Active Agents</h2>
+                    <div class="flex gap-2">
+                        <!-- Demo Launch Dropdown -->
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-primary btn-sm whitespace-nowrap min-h-0 h-auto py-2 px-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-xs">Launch Demo</span>
+                            </div>
+                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "online"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                                        </svg>
+                                        Online Research
+                                    </button>
+                                </li>
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "offline"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Offline Analysis
+                                    </button>
+                                </li>
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "continuous"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Continuous Processing
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <button class="btn btn-outline btn-sm"
+                                hx-post="/agent-control"
+                                hx-vals='{"action": "start", "agent_id": "new"}'
+                                hx-swap="none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            New Agent
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Agent List with Auto-refresh -->
+                <div hx-get="/agents/list" 
+                     hx-trigger="load, every 10s"
+                     hx-target="this"
+                     hx-swap="innerHTML"
+                     class="space-y-2">
+                    <!-- Agent list will be loaded here -->
+                    <div class="skeleton h-16 w-full"></div>
+                    <div class="skeleton h-16 w-full"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Details Panel (Right) -->
+        <div id="agent-details" class="col-span-10 lg:col-span-5">
+            <div class="h-full p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Agent Details</h2>
+                    <div class="badge badge-neutral" id="execution-status">Idle</div>
+                </div>
+                
+                <!-- Real-time Agent Execution Details -->
+                <div hx-ext="sse" sse-connect="/agent-stream" class="space-y-4">
+                    <!-- Execution Timeline -->
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h3 class="card-title">Execution Timeline</h3>
+                            <div id="execution-timeline" sse-swap="node_start node_complete" class="timeline timeline-vertical">
+                                <!-- Timeline items populated by SSE -->
+                                <div class="timeline-item">
+                                    <div class="timeline-marker">
+                                        <div class="w-4 h-4 bg-base-300 rounded-full"></div>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h4 class="font-semibold">Waiting for agent...</h4>
+                                        <p class="text-sm text-base-content/70">Select an agent to view execution details</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Live LLM Output -->
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h3 class="card-title">Agent Thinking</h3>
+                            <div id="llm-output" 
+                                 sse-swap="llm_token"
+                                 class="text-sm font-mono bg-base-200 p-4 rounded-lg max-h-48 overflow-y-auto">
+                                <!-- Streaming LLM tokens -->
+                                <div class="text-base-content/50">Waiting for agent activity...</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Indicator -->
+                    <div class="card bg-base-100 shadow-xl">
+                        <div class="card-body">
+                            <h3 class="card-title">Execution Progress</h3>
+                            <div id="progress-display" sse-swap="progress_update">
+                                <div class="progress progress-primary w-full">
+                                    <div class="progress-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="text-sm text-base-content/70 mt-2">0% Complete</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Indicators -->
+                    <div id="status-badges" sse-swap="status_update" class="flex gap-2">
+                        <div class="badge badge-success">Ready</div>
+                        <div class="badge badge-info">Internet: On</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SSE Connection Management Script -->
     <script>
-        function loadTrace() {
-            const executionId = document.getElementById('execution-id').value;
-            if (executionId) {
-                fetch(`/api/v1/trace/${executionId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const container = document.getElementById('trace-container');
-                        if (data.error) {
-                            container.innerHTML = `<div class="text-red-600">${data.error}</div>`;
-                        } else {
-                            container.innerHTML = `
-                                <div class="text-sm text-gray-600">Execution ID: ${data.execution_id}</div>
-                                <div class="mt-2">${JSON.stringify(data.trace_events, null, 2)}</div>
-                            `;
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('trace-container').innerHTML = 
-                            `<div class="text-red-600">Error loading trace: ${error}</div>`;
-                    });
+        // SSE connection management
+        document.addEventListener('htmx:sseOpen', function(evt) {
+            console.log('SSE connection opened');
+            document.getElementById('sse-indicator').classList.remove('sse-disconnected');
+            document.getElementById('sse-indicator').classList.add('sse-connected');
+            document.getElementById('sse-status-text').textContent = 'Connected';
+        });
+        
+        document.addEventListener('htmx:sseClose', function(evt) {
+            console.log('SSE connection closed');
+            document.getElementById('sse-indicator').classList.remove('sse-connected');
+            document.getElementById('sse-indicator').classList.add('sse-disconnected');
+            document.getElementById('sse-status-text').textContent = 'Disconnected';
+        });
+        
+        // Handle SSE events
+        document.addEventListener('htmx:sseMessage', function(evt) {
+            const event = evt.detail;
+            console.log('SSE event received:', event);
+            
+            // Handle different event types
+            if (event.type === 'state_change') {
+                const data = JSON.parse(event.data);
+                handleStateChange(data);
+            }
+        });
+        
+        function handleStateChange(data) {
+            // Update execution status
+            if (data.event === 'agent_started') {
+                document.getElementById('execution-status').textContent = 'Running';
+                document.getElementById('execution-status').className = 'badge badge-success';
+            } else if (data.event === 'agent_stopped') {
+                document.getElementById('execution-status').textContent = 'Stopped';
+                document.getElementById('execution-status').className = 'badge badge-error';
+            } else if (data.event === 'internet_toggle') {
+                const internetBadge = document.querySelector('.badge-info');
+                if (internetBadge) {
+                    internetBadge.textContent = `Internet: ${data.enabled ? 'On' : 'Off'}`;
+                }
             }
         }
+        
+        // Initialize SSE connection status
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set initial status
+            const indicator = document.getElementById('sse-indicator');
+            const statusText = document.getElementById('sse-status-text');
+            
+            // Check if SSE is available
+            if (typeof EventSource !== 'undefined') {
+                indicator.classList.add('sse-connected');
+                statusText.textContent = 'Connecting...';
+            } else {
+                indicator.classList.add('sse-disconnected');
+                statusText.textContent = 'Not Supported';
+            }
+        });
     </script>
 </body>
 </html> 

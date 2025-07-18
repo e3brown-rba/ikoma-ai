@@ -1,31 +1,54 @@
+"""Dashboard models for agent events and state."""
+
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class AgentEvent(BaseModel):
-    type: str  # Allow any string for flexibility
+    """Standardized agent event model for dashboard and TUI communication."""
+
+    type: str
     data: dict[str, Any]
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = datetime.now()
+
+    class Config:
+        """Pydantic configuration."""
+
+        arbitrary_types_allowed = True
 
 
-class EventsResponse(BaseModel):
-    events: list[AgentEvent]
-    latest_timestamp: datetime
-    has_more: bool
+class AgentStatus(BaseModel):
+    """Agent status information for dashboard display."""
+
+    agent_id: str
+    status: str  # "running", "stopped", "error"
+    goal: str | None = None
+    current_step: str | None = None
+    iteration: int = 0
+    max_iterations: int = 0
+    start_time: datetime | None = None
+    last_update: datetime = datetime.now()
+
+    class Config:
+        """Pydantic configuration."""
+
+        arbitrary_types_allowed = True
 
 
-class PlanSummary(BaseModel):
-    id: str
+class DemoStatus(BaseModel):
+    """Demo status information for dashboard display."""
+
+    demo_id: str
+    status: str  # "running", "stopped", "error"
+    scenario: str  # "online", "offline", "continuous"
     goal: str
-    steps: list[dict[str, Any]]
-    created_at: datetime
-    status: str
+    start_time: datetime | None = None
+    last_update: datetime = datetime.now()
+    output: str = ""
 
+    class Config:
+        """Pydantic configuration."""
 
-class ExecutionTrace(BaseModel):
-    execution_id: str
-    events: list[AgentEvent]
-    duration_seconds: float
-    status: str
+        arbitrary_types_allowed = True

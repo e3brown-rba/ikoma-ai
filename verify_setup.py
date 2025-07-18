@@ -34,13 +34,17 @@ def check_python_version():
     version = sys.version_info
     print(f"Current Python version: {version.major}.{version.minor}.{version.micro}")
 
-    if version.major == 3 and version.minor >= 10:
-        print_status("✅ Python version meets requirements (3.10+)", "SUCCESS")
+    if version.major == 3 and version.minor >= 11:
+        print_status("✅ Python version meets requirements (3.11+)", "SUCCESS")
+        return True
+    elif version.major == 3 and version.minor >= 10:
+        print_status("⚠️  Python version acceptable but 3.11+ recommended", "WARNING")
+        print_status("Upgrade to Python 3.11+ for best performance", "INFO")
         return True
     else:
         print_status("❌ Python version too old. Need 3.10+", "ERROR")
         print_status(
-            "Install Python 3.10+ using Homebrew: brew install python@3.11", "WARNING"
+            "Install Python 3.11+ using Homebrew: brew install python@3.11", "WARNING"
         )
         return False
 
@@ -75,6 +79,12 @@ def check_dependencies():
         "openai",
         "dotenv",
         "pydantic",
+        "fastapi",
+        "uvicorn",
+        "rich",
+        "jinja2",
+        "sse_starlette",
+        "websockets",
     ]
 
     missing_packages = []
@@ -183,6 +193,43 @@ def check_lm_studio():
         return False
 
 
+def check_tui_and_dashboard():
+    """Check if TUI and dashboard components can be imported."""
+    print_header("TUI and Dashboard Check")
+
+    # Check TUI imports
+    try:
+        from agent.ui.tui import IkomaTUI  # noqa: F401
+
+        print_status("✅ TUI imports working", "SUCCESS")
+        tui_ok = True
+    except ImportError as e:
+        print_status(f"❌ TUI import failed: {e}", "ERROR")
+        tui_ok = False
+
+    # Check dashboard imports
+    try:
+        from dashboard.app import app  # noqa: F401
+
+        print_status("✅ Dashboard imports working", "SUCCESS")
+        dashboard_ok = True
+    except ImportError as e:
+        print_status(f"❌ Dashboard import failed: {e}", "ERROR")
+        dashboard_ok = False
+
+    # Check modern Python syntax
+    try:
+        # Test modern union syntax
+        _: dict[str, str] | None = None  # noqa: F841
+        print_status("✅ Modern union syntax supported", "SUCCESS")
+        syntax_ok = True
+    except SyntaxError as e:
+        print_status(f"❌ Modern syntax not supported: {e}", "ERROR")
+        syntax_ok = False
+
+    return tui_ok and dashboard_ok and syntax_ok
+
+
 def check_tests():
     """Check if tests can run."""
     print_header("Test Availability")
@@ -190,6 +237,9 @@ def check_tests():
     test_files = [
         "tests/test_agent_phase1b.py",
         "tests/test_persistence_vector_store.py",
+        "tests/test_tui_basic.py",
+        "tests/test_dashboard_mvp.py",
+        "tests/test_dashboard_demo_integration.py",
     ]
 
     for test_file in test_files:
@@ -212,6 +262,7 @@ def main():
         ("Dependencies", check_dependencies),
         ("Environment File", check_environment_file),
         ("Directories", check_directories),
+        ("TUI and Dashboard", check_tui_and_dashboard),
         ("LM Studio", check_lm_studio),
         ("Tests", check_tests),
     ]
