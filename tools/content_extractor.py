@@ -33,7 +33,7 @@ except ImportError:
     logger.warning("textstat not available, quality scoring will be limited")
 
 try:
-    from bs4 import BeautifulSoup  # type: ignore[import-untyped]
+    from bs4 import BeautifulSoup
 
     BEAUTIFULSOUP_AVAILABLE = True
 except ImportError:
