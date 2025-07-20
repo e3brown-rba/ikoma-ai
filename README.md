@@ -205,8 +205,17 @@ iKOMA/
 ├── tests/                   # All test files and test documentation
 │   ├── test_agent_phase1b.py    # Phase 1-B plan-execute-reflect tests
 │   ├── test_persistence_vector_store.py  # Memory persistence tests
+│   ├── test_benchmarks.py       # Performance benchmark tests
 │   ├── ... (other test_*.py files)
 │   └── README.md            # Test organization and instructions
+├── benchmarks/              # Performance benchmarking system
+│   ├── bench.py             # Main benchmark runner
+│   ├── metrics.py           # Performance metrics collection
+│   ├── scenarios.py         # Standardized test scenarios
+│   ├── baselines.json       # Historical baseline data
+│   └── README.md            # Benchmarking documentation
+├── scripts/
+│   └── establish_baseline.sh # Baseline establishment script
 ├── requirements.txt         # Python dependencies (inc. langgraph, chromadb)
 ├── config.env.template      # Environment configuration template
 ├── pyproject.toml           # Project configuration and metadata
@@ -223,12 +232,43 @@ iKOMA/
 The project includes comprehensive tests for the plan-execute-reflect architecture. All test files are located in the `tests/` directory.
 
 - **Test Coverage: 39%** (652 statements, 398 missed - comprehensive plan-execute-reflect testing)
-- **128 tests passing** with 0 failures
+- **139 tests passing** with 0 failures (including 11 benchmark tests)
 - **Key modules covered**:
   - `agent/agent.py`: 35% coverage
   - `tools/tool_loader.py`: 53% coverage  
   - `tools/vector_store.py`: 49% coverage
   - `tools/fs_tools.py`: 16% coverage
+
+### Performance Benchmarking
+
+The project includes a comprehensive performance benchmarking system to detect performance regressions:
+
+- **Startup Time**: Measures agent initialization performance
+- **Turn Latency**: Measures plan-execute-reflect cycle performance
+- **Regression Detection**: Fails CI if performance regresses by >20%
+- **Historical Tracking**: Stores baseline data for trend analysis
+- **CI Integration**: Automatic performance checks on PRs with detailed reporting
+
+Run performance benchmarks:
+```bash
+# Run all benchmarks and check for regressions
+python -m benchmarks.bench
+
+# Establish new baseline (after performance improvements)
+./scripts/establish_baseline.sh
+
+# Check existing results against baseline
+python -m benchmarks.bench --check-only
+```
+
+Run benchmark tests:
+```bash
+python -m pytest tests/test_benchmarks.py -v
+```
+
+See `benchmarks/README.md` for detailed benchmarking documentation.
+
+### Unit Tests
 
 Run all tests with coverage:
 ```bash

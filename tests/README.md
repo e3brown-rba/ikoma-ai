@@ -45,6 +45,9 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 - `test_memory_manager_integration.py` - LangGraph memory manager integration and round-trip tests
 - `test_checkpointer_toggle.py` - Checkpointer environment variable toggle tests for CHECKPOINTER_ENABLED and legacy compatibility
 
+### Performance Benchmark Tests
+- `test_benchmarks.py` - Performance benchmarking system tests including regression detection, baseline management, and metric collection
+
 ### CLI and Interface Tests
 - `test_cli_continuous.py` - Command-line interface continuous mode tests
 - `test_cli_checkpointer.py` - CLI interface tests for checkpoint management commands
@@ -105,7 +108,9 @@ python -m pytest tests/test_dashboard*.py -v
 
 # TUI tests
 python -m pytest tests/test_tui_*.py -v
-```
+
+# Performance benchmark tests
+python -m pytest tests/test_benchmarks.py -v
 
 To run with coverage:
 ```bash
