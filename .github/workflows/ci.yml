@@ -99,16 +99,17 @@ jobs:
       - name: Security audit
         run: |
           # Convert .pip-audit-ignore to individual --ignore-vuln flags
-          IGNORE_FLAGS=""
+          IGNORE_FLAGS=()
           while IFS= read -r line; do
-            # Skip empty lines and comments
+            # Skip empty lines and comments, trim whitespace
+            line=$(echo "$line" | xargs)
             if [[ ! -z "$line" && ! "$line" =~ ^[[:space:]]*# ]]; then
-              IGNORE_FLAGS="$IGNORE_FLAGS --ignore-vuln $line"
+              IGNORE_FLAGS+=("--ignore-vuln" "$line")
             fi
           done < .pip-audit-ignore
 
           # Run pip-audit with ignore flags
-          pip-audit $IGNORE_FLAGS
+          pip-audit "${IGNORE_FLAGS[@]}"
       - run: bandit -r agent tools -ll
       - name: Secret scan
         run: trufflehog .
