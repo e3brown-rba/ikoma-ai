@@ -1,0 +1,41 @@
+{
+  "timestamp": 1753052491.25227,
+  "baselines": {
+    "agent_startup": {
+      "name": "agent_startup",
+      "value": 0.3333677918068133,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252271"
+    },
+    "turn_latency_simple_math": {
+      "name": "turn_latency_simple_math",
+      "value": 24.094477041663293,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252272"
+    },
+    "turn_latency_file_operation": {
+      "name": "turn_latency_file_operation",
+      "value": 43.4984115693563,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252273"
+    },
+    "turn_latency_multi_step": {
+      "name": "turn_latency_multi_step",
+      "value": 32.34880633301024,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252273"
+    },
+    "turn_latency_text_processing": {
+      "name": "turn_latency_text_processing",
+      "value": 28.702913222349405,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252274"
+    },
+    "turn_latency_simple_planning": {
+      "name": "turn_latency_simple_planning",
+      "value": 21.159986875019968,
+      "unit": "seconds",
+      "timestamp": "2025-07-20T23:01:31.252275"
+    }
+  }
+}

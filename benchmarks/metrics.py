@@ -1,4 +1,5 @@
 """Performance metrics collection and reporting."""
+
 import json
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,6 +10,7 @@ from typing import Any
 @dataclass
 class PerformanceResult:
     """Single performance measurement result."""
+
     name: str
     value: float
     unit: str = "seconds"
@@ -18,7 +20,7 @@ class PerformanceResult:
             "name": self.name,
             "value": self.value,
             "unit": self.unit,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
 
@@ -42,9 +44,9 @@ class BenchmarkMetrics:
             "results": [r.to_dict() for r in results],
             "summary": {
                 "total_metrics": len(results),
-                "average_latency": sum(r.value for r in results if "latency" in r.name) /
-                                  max(1, sum(1 for r in results if "latency" in r.name))
-            }
+                "average_latency": sum(r.value for r in results if "latency" in r.name)
+                / max(1, sum(1 for r in results if "latency" in r.name)),
+            },
         }
 
         with open(path, "w") as f:

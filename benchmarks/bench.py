@@ -1,4 +1,5 @@
 """Performance benchmark runner for Ikoma agent."""
+
 import argparse
 import json
 import sys
@@ -29,10 +30,12 @@ class IkomaBenchmark:
             end = time.perf_counter()
             times.append(end - start)
             del agent  # Clean up
-            print(f"  Startup iteration {i+1}/{iterations}: {times[-1]:.3f}s")
+            print(f"  Startup iteration {i + 1}/{iterations}: {times[-1]:.3f}s")
         return sum(times) / len(times)
 
-    def measure_turn_latency(self, scenario: dict[str, Any], iterations: int = 3) -> float:
+    def measure_turn_latency(
+        self, scenario: dict[str, Any], iterations: int = 3
+    ) -> float:
         """Measure single plan-execute-reflect cycle time."""
         agent = create_agent(disable_checkpoint=True)
         times = []
@@ -65,9 +68,11 @@ class IkomaBenchmark:
                 agent.invoke(initial_state, scenario.get("config", {}))
                 end = time.perf_counter()
                 times.append(end - start)
-                print(f"  {scenario['name']} iteration {i+1}/{iterations}: {times[-1]:.3f}s")
+                print(
+                    f"  {scenario['name']} iteration {i + 1}/{iterations}: {times[-1]:.3f}s"
+                )
             except Exception as e:
-                print(f"  Error in {scenario['name']} iteration {i+1}: {e}")
+                print(f"  Error in {scenario['name']} iteration {i + 1}: {e}")
                 # Use a high value for failed iterations to indicate problems
                 times.append(10.0)
 
@@ -79,22 +84,22 @@ class IkomaBenchmark:
 
         print("🚀 Running startup benchmark...")
         startup_time = self.measure_startup()
-        results.append(PerformanceResult(
-            name="agent_startup",
-            value=startup_time,
-            unit="seconds"
-        ))
+        results.append(
+            PerformanceResult(name="agent_startup", value=startup_time, unit="seconds")
+        )
         print(f"✅ Average startup time: {startup_time:.3f}s")
 
         print("\n⏱️ Running turn latency benchmarks...")
         for scenario in BENCHMARK_SCENARIOS:
             print(f"\n📋 Testing scenario: {scenario['name']}")
             latency = self.measure_turn_latency(scenario)
-            results.append(PerformanceResult(
-                name=f"turn_latency_{scenario['name']}",
-                value=latency,
-                unit="seconds"
-            ))
+            results.append(
+                PerformanceResult(
+                    name=f"turn_latency_{scenario['name']}",
+                    value=latency,
+                    unit="seconds",
+                )
+            )
             print(f"✅ Average latency: {latency:.3f}s")
 
         return results
@@ -126,7 +131,9 @@ class IkomaBenchmark:
                     print(f"✅ IMPROVEMENT: {result.name} is {-regression:.1%} faster")
                     print(f"   Baseline: {baseline:.3f}s, Current: {result.value:.3f}s")
                 else:
-                    print(f"✅ {result.name}: {regression:+.1%} change (within acceptable range)")
+                    print(
+                        f"✅ {result.name}: {regression:+.1%} change (within acceptable range)"
+                    )
             else:
                 print(f"📝 New metric: {result.name} = {result.value:.3f}s")
 
@@ -136,7 +143,7 @@ class IkomaBenchmark:
         """Save current results as new baseline."""
         baseline_data = {
             "timestamp": time.time(),
-            "baselines": {r.name: r.to_dict() for r in results}
+            "baselines": {r.name: r.to_dict() for r in results},
         }
 
         self.baseline_path.parent.mkdir(exist_ok=True)
@@ -148,12 +155,22 @@ class IkomaBenchmark:
 def main() -> None:
     """Main benchmark runner."""
     parser = argparse.ArgumentParser(description="Run Ikoma performance benchmarks")
-    parser.add_argument("--save-baseline", action="store_true",
-                       help="Save current results as new baseline")
-    parser.add_argument("--check-only", action="store_true",
-                       help="Only check for regressions, don't run benchmarks")
-    parser.add_argument("--output", type=Path, default=Path("benchmark_results.json"),
-                       help="Output file for results")
+    parser.add_argument(
+        "--save-baseline",
+        action="store_true",
+        help="Save current results as new baseline",
+    )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Only check for regressions, don't run benchmarks",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("benchmark_results.json"),
+        help="Output file for results",
+    )
 
     args = parser.parse_args()
 
