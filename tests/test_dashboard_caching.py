@@ -5,6 +5,7 @@ Test dashboard citation caching functionality.
 
 import time
 
+import pytest
 import requests
 
 from tools.citation_manager import ProductionCitationManager
@@ -40,6 +41,7 @@ def add_sample_citations() -> ProductionCitationManager:
     return citation_mgr
 
 
+@pytest.mark.dashboard
 def test_dashboard_caching() -> None:
     """Test the dashboard caching functionality."""
     print("🧪 Testing Dashboard Citation Caching")

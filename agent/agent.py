@@ -1158,7 +1158,7 @@ def main() -> None:
 
             import uvicorn
 
-            from dashboard.server import app
+            from dashboard.app import app
 
             def run_dashboard() -> None:
                 host = os.getenv("IKOMA_DASHBOARD_HOST", "127.0.0.1")

@@ -42,9 +42,9 @@ fi
 # Step 1: Check Python version
 print_status "Checking Python version..."
 
-# Try different Python versions in order of preference
+# Try different Python versions in order of preference (3.11+ preferred)
 PYTHON_CMD=""
-for cmd in python3.11 python3.12 python3.10 python3; do
+for cmd in python3.11 python3.12 python3.13 python3.10 python3; do
     if command -v $cmd &> /dev/null; then
         PYTHON_VERSION=$($cmd --version 2>&1 | cut -d' ' -f2 | cut -d'.' -f1,2)
         PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d'.' -f1)
@@ -52,7 +52,11 @@ for cmd in python3.11 python3.12 python3.10 python3; do
         
         if [ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -ge 10 ]; then
             PYTHON_CMD=$cmd
-            print_success "Python $PYTHON_VERSION found (meets requirement of 3.10+)"
+            if [ "$PYTHON_MINOR" -ge 11 ]; then
+                print_success "Python $PYTHON_VERSION found (recommended 3.11+)"
+            else
+                print_warning "Python $PYTHON_VERSION found (acceptable, but 3.11+ recommended)"
+            fi
             break
         fi
     fi
@@ -130,6 +134,15 @@ if python -c "import langchain, langgraph, chromadb" 2>/dev/null; then
     print_success "Core dependencies imported successfully"
 else
     print_error "Failed to import core dependencies"
+    exit 1
+fi
+
+# Step 9.5: Check TUI and Dashboard imports
+print_status "Checking TUI and Dashboard components..."
+if python -c "from agent.ui.tui import IkomaTUI; from dashboard.app import app" 2>/dev/null; then
+    print_success "TUI and Dashboard components imported successfully"
+else
+    print_error "Failed to import TUI and Dashboard components"
     exit 1
 fi
 

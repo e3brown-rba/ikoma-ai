@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from rich.table import Table
 
@@ -65,7 +66,7 @@ class PlanStatusTable:
 
 class InternetStatusBadge:
     def render(
-        self, internet_enabled: bool, rate_limit_info: dict | None = None
+        self, internet_enabled: bool, rate_limit_info: dict[str, Any] | None = None
     ) -> str:
         """Render internet connectivity badge"""
         if internet_enabled:

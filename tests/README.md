@@ -50,6 +50,9 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 - `test_cli_checkpointer.py` - CLI interface tests for checkpoint management commands
 - `test_dashboard_caching.py` - Dashboard caching functionality tests
 - `test_dashboard.py` - Dashboard functionality and WebSocket integration tests
+- `test_dashboard_demo_integration.py` - Dashboard demo integration and subprocess management tests
+- `test_dashboard_mvp.py` - Dashboard MVP functionality and FastAPI integration tests
+- `test_tui_basic.py` - Basic TUI functionality and component tests
 
 ### Heuristics & Iteration Control Tests
 - `test_iteration_limit.py` - Tests for the iteration-count termination heuristic, including CLI/env overrides and integration
@@ -96,6 +99,12 @@ python -m pytest tests/test_checkpointer*.py tests/test_memory_manager*.py -v
 
 # CLI tests
 python -m pytest tests/test_cli_*.py -v
+
+# Dashboard tests
+python -m pytest tests/test_dashboard*.py -v
+
+# TUI tests
+python -m pytest tests/test_tui_*.py -v
 ```
 
 To run with coverage:
