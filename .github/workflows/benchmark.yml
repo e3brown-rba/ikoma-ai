@@ -39,7 +39,7 @@ jobs:
     - name: Run benchmarks
       id: bench
       run: |
-        python -m benchmarks.bench > benchmark_output.txt
+        python -m benchmarks.bench --ci-mode > benchmark_output.txt
         echo "has_regression=$?" >> $GITHUB_OUTPUT
         
     - name: Upload benchmark results

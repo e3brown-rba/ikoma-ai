@@ -139,7 +139,7 @@ jobs:
       - name: Performance check
         run: |
           if [ -f "benchmark_results.json" ]; then
-            python -m benchmarks.bench --check-only
+            python -m benchmarks.bench --check-only --ci-mode
           else
             echo "⚠️ No benchmark results found - skipping performance check"
             echo "Run the full benchmark workflow to generate results"
