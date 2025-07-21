@@ -21,47 +21,113 @@ class IkomaBenchmark:
         self.baseline_path = baseline_path
         self.metrics = BenchmarkMetrics()
 
-    def measure_startup(self, iterations: int = 5) -> float:
+    def measure_startup(self, iterations: int = 5, ci_mode: bool = False) -> float:
         """Measure agent initialization time."""
         times = []
         for i in range(iterations):
             start = time.perf_counter()
-            agent = create_agent(disable_checkpoint=True)
+            if ci_mode:
+                # Use mocked agent for CI
+                agent = self._create_mocked_agent()
+            else:
+                agent = create_agent(disable_checkpoint=True)
             end = time.perf_counter()
             times.append(end - start)
             del agent  # Clean up
             print(f"  Startup iteration {i + 1}/{iterations}: {times[-1]:.3f}s")
         return sum(times) / len(times)
 
+    def _create_mocked_agent(self) -> Any:
+        """Create a mocked agent for CI testing."""
+        # Import here to avoid circular imports
+        from langchain_core.messages import AIMessage
+        from langgraph.graph import StateGraph, END
+        from typing import TypedDict
+        
+        # Define a simple state type for the mocked agent
+        class MockState(TypedDict):
+            messages: list
+            current_plan: list
+            execution_results: list
+            reflection: str
+            continue_planning: bool
+        
+        # Create a simple mocked agent that just returns a response
+        def mock_plan_node(state: MockState) -> MockState:
+            return {
+                **state,
+                "current_plan": [{"step": 1, "tool_name": "create_text_file", "args": {"filename_and_content": "test.txt|||test"}, "description": "Create test file"}],
+                "reflection": "Plan created successfully"
+            }
+        
+        def mock_execute_node(state: MockState) -> MockState:
+            return {
+                **state,
+                "execution_results": [{"step": 1, "result": "File created successfully"}],
+                "reflection": "Task completed"
+            }
+        
+        def mock_reflect_node(state: MockState) -> MockState:
+            return {
+                **state,
+                "continue_planning": False,
+                "reflection": "Task completed successfully"
+            }
+        
+        # Create simple workflow
+        workflow = StateGraph(MockState)
+        workflow.add_node("plan", mock_plan_node)
+        workflow.add_node("execute", mock_execute_node)
+        workflow.add_node("reflect", mock_reflect_node)
+        workflow.add_edge("plan", "execute")
+        workflow.add_edge("execute", "reflect")
+        workflow.add_edge("reflect", END)
+        workflow.set_entry_point("plan")
+        
+        return workflow.compile()
+
     def measure_turn_latency(
-        self, scenario: dict[str, Any], iterations: int = 3
+        self, scenario: dict[str, Any], iterations: int = 3, ci_mode: bool = False
     ) -> float:
         """Measure single plan-execute-reflect cycle time."""
-        agent = create_agent(disable_checkpoint=True)
+        if ci_mode:
+            agent = self._create_mocked_agent()
+        else:
+            agent = create_agent(disable_checkpoint=True)
         times = []
 
         for i in range(iterations):
-            initial_state: AgentState = {
-                "messages": [HumanMessage(content=scenario["goal"])],
-                "memory_context": None,
-                "user_profile": None,
-                "session_summary": None,
-                "current_plan": None,
-                "execution_results": None,
-                "reflection": None,
-                "continue_planning": False,
-                "max_iterations": 1,  # Single turn only
-                "current_iteration": 0,
-                "start_time": None,
-                "time_limit_secs": None,
-                "citations": None,
-                "citation_counter": None,
-                "reflection_json": None,
-                "reflection_failures": None,
-                "checkpoint_every": None,
-                "last_checkpoint_iter": None,
-                "stats": None,
-            }
+            if ci_mode:
+                # Use simplified state for mocked agent
+                initial_state: dict[str, Any] = {
+                    "messages": [HumanMessage(content=scenario["goal"])],
+                    "current_plan": None,
+                    "execution_results": None,
+                    "reflection": None,
+                    "continue_planning": False,
+                }
+            else:
+                initial_state: AgentState = {
+                    "messages": [HumanMessage(content=scenario["goal"])],
+                    "memory_context": None,
+                    "user_profile": None,
+                    "session_summary": None,
+                    "current_plan": None,
+                    "execution_results": None,
+                    "reflection": None,
+                    "continue_planning": False,
+                    "max_iterations": 1,  # Single turn only
+                    "current_iteration": 0,
+                    "start_time": None,
+                    "time_limit_secs": None,
+                    "citations": None,
+                    "citation_counter": None,
+                    "reflection_json": None,
+                    "reflection_failures": None,
+                    "checkpoint_every": None,
+                    "last_checkpoint_iter": None,
+                    "stats": None,
+                }
 
             start = time.perf_counter()
             try:
@@ -78,12 +144,12 @@ class IkomaBenchmark:
 
         return sum(times) / len(times)
 
-    def run_benchmarks(self) -> list[PerformanceResult]:
+    def run_benchmarks(self, ci_mode: bool = False) -> list[PerformanceResult]:
         """Run all benchmark scenarios."""
         results = []
 
         print("🚀 Running startup benchmark...")
-        startup_time = self.measure_startup()
+        startup_time = self.measure_startup(ci_mode=ci_mode)
         results.append(
             PerformanceResult(name="agent_startup", value=startup_time, unit="seconds")
         )
@@ -92,7 +158,7 @@ class IkomaBenchmark:
         print("\n⏱️ Running turn latency benchmarks...")
         for scenario in BENCHMARK_SCENARIOS:
             print(f"\n📋 Testing scenario: {scenario['name']}")
-            latency = self.measure_turn_latency(scenario)
+            latency = self.measure_turn_latency(scenario, ci_mode=ci_mode)
             results.append(
                 PerformanceResult(
                     name=f"turn_latency_{scenario['name']}",
@@ -171,6 +237,11 @@ def main() -> None:
         default=Path("benchmark_results.json"),
         help="Output file for results",
     )
+    parser.add_argument(
+        "--ci-mode",
+        action="store_true",
+        help="Run in CI mode with mocked components (no external dependencies)",
+    )
 
     args = parser.parse_args()
 
@@ -191,9 +262,11 @@ def main() -> None:
 
     # Run benchmarks
     print("🎯 Starting Ikoma Performance Benchmarks")
+    if args.ci_mode:
+        print("🔧 Running in CI mode with mocked components")
     print("=" * 50)
 
-    results = benchmark.run_benchmarks()
+    results = benchmark.run_benchmarks(ci_mode=args.ci_mode)
 
     # Save results
     benchmark.metrics.save_artifacts(results, args.output)
