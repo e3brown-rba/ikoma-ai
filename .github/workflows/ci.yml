@@ -125,3 +125,22 @@ jobs:
       - run: pip install -e .
       - run: pip install build
       - run: python -m build --sdist --wheel --outdir dist/
+
+  performance:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .
+      - run: pip install matplotlib
+      - name: Performance check
+        run: |
+          if [ -f "benchmark_results.json" ]; then
+            python -m benchmarks.bench --check-only --ci-mode
+          else
+            echo "⚠️ No benchmark results found - skipping performance check"
+            echo "Run the full benchmark workflow to generate results"
+          fi

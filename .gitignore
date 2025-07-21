@@ -66,4 +66,5 @@ artifacts/
 agent/memory/vector_store/*/
 agent/memory/vector_store/*.sqlite3
 agent/memory/*.sqlite3
-agent/memory/*/ 
+agent/memory/*/ benchmarks/baselines.json
+benchmark_results.json
