@@ -40,10 +40,10 @@ class IkomaBenchmark:
     def _create_mocked_agent(self) -> Any:
         """Create a mocked agent for CI testing."""
         # Import here to avoid circular imports
-        from langchain_core.messages import AIMessage
-        from langgraph.graph import StateGraph, END
         from typing import TypedDict
-        
+
+        from langgraph.graph import END, StateGraph
+
         # Define a simple state type for the mocked agent
         class MockState(TypedDict):
             messages: list
@@ -51,29 +51,38 @@ class IkomaBenchmark:
             execution_results: list
             reflection: str
             continue_planning: bool
-        
+
         # Create a simple mocked agent that just returns a response
         def mock_plan_node(state: MockState) -> MockState:
             return {
                 **state,
-                "current_plan": [{"step": 1, "tool_name": "create_text_file", "args": {"filename_and_content": "test.txt|||test"}, "description": "Create test file"}],
-                "reflection": "Plan created successfully"
+                "current_plan": [
+                    {
+                        "step": 1,
+                        "tool_name": "create_text_file",
+                        "args": {"filename_and_content": "test.txt|||test"},
+                        "description": "Create test file",
+                    }
+                ],
+                "reflection": "Plan created successfully",
             }
-        
+
         def mock_execute_node(state: MockState) -> MockState:
             return {
                 **state,
-                "execution_results": [{"step": 1, "result": "File created successfully"}],
-                "reflection": "Task completed"
+                "execution_results": [
+                    {"step": 1, "result": "File created successfully"}
+                ],
+                "reflection": "Task completed",
             }
-        
+
         def mock_reflect_node(state: MockState) -> MockState:
             return {
                 **state,
                 "continue_planning": False,
-                "reflection": "Task completed successfully"
+                "reflection": "Task completed successfully",
             }
-        
+
         # Create simple workflow
         workflow = StateGraph(MockState)
         workflow.add_node("plan", mock_plan_node)
@@ -83,7 +92,7 @@ class IkomaBenchmark:
         workflow.add_edge("execute", "reflect")
         workflow.add_edge("reflect", END)
         workflow.set_entry_point("plan")
-        
+
         return workflow.compile()
 
     def measure_turn_latency(
