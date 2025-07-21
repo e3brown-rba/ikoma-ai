@@ -14,6 +14,7 @@ class PerformanceResult:
     name: str
     value: float
     unit: str = "seconds"
+    timestamp: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
