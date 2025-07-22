@@ -19,6 +19,7 @@ from rich.panel import Panel
 # Checkpoint functionality for conversation state persistence
 from agent.checkpointer import IkomaCheckpointer
 from agent.constants import MAX_ITER, MAX_MINS
+from agent.instrumentation import get_instrumentation
 from ikoma.schemas.plan_models import MalformedPlanError, Plan
 from planning.reflection import PlanRepairFailure, get_max_plan_retries, repair_plan
 from tools.citation_manager import ProductionCitationManager
@@ -222,6 +223,10 @@ def should_continue_planning(state: AgentState) -> str:
 # --- Plan-Execute-Reflect Nodes ---
 def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> AgentState:
     """Optimized plan_node that uses shared LLM instance."""
+    # Instrumentation: Record plan start
+    instrumentation = get_instrumentation()
+    instrumentation.record_plan_start()
+
     try:
         # TUI Integration: planning_start
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
@@ -318,6 +323,12 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
                     step.model_dump() for step in validated_plan.plan
                 ]
                 state["continue_planning"] = True
+
+                # Instrumentation: Record successful plan end
+                instrumentation.record_plan_end(
+                    len(validated_plan.plan), state["current_plan"] or []
+                )
+
             except Exception as e:
                 # Self-reflection retry (Issue-18)
                 max_retries = (
@@ -410,6 +421,10 @@ def execute_node(
     state: AgentState, config: dict, *, store: Any, tools: Any
 ) -> AgentState:
     """Optimized execute_node that uses shared tools with citation tracking."""
+    # Instrumentation: Record execute start
+    instrumentation = get_instrumentation()
+    instrumentation.record_execute_start()
+
     try:
         # Initialize citation manager
         from tools.citation_manager import CitationManager
@@ -469,6 +484,10 @@ def execute_node(
                         "status": "error",
                         "result": f"Tool '{tool_name}' not found",
                     }
+                )
+                # Instrumentation: Record failed tool call
+                instrumentation.record_tool_call(
+                    tool_name, args, False, f"Tool '{tool_name}' not found"
                 )
                 continue
 
@@ -573,6 +592,9 @@ def execute_node(
 
         state["execution_results"] = execution_results
 
+        # Instrumentation: Record execute end
+        instrumentation.record_execute_end(execution_results)
+
         # After execution result
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             print(
@@ -599,6 +621,8 @@ def execute_node(
                 "result": f"Execution error: {e}",
             }
         ]
+        # Instrumentation: Record error
+        instrumentation.record_error(str(e), {"node": "execute_node"})
 
     return state
 
@@ -607,6 +631,10 @@ def reflect_node(
     state: AgentState, config: dict, *, store: Any, llm: Any
 ) -> AgentState:
     """Optimized reflect_node that uses shared LLM instance."""
+    # Instrumentation: Record reflect start
+    instrumentation = get_instrumentation()
+    instrumentation.record_reflect_start()
+
     try:
         # Increment iteration counter
         state["current_iteration"] = state.get("current_iteration", 0) + 1
@@ -742,6 +770,12 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
                 "reasoning", "Reflection completed"
             )
 
+            # Instrumentation: Record reflect end
+            next_action = reflection_data.get("next_action", "continue")
+            instrumentation.record_reflect_end(
+                reflection_data.get("reasoning", "Reflection completed"), next_action
+            )
+
         except (json.JSONDecodeError, ValueError) as e:
             # Record failure
             failure_record = {
@@ -773,6 +807,11 @@ Let me know if you need anything else!"""
 
             state["messages"].append(AIMessage(content=fallback_response))
 
+            # Instrumentation: Record error
+            instrumentation.record_error(
+                str(e), {"node": "reflect_node", "type": "json_decode"}
+            )
+
     except Exception as e:
         print(f"Error in reflect_node: {e}")
         state["continue_planning"] = False
@@ -782,6 +821,11 @@ Let me know if you need anything else!"""
         # Broadcast reflection error
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             tui_broadcaster.broadcast("reflection_error", {"error": str(e)})
+
+        # Instrumentation: Record error
+        instrumentation.record_error(
+            str(e), {"node": "reflect_node", "type": "exception"}
+        )
 
     return state
 
