@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class AgentEvent(BaseModel):
@@ -13,10 +13,7 @@ class AgentEvent(BaseModel):
     data: dict[str, Any]
     timestamp: datetime = datetime.now()
 
-    class Config:
-        """Pydantic configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class AgentStatus(BaseModel):
@@ -31,10 +28,7 @@ class AgentStatus(BaseModel):
     start_time: datetime | None = None
     last_update: datetime = datetime.now()
 
-    class Config:
-        """Pydantic configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class DemoStatus(BaseModel):
@@ -48,7 +42,4 @@ class DemoStatus(BaseModel):
     last_update: datetime = datetime.now()
     output: str = ""
 
-    class Config:
-        """Pydantic configuration."""
-
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

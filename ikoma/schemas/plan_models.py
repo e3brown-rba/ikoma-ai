@@ -7,7 +7,7 @@ and provide a single source of truth for plan structure validation.
 
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from tools.tool_loader import tool_loader
 
@@ -57,11 +57,9 @@ class Plan(BaseModel):
         ..., description="Explanation of why this plan will achieve the goal"
     )
 
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"  # Reject any additional properties
-        json_schema_extra = {
+    model_config = ConfigDict(
+        extra="forbid",  # Reject any additional properties
+        json_schema_extra={
             "examples": [
                 {
                     "plan": [
@@ -75,7 +73,8 @@ class Plan(BaseModel):
                     "reasoning": "Start by exploring what files are available",
                 }
             ]
-        }
+        },
+    )
 
 
 class MalformedPlanError(Exception):

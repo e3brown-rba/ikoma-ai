@@ -185,7 +185,7 @@ def launch_demo(demo_type: str, agent_id: str) -> subprocess.Popen:
 def dashboard_home(request: Request) -> HTMLResponse:
     """Render the main dashboard with three-panel layout."""
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "agent_config": agent_config}
+        request, "dashboard.html", {"agent_config": agent_config}
     )
 
 
@@ -224,9 +224,7 @@ def get_agents_list(request: Request) -> HTMLResponse:
             }
         )
 
-    return templates.TemplateResponse(
-        "agents_list.html", {"request": request, "agents": agents}
-    )
+    return templates.TemplateResponse(request, "agents_list.html", {"agents": agents})
 
 
 @app.get("/agent-details/{agent_id}", response_class=HTMLResponse)
@@ -263,7 +261,7 @@ def get_agent_details(request: Request, agent_id: str) -> HTMLResponse:
         }
 
     return templates.TemplateResponse(
-        "agent_details.html", {"request": request, "agent": agent_details}
+        request, "agent_details.html", {"agent": agent_details}
     )
 
 
@@ -509,10 +507,10 @@ async def health_check() -> dict[str, Any]:
 @app.get("/metrics", response_class=HTMLResponse)
 def get_metrics_dashboard(request: Request) -> HTMLResponse:
     """Metrics dashboard page"""
-    return templates.TemplateResponse("metrics.html", {"request": request})
+    return templates.TemplateResponse(request, "metrics.html")
 
 
 @app.get("/metrics-panel", response_class=HTMLResponse)
 def get_metrics_panel(request: Request) -> HTMLResponse:
     """HTMX endpoint for metrics panel"""
-    return templates.TemplateResponse("metrics.html", {"request": request})
+    return templates.TemplateResponse(request, "metrics.html")

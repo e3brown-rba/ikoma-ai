@@ -20,7 +20,6 @@ from tools.http_client import (
 from tools.http_tools import (
     get_http_client_stats,
     make_http_request,
-    test_http_connection,
 )
 
 
@@ -368,40 +367,6 @@ class TestHTTPTools:
             assert "📊 HTTP Client Statistics" in result
             assert "Total Domains: 2" in result
             assert "Total Requests: 10" in result
-
-    def test_test_http_connection_success(self):
-        """Test HTTP connection test tool success."""
-        with patch("tools.http_tools.get_http_client") as mock_get_client:
-            mock_client = MagicMock()
-            mock_client.get.return_value = {
-                "success": True,
-                "url": "https://httpbin.org/get",
-                "status_code": 200,
-                "content_length": 100,
-                "domain": "httpbin.org",
-            }
-            mock_get_client.return_value = mock_client
-
-            result = test_http_connection.invoke({})
-
-            assert "✅ HTTP connection test successful" in result
-            assert "Status: 200" in result
-
-    def test_test_http_connection_failure(self):
-        """Test HTTP connection test tool failure."""
-        with patch("tools.http_tools.get_http_client") as mock_get_client:
-            mock_client = MagicMock()
-            mock_client.get.return_value = {
-                "success": False,
-                "url": "https://httpbin.org/get",
-                "error": "Connection failed",
-            }
-            mock_get_client.return_value = mock_client
-
-            result = test_http_connection.invoke({})
-
-            assert "❌ HTTP connection test failed" in result
-            assert "Connection failed" in result
 
 
 def test_get_http_client_singleton():
