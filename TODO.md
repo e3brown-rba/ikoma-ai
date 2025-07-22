@@ -499,10 +499,16 @@ python -m agent.agent --dashboard --dashboard-port 8001 --continuous --goal "You
   - **Documentation**: Added to tests/README.md with proper categorization
   - **Type Safety**: Full mypy compliance with Python 3.11 syntax
 
-- ❌ **Issue #25**: Publish metrics artifact in CI & alert on spike (metrics) - NOT COMPLETED
-  - **Current Status**: Metrics collection not implemented
-  - **Missing**: CI metrics artifact publishing and alerting
-  - **Next Steps**: Implement metrics collection and alerting system
+- ✅ **Issue #25**: Publish metrics artifact in CI & alert on spike (metrics) - COMPLETED
+  - **Current Status**: Comprehensive metrics collection system implemented
+  - **Metrics Collection**: Pydantic models with thread-safe JSONL output
+  - **Performance Analysis**: Regression detection with 20% threshold
+  - **CI Integration**: MetricsReporter for artifact publishing and alerting
+  - **Agent Integration**: Full metrics tracking in plan, execute, reflect nodes
+  - **Session Tracking**: Both interactive and continuous mode support
+  - **Environment Config**: IKOMA_METRICS_ENABLED toggle
+  - **Test Coverage**: 100% coverage of metrics classes
+  - **Type Safety**: Complete mypy compliance
 
 - ❌ **Issue #26**: Grafana-lite dashboard for metrics (metrics) - NOT COMPLETED
   - **Current Status**: Metrics dashboard not implemented
