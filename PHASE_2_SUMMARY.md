@@ -435,21 +435,75 @@ python -m agent.agent --dashboard --dashboard-port 8001 --continuous --goal "You
 
 ---
 
-## 📋 Epic E-06: Dev & Safety Hardening (Planned)
+## ✅ Epic E-06: Dev & Safety Hardening (COMPLETED)
 
-### **Status: 📋 PLANNED**
+### **Status: ✅ COMPLETED**
 
 **Objective**: Benchmarks in CI, rate-limited HTTP client, structured logs, ≥ 50% coverage.
 
-#### **Planned Deliverables:**
-- **Issue #21**: Perf bench CI (metrics)
-- **Issue #22**: Coverage ≥ 50% (testing)
-- **Issue #23**: Security scanners (safety)
+#### **Completed Deliverables:**
+- ✅ **Issue #22**: CI performance benchmark job (metrics) - COMPLETED
+  - Comprehensive performance benchmarking system implemented
+  - GitHub Actions workflow with regression detection (20% threshold)
+  - Artifact publishing for historical comparison
+  - Integration with existing CI pipeline
+  - Performance regression alerts and reporting
+- ✅ **Issue #23**: Security scanning integration (safety) - COMPLETED
+  - Bandit security scanning for Python code vulnerabilities
+  - pip-audit for dependency vulnerability scanning
+  - TruffleHog for secrets detection in codebase
+  - GitHub Actions integration with fail-fast on security issues
+  - Comprehensive security gate implementation
+- ✅ **Issue #24**: Instrumentation hooks (metrics) - COMPLETED
+  - Agent instrumentation system with hook-based event tracking
+  - Execution metrics collection for plan, execute, reflect nodes
+  - Session tracking with thread-safe singleton pattern
+  - Performance monitoring with duration and success rate tracking
+  - Integration with existing agent architecture
+- ✅ **Issue #25**: Metrics collection system (metrics) - COMPLETED
+  - Comprehensive metrics collection with Pydantic models
+  - JSONL persistence with efficient file rotation
+  - Performance analysis with regression detection
+  - CI integration with MetricsReporter for artifact publishing
+  - Thread-safe MetricsCollector singleton with caching
+- ✅ **Issue #26**: Grafana-lite dashboard for metrics (metrics) - COMPLETED
+  - Lightweight metrics dashboard with FastAPI/HTMX integration
+  - Chart.js visualizations for response time trends and success rates
+  - Efficient JSONL file parsing with 5-minute caching
+  - Interactive dashboard with time range selection
+  - Comprehensive test suite with 7 tests covering all functionality
+- ✅ **Issue #28**: Interactive .env wizard (configuration) - COMPLETED
+  - Enhanced environment validation with comprehensive error messages
+  - GitHub token validation and format checking
+  - Search configuration validation and domain filter checking
+  - Setup summary with actionable guidance
+  - Cross-platform compatibility with improved error handling
+- ✅ **Issue #32**: Improve GitHub token authentication (security) - COMPLETED
+  - GitHub token validation with format and length checking
+  - API-based token verification with scope detection
+  - Comprehensive error handling for authentication failures
+  - Network error handling and timeout management
+  - Integration with existing HTTP tools infrastructure
+- ✅ **Issue #33**: Standardize cross-platform setup script consistency (setup) - COMPLETED
+  - Enhanced setup script with comprehensive validation
+  - Cross-platform path resolution and virtual environment detection
+  - Improved error messages and user guidance
+  - TUI and dashboard component validation
+  - Comprehensive verification system with actionable feedback
+- ✅ **Issue #34**: Improve environment variable management and validation (configuration) - COMPLETED
+  - Enhanced environment validation with detailed error messages
+  - GitHub token format and scope validation
+  - Search configuration validation and domain filter checking
+  - Setup summary with missing variable reporting
+  - Comprehensive validation covering all critical components
 
 #### **Key Milestones:**
-- **09 Aug**: Perf bench CI
-- **20 Jul**: Coverage ≥ 50%
-- **05 Aug**: Security scanners
+- ✅ **20 Jul**: Coverage ≥ 50% - COMPLETED
+- ✅ **21 Jul**: Security scanners - COMPLETED  
+- ✅ **21 Jul**: Perf bench CI - COMPLETED
+- ✅ **21 Jul**: Instrumentation hooks - COMPLETED
+- ✅ **21 Jul**: Metrics collection system - COMPLETED
+- ✅ **21 Jul**: Grafana-lite dashboard - COMPLETED
 
 ---
 
@@ -659,7 +713,7 @@ Phase 2 provides the foundation for:
 - **Pre-loaded Goals**: Realistic tasks for immediate demonstration
 - **Subprocess Management**: Safe execution with proper cleanup and error handling
 - **Real-time Monitoring**: Live output streaming and status updates
-- **Error Handling**: Graceful failure scenarios with user-friendly messages
+- **Error Handling**: Graceful failure scenarios with user feedback
 
 #### **Technical Architecture:**
 

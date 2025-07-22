@@ -935,9 +935,12 @@ def check_env() -> None:
         "LMSTUDIO_EMBED_MODEL",
         "VECTOR_STORE_PATH",
     ]
+
+    missing_vars = []
     for var in critical_vars:
         value = os.getenv(var)
         if not value:
+            missing_vars.append(var)
             print(
                 f"⚠️  ENV WARNING: Required variable {var} is not set. Using default built-in fallback."
             )
@@ -954,8 +957,47 @@ def check_env() -> None:
     if cpe and cpe.lower() not in {"0", "1", "true", "false", "yes", "no"}:
         print(
             f"⚠️  ENV WARNING: CHECKPOINTER_ENABLED value '{cpe}' is invalid – "
-            "defaulting to 'true'."
+            "defaulting to 'true'. Valid values: true/false, yes/no, 1/0"
         )
+
+    # Enhanced validation for GitHub-related variables
+    github_token = os.getenv("GITHUB_TOKEN")
+    if github_token:
+        if len(github_token) < 10:
+            print(
+                "⚠️  ENV WARNING: GITHUB_TOKEN appears to be too short. Please verify your token."
+            )
+        elif not github_token.startswith(("ghp_", "github_pat_")):
+            print(
+                "⚠️  ENV WARNING: GITHUB_TOKEN format appears invalid. Expected format: ghp_... or github_pat_..."
+            )
+
+    # Validate search configuration
+    search_enabled = os.getenv("SEARCH_ENABLED", "false").lower()
+    serpapi_key = os.getenv("SERPAPI_API_KEY")
+    if search_enabled in {"true", "1", "yes"} and not serpapi_key:
+        print(
+            "⚠️  ENV WARNING: SEARCH_ENABLED=true but SERPAPI_API_KEY is not set. Web search will be disabled."
+        )
+
+    # Validate domain filter configuration
+    allow_list = os.getenv("DOMAIN_ALLOW_LIST_PATH", ".allow_domains.txt")
+    deny_list = os.getenv("DOMAIN_DENY_LIST_PATH", ".deny_domains.txt")
+
+    if not Path(allow_list).exists():
+        print(
+            f"ℹ️  INFO: Domain allow list not found at {allow_list} - using default allow list"
+        )
+    if not Path(deny_list).exists():
+        print(
+            f"ℹ️  INFO: Domain deny list not found at {deny_list} - using default deny list"
+        )
+
+    # Summary if there are issues
+    if missing_vars:
+        print(f"\n📋 SETUP SUMMARY: {len(missing_vars)} critical variables missing")
+        print("   Run './setup.sh' to configure your environment automatically")
+        print("   Or copy 'config.env.template' to '.env' and edit as needed")
 
 
 # --- Agent Setup ---

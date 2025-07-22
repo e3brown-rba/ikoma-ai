@@ -21,6 +21,7 @@ from sse_starlette import (
     EventSourceResponse,  # type: ignore[import-untyped,unused-ignore]
 )
 
+from dashboard.metrics import metrics_router
 from tools.citation_manager import ProductionCitationManager
 
 # Global state for agent configuration and demo management
@@ -74,6 +75,9 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Include metrics router
+app.include_router(metrics_router)
 
 # Simple in-memory cache for citation HTML, keyed by conversation_id
 _citation_cache: dict[str, tuple[str, float]] = {}
@@ -500,3 +504,15 @@ async def health_check() -> dict[str, Any]:
         "sse_connections": len(sse_connections),
         "active_demos": len(demo_status),
     }
+
+
+@app.get("/metrics", response_class=HTMLResponse)
+def get_metrics_dashboard(request: Request) -> HTMLResponse:
+    """Metrics dashboard page"""
+    return templates.TemplateResponse("metrics.html", {"request": request})
+
+
+@app.get("/metrics-panel", response_class=HTMLResponse)
+def get_metrics_panel(request: Request) -> HTMLResponse:
+    """HTMX endpoint for metrics panel"""
+    return templates.TemplateResponse("metrics.html", {"request": request})

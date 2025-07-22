@@ -7,6 +7,7 @@ import asyncio
 import pytest
 
 
+@pytest.mark.asyncio
 @pytest.mark.dashboard
 async def test_demo_integration():
     """Test the complete demo integration functionality"""
