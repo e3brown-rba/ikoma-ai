@@ -17,8 +17,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import escape
 from pydantic import BaseModel
+
 try:
-    from sse_starlette import EventSourceResponse  # type: ignore[import-untyped,unused-ignore]
+    from sse_starlette import (
+        EventSourceResponse,  # type: ignore[import-untyped,unused-ignore]
+    )
 except ImportError:
     # Fallback for environments where sse_starlette is not available
     from starlette.responses import StreamingResponse as EventSourceResponse
