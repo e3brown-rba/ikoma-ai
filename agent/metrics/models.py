@@ -1,7 +1,7 @@
 """Pydantic models for metrics data collection."""
 
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -11,10 +11,10 @@ class StepMetric(BaseModel):
     timestamp: datetime
     thread_id: str
     step_type: str  # "plan", "execute", "reflect"
-    tool_name: Optional[str] = None
+    tool_name: str | None = None
     duration_ms: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     metadata: dict = {}
 
 
@@ -47,4 +47,4 @@ class MetricsSummary(BaseModel):
     overall_success_rate: float
     most_used_tools: list[tuple[str, int]]
     safety_incidents: int
-    performance_regression: Optional[float] = None  # Percentage change
+    performance_regression: float | None = None  # Percentage change

@@ -2,17 +2,16 @@
 
 import json
 import tempfile
-import time
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
 from agent.metrics import metrics_collector
 from agent.metrics.analyzer import MetricsAnalyzer
 from agent.metrics.collector import MetricsCollector
-from agent.metrics.models import MetricsSummary, SessionMetric, StepMetric
+from agent.metrics.models import SessionMetric, StepMetric
 
 
 class TestMetricsModels:
@@ -98,7 +97,7 @@ class TestMetricsCollector:
 
             # Check that the metric was written
             assert metrics_file.exists()
-            with open(metrics_file, "r") as f:
+            with open(metrics_file) as f:
                 lines = f.readlines()
                 assert len(lines) == 1
 
@@ -144,7 +143,7 @@ class TestMetricsCollector:
                 assert session_id not in collector._session_metrics
 
                 # Check that session metric was written
-                with open(metrics_file, "r") as f:
+                with open(metrics_file) as f:
                     lines = f.readlines()
                     assert len(lines) == 1
 

@@ -65,7 +65,7 @@ def main() -> None:
     else:
         # Default behavior: just analyze and report
         summary = analyzer.analyze_recent_performance()
-        print(f"📊 Metrics Summary:")
+        print("📊 Metrics Summary:")
         print(f"  Sessions: {summary.total_sessions}")
         print(f"  Iterations: {summary.total_iterations}")
         print(f"  Success Rate: {summary.overall_success_rate:.1%}")

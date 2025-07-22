@@ -3,10 +3,9 @@
 import json
 import os
 import threading
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .models import SessionMetric, StepMetric
 
@@ -34,7 +33,7 @@ class MetricsCollector:
         self.output_path = self._get_output_path()
         self.max_size_mb = self._get_max_size()
         self._file_lock = threading.Lock()
-        self._session_metrics: Dict[str, SessionMetric] = {}
+        self._session_metrics: dict[str, SessionMetric] = {}
         self._session_lock = threading.Lock()
 
         # Ensure output directory exists
@@ -61,9 +60,9 @@ class MetricsCollector:
         step_type: str,
         duration_ms: float,
         success: bool,
-        tool_name: Optional[str] = None,
-        error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tool_name: str | None = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Emit a step metric."""
         if not self.enabled:
@@ -111,7 +110,7 @@ class MetricsCollector:
                     if hasattr(session, key):
                         setattr(session, key, value)
 
-    def end_session(self, session_id: str) -> Optional[SessionMetric]:
+    def end_session(self, session_id: str) -> SessionMetric | None:
         """End session tracking and return final metrics."""
         if not self.enabled:
             return None
@@ -175,7 +174,7 @@ class MetricsCollector:
             return []
 
         metrics = []
-        with open(self.output_path, "r") as f:
+        with open(self.output_path) as f:
             for line in f:
                 try:
                     metrics.append(json.loads(line.strip()))

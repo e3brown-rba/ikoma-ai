@@ -229,7 +229,7 @@ class TestAgentInstrumentation:
         self.instrumentation.record_reflect_end("Test reflection", "continue")
 
         # End the iteration properly
-        iteration_metrics = self.instrumentation.end_iteration(state)
+        self.instrumentation.end_iteration(state)
 
         final_state = create_test_agent_state()
         session_metrics = self.instrumentation.end_session(final_state)
@@ -442,7 +442,7 @@ class TestGlobalInstrumentation:
         instrumentation.record_reflect_end("Test reflection", "continue")
 
         # End the iteration properly
-        iteration_metrics = instrumentation.end_iteration(state)
+        instrumentation.end_iteration(state)
 
         final_state = create_test_agent_state()
         session_metrics = instrumentation.end_session(final_state)

@@ -4,9 +4,9 @@ import json
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from .models import MetricsSummary, SessionMetric, StepMetric
+from .models import MetricsSummary
 
 
 class MetricsAnalyzer:
@@ -128,7 +128,9 @@ class MetricsAnalyzer:
         # Calculate average step duration
         def get_avg_duration(metrics_list: list[dict[str, Any]]) -> float:
             durations = [
-                float(m.get("duration_ms", 0)) for m in metrics_list if m.get("duration_ms")
+                float(m.get("duration_ms", 0))
+                for m in metrics_list
+                if m.get("duration_ms")
             ]
             return sum(durations) / max(1, len(durations))
 
@@ -154,12 +156,12 @@ class MetricsAnalyzer:
 
         metrics = []
         try:
-            with open(self.metrics_file, "r") as f:
+            with open(self.metrics_file) as f:
                 for line in f:
                     line = line.strip()
                     if line:
                         metrics.append(json.loads(line))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             pass
 
         return metrics

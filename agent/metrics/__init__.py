@@ -1,8 +1,8 @@
 """Metrics collection and analysis for agent performance monitoring."""
 
+from .analyzer import MetricsAnalyzer
 from .collector import metrics_collector
 from .models import MetricsSummary, SessionMetric, StepMetric
-from .analyzer import MetricsAnalyzer
 from .reporter import main as reporter_main
 
 __all__ = [
