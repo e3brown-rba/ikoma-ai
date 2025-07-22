@@ -68,3 +68,7 @@ agent/memory/vector_store/*.sqlite3
 agent/memory/*.sqlite3
 agent/memory/*/ benchmarks/baselines.json
 benchmark_results.json
+
+# Metrics and logs (local runtime artifacts)
+agent/logs/
+agent/logs/*.jsonl

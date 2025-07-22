@@ -48,6 +48,9 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 ### Performance Benchmark Tests
 - `test_benchmarks.py` - Performance benchmarking system tests including regression detection, baseline management, and metric collection
 
+### Instrumentation Tests
+- `test_instrumentation.py` - Agent instrumentation system tests including metrics collection, session tracking, and performance monitoring hooks
+
 ### CLI and Interface Tests
 - `test_cli_continuous.py` - Command-line interface continuous mode tests
 - `test_cli_checkpointer.py` - CLI interface tests for checkpoint management commands
@@ -111,6 +114,9 @@ python -m pytest tests/test_tui_*.py -v
 
 # Performance benchmark tests
 python -m pytest tests/test_benchmarks.py -v
+
+# Instrumentation tests
+python -m pytest tests/test_instrumentation.py -v
 
 To run with coverage:
 ```bash
