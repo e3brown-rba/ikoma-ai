@@ -20,6 +20,7 @@ from rich.panel import Panel
 from agent.checkpointer import IkomaCheckpointer
 from agent.constants import MAX_ITER, MAX_MINS
 from agent.instrumentation import get_instrumentation
+from agent.metrics import metrics_collector
 from ikoma.schemas.plan_models import MalformedPlanError, Plan
 from planning.reflection import PlanRepairFailure, get_max_plan_retries, repair_plan
 from tools.citation_manager import ProductionCitationManager
@@ -227,6 +228,9 @@ def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> Agent
     instrumentation = get_instrumentation()
     instrumentation.record_plan_start()
 
+    # Metrics: Record plan step start
+    plan_start_time = time.perf_counter()
+
     try:
         # TUI Integration: planning_start
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
@@ -329,6 +333,15 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
                     len(validated_plan.plan), state["current_plan"] or []
                 )
 
+                # Metrics: Record successful plan step
+                plan_duration_ms = (time.perf_counter() - plan_start_time) * 1000
+                metrics_collector.emit_step(
+                    step_type="plan",
+                    duration_ms=plan_duration_ms,
+                    success=True,
+                    metadata={"plan_steps": len(validated_plan.plan)},
+                )
+
             except Exception as e:
                 # Self-reflection retry (Issue-18)
                 max_retries = (
@@ -358,6 +371,16 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
 
         except (json.JSONDecodeError, MalformedPlanError) as e:
             print(f"Error parsing plan: {e}")
+
+            # Metrics: Record failed plan step
+            plan_duration_ms = (time.perf_counter() - plan_start_time) * 1000
+            metrics_collector.emit_step(
+                step_type="plan",
+                duration_ms=plan_duration_ms,
+                success=False,
+                error=str(e),
+            )
+
             # Intelligent fallback based on request type
             user_request = state["messages"][-1].content.lower()
 
@@ -424,6 +447,9 @@ def execute_node(
     # Instrumentation: Record execute start
     instrumentation = get_instrumentation()
     instrumentation.record_execute_start()
+
+    # Metrics: Record execute step start
+    execute_start_time = time.perf_counter()
 
     try:
         # Initialize citation manager
@@ -492,6 +518,7 @@ def execute_node(
                 continue
 
             # Execute the tool
+            tool_start_time = time.perf_counter()
             try:
                 # Handle different tool argument formats
                 if tool_name == "Calculator" or (
@@ -554,6 +581,16 @@ def execute_node(
                     "result": str(result),
                 }
 
+                # Metrics: Record successful tool execution
+                tool_duration_ms = (time.perf_counter() - tool_start_time) * 1000
+                metrics_collector.emit_step(
+                    step_type="tool",
+                    duration_ms=tool_duration_ms,
+                    success=True,
+                    tool_name=tool_name,
+                    metadata={"args": args, "result_length": len(str(result))},
+                )
+
                 # Check for citation-worthy sources after successful execution
                 if execution_result["status"] == "success":
                     # For future web tools, extract citation info
@@ -585,6 +622,17 @@ def execute_node(
                     }
                 )
 
+                # Metrics: Record failed tool execution
+                tool_duration_ms = (time.perf_counter() - tool_start_time) * 1000
+                metrics_collector.emit_step(
+                    step_type="tool",
+                    duration_ms=tool_duration_ms,
+                    success=False,
+                    tool_name=tool_name,
+                    error=str(e),
+                    metadata={"args": args},
+                )
+
         # Update citation state
         citation_data = citation_manager.to_dict()
         state["citations"] = citation_data["citations"]
@@ -594,6 +642,15 @@ def execute_node(
 
         # Instrumentation: Record execute end
         instrumentation.record_execute_end(execution_results)
+
+        # Metrics: Record successful execute step
+        execute_duration_ms = (time.perf_counter() - execute_start_time) * 1000
+        metrics_collector.emit_step(
+            step_type="execute",
+            duration_ms=execute_duration_ms,
+            success=True,
+            metadata={"tools_executed": len(execution_results)},
+        )
 
         # After execution result
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
@@ -624,6 +681,15 @@ def execute_node(
         # Instrumentation: Record error
         instrumentation.record_error(str(e), {"node": "execute_node"})
 
+        # Metrics: Record failed execute step
+        execute_duration_ms = (time.perf_counter() - execute_start_time) * 1000
+        metrics_collector.emit_step(
+            step_type="execute",
+            duration_ms=execute_duration_ms,
+            success=False,
+            error=str(e),
+        )
+
     return state
 
 
@@ -634,6 +700,9 @@ def reflect_node(
     # Instrumentation: Record reflect start
     instrumentation = get_instrumentation()
     instrumentation.record_reflect_start()
+
+    # Metrics: Record reflect step start
+    reflect_start_time = time.perf_counter()
 
     try:
         # Increment iteration counter
@@ -776,6 +845,15 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
                 reflection_data.get("reasoning", "Reflection completed"), next_action
             )
 
+            # Metrics: Record successful reflect step
+            reflect_duration_ms = (time.perf_counter() - reflect_start_time) * 1000
+            metrics_collector.emit_step(
+                step_type="reflect",
+                duration_ms=reflect_duration_ms,
+                success=True,
+                metadata={"next_action": next_action},
+            )
+
         except (json.JSONDecodeError, ValueError) as e:
             # Record failure
             failure_record = {
@@ -812,6 +890,15 @@ Let me know if you need anything else!"""
                 str(e), {"node": "reflect_node", "type": "json_decode"}
             )
 
+            # Metrics: Record failed reflect step
+            reflect_duration_ms = (time.perf_counter() - reflect_start_time) * 1000
+            metrics_collector.emit_step(
+                step_type="reflect",
+                duration_ms=reflect_duration_ms,
+                success=False,
+                error=str(e),
+            )
+
     except Exception as e:
         print(f"Error in reflect_node: {e}")
         state["continue_planning"] = False
@@ -825,6 +912,15 @@ Let me know if you need anything else!"""
         # Instrumentation: Record error
         instrumentation.record_error(
             str(e), {"node": "reflect_node", "type": "exception"}
+        )
+
+        # Metrics: Record failed reflect step
+        reflect_duration_ms = (time.perf_counter() - reflect_start_time) * 1000
+        metrics_collector.emit_step(
+            step_type="reflect",
+            duration_ms=reflect_duration_ms,
+            success=False,
+            error=str(e),
         )
 
     return state
@@ -1018,6 +1114,10 @@ def interactive_chat(agent: Any) -> None:
             # Prepare config with user and thread identification
             config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
 
+            # Start metrics session tracking for this interaction
+            session_id = f"session_{thread_id}_{int(time.time())}"
+            metrics_collector.start_session(session_id)
+
             # Invoke agent with plan-execute-reflect capabilities
             initial_state: AgentState = {
                 "messages": [HumanMessage(content=user_input)],
@@ -1043,6 +1143,13 @@ def interactive_chat(agent: Any) -> None:
 
             result = agent.invoke(initial_state, config)
             _render_final_response(result)
+
+            # End metrics session tracking
+            final_metrics = metrics_collector.end_session(session_id)
+            if final_metrics:
+                print(
+                    f"📊 Interaction completed: {final_metrics.total_duration_ms:.1f}ms, {final_metrics.iterations} iterations"
+                )
 
         except Exception as e:
             print(f"🤖 Ikoma: I encountered an issue: {e}")
@@ -1284,11 +1391,24 @@ def main() -> None:
         thread_id = f"thread_{user_id}_{uuid.uuid4().hex[:8]}"
         config = {"configurable": {"thread_id": thread_id, "user_id": user_id}}
 
+        # Start metrics session tracking
+        session_id = f"session_{thread_id}"
+        metrics_collector.start_session(session_id)
+
         try:
             result = agent.invoke(initial_state, config)
             _render_final_response(result)
+
+            # End metrics session tracking
+            final_metrics = metrics_collector.end_session(session_id)
+            if final_metrics:
+                print(
+                    f"📊 Session completed: {final_metrics.total_duration_ms:.1f}ms, {final_metrics.iterations} iterations"
+                )
         except KeyboardInterrupt:
             console.print("[red]⏹  Aborted by user[/red]")
+            # End session even on interruption
+            metrics_collector.end_session(session_id)
             sys.exit(1)
         sys.exit(0)
 
