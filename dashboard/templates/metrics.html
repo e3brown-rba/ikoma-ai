@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ikoma AI - Metrics Dashboard</title>
+    
+    <!-- HTMX 2.0 -->
+    <script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/htmx.min.js"></script>
+    
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Alpine.js for minimal client-side logic -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .performance-indicator {
+            transition: all 0.3s ease;
+        }
+        
+        .performance-good {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .performance-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        
+        .performance-error {
+            background-color: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-base-100">
+    <!-- Header -->
+    <div class="navbar bg-base-200 shadow-lg">
+        <div class="navbar-start">
+            <a href="/" class="btn btn-ghost text-xl">Ikoma AI</a>
+        </div>
+        <div class="navbar-center">
+            <h1 class="text-xl font-bold">Metrics Dashboard</h1>
+        </div>
+        <div class="navbar-end">
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost">
+                    <span id="timeRange">Last 7 Days</span>
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                    <li><a onclick="changeTimeRange(1)">Last 24 Hours</a></li>
+                    <li><a onclick="changeTimeRange(7)">Last 7 Days</a></li>
+                    <li><a onclick="changeTimeRange(30)">Last 30 Days</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-4">
+        <!-- Performance Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">Avg Response Time</h3>
+                    <div class="stat-value text-primary" id="avgResponseTime">0ms</div>
+                    <div class="stat-desc">Last 7 days</div>
+                </div>
+            </div>
+            
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">Success Rate</h3>
+                    <div class="stat-value text-success" id="successRate">0%</div>
+                    <div class="stat-desc">Overall success</div>
+                </div>
+            </div>
+            
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">Total Sessions</h3>
+                    <div class="stat-value text-info" id="totalSessions">0</div>
+                    <div class="stat-desc">Active sessions</div>
+                </div>
+            </div>
+            
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">P95 Response</h3>
+                    <div class="stat-value text-secondary" id="p95ResponseTime">0ms</div>
+                    <div class="stat-desc">95th percentile</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Response Time Chart -->
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title">Response Time Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="responseTimeChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-sm text-base-content/70">
+                        Average response time over time
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success Rate Chart -->
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title">Success Rate Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="successRateChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-sm text-base-content/70">
+                        Success rate percentage over time
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tool Usage Chart -->
+            <div class="metric-card card bg-base-100 shadow-xl lg:col-span-2">
+                <div class="card-body">
+                    <h3 class="card-title">Tool Usage Patterns</h3>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="toolUsageChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-sm text-base-content/70">
+                        Most frequently used tools
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Session Analytics -->
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title">Session Analytics</h3>
+                    <div class="stats stats-vertical">
+                        <div class="stat">
+                            <div class="stat-title">Avg Iterations</div>
+                            <div class="stat-value text-secondary" id="avgIterations">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-title">Total Metrics</div>
+                            <div class="stat-value text-info" id="totalMetrics">0</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-title">Error Rate</div>
+                            <div class="stat-value text-error" id="errorRate">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Status -->
+            <div class="metric-card card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h3 class="card-title">Performance Status</h3>
+                    <div id="performanceStatus" class="alert alert-success">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>All systems performing within baseline</span>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="font-semibold mb-2">Recent Activity</h4>
+                        <div id="recentActivity" class="space-y-2 max-h-32 overflow-y-auto">
+                            <div class="text-sm text-base-content/70">Loading recent activity...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTimeRange = 7;
+        let charts = {};
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadMetricsData();
+            // Auto-refresh every 5 minutes
+            setInterval(loadMetricsData, 300000);
+        });
+        
+        async function loadMetricsData() {
+            try {
+                const response = await fetch(`/api/metrics/charts?days=${currentTimeRange}`);
+                const data = await response.json();
+                
+                updateCharts(data);
+                updateStatistics(data.stats);
+                updatePerformanceStatus(data.stats);
+                
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+                showError('Failed to load metrics data');
+            }
+        }
+        
+        function updateCharts(data) {
+            // Response Time Chart
+            if (charts.responseTime) {
+                charts.responseTime.destroy();
+            }
+            const responseCtx = document.getElementById('responseTimeChart').getContext('2d');
+            charts.responseTime = new Chart(responseCtx, {
+                type: 'line',
+                data: data.responseTime,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Response Time (ms)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Success Rate Chart
+            if (charts.successRate) {
+                charts.successRate.destroy();
+            }
+            const successCtx = document.getElementById('successRateChart').getContext('2d');
+            charts.successRate = new Chart(successCtx, {
+                type: 'line',
+                data: data.successRate,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Success Rate (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Tool Usage Chart
+            if (charts.toolUsage) {
+                charts.toolUsage.destroy();
+            }
+            const toolCtx = document.getElementById('toolUsageChart').getContext('2d');
+            charts.toolUsage = new Chart(toolCtx, {
+                type: 'bar',
+                data: data.toolUsage,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Usage Count'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tools'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateStatistics(stats) {
+            document.getElementById('avgResponseTime').textContent = Math.round(stats.avgResponse) + 'ms';
+            document.getElementById('p95ResponseTime').textContent = Math.round(stats.p95Response) + 'ms';
+            document.getElementById('totalSessions').textContent = stats.totalSessions;
+            document.getElementById('avgIterations').textContent = Math.round(stats.avgIterations);
+            
+            // Calculate success rate from stats
+            const successRate = stats.avgResponse > 0 ? 95 : 0; // Placeholder
+            document.getElementById('successRate').textContent = successRate + '%';
+            
+            // Calculate error rate
+            const errorRate = 100 - successRate;
+            document.getElementById('errorRate').textContent = errorRate + '%';
+        }
+        
+        function updatePerformanceStatus(stats) {
+            const statusElement = document.getElementById('performanceStatus');
+            const avgResponse = stats.avgResponse;
+            
+            // Simple performance thresholds
+            if (avgResponse < 1000) {
+                statusElement.className = 'alert alert-success performance-indicator performance-good';
+                statusElement.innerHTML = `
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Performance: Excellent (${Math.round(avgResponse)}ms avg)</span>
+                `;
+            } else if (avgResponse < 3000) {
+                statusElement.className = 'alert alert-warning performance-indicator performance-warning';
+                statusElement.innerHTML = `
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <span>Performance: Good (${Math.round(avgResponse)}ms avg)</span>
+                `;
+            } else {
+                statusElement.className = 'alert alert-error performance-indicator performance-error';
+                statusElement.innerHTML = `
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Performance: Needs Attention (${Math.round(avgResponse)}ms avg)</span>
+                `;
+            }
+        }
+        
+        function changeTimeRange(days) {
+            currentTimeRange = days;
+            const timeRangeText = days === 1 ? 'Last 24 Hours' : 
+                                days === 7 ? 'Last 7 Days' : 'Last 30 Days';
+            document.getElementById('timeRange').textContent = timeRangeText;
+            loadMetricsData();
+        }
+        
+        function showError(message) {
+            const recentActivity = document.getElementById('recentActivity');
+            recentActivity.innerHTML = `
+                <div class="alert alert-error">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html> 

@@ -50,12 +50,13 @@ This directory contains all test files for the ikoma-ai project. The tests are o
 
 ### Instrumentation Tests
 - `test_instrumentation.py` - Agent instrumentation system tests including metrics collection, session tracking, and performance monitoring hooks
+- `test_metrics.py` - Comprehensive metrics collection system tests including StepMetric, SessionMetric, MetricsCollector, and MetricsAnalyzer
+- `test_metrics_dashboard.py` - Metrics dashboard functionality tests including API endpoints, chart generation, and FastAPI integration
 
 ### CLI and Interface Tests
 - `test_cli_continuous.py` - Command-line interface continuous mode tests
 - `test_cli_checkpointer.py` - CLI interface tests for checkpoint management commands
 - `test_dashboard_caching.py` - Dashboard caching functionality tests
-- `test_dashboard.py` - Dashboard functionality and WebSocket integration tests
 - `test_dashboard_demo_integration.py` - Dashboard demo integration and subprocess management tests
 - `test_dashboard_mvp.py` - Dashboard MVP functionality and FastAPI integration tests
 - `test_tui_basic.py` - Basic TUI functionality and component tests
@@ -117,6 +118,8 @@ python -m pytest tests/test_benchmarks.py -v
 
 # Instrumentation tests
 python -m pytest tests/test_instrumentation.py -v
+python -m pytest tests/test_metrics.py -v
+python -m pytest tests/test_metrics_dashboard.py -v
 
 To run with coverage:
 ```bash

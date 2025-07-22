@@ -17,10 +17,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from markupsafe import escape
 from pydantic import BaseModel
-from sse_starlette import (
-    EventSourceResponse,  # type: ignore[import-untyped,unused-ignore]
-)
 
+try:
+    from sse_starlette import (
+        EventSourceResponse,  # type: ignore[import-untyped,unused-ignore]
+    )
+except ImportError:
+    # Fallback for environments where sse_starlette is not available
+    from starlette.responses import StreamingResponse as EventSourceResponse
+
+from dashboard.metrics import metrics_router
 from tools.citation_manager import ProductionCitationManager
 
 # Global state for agent configuration and demo management
@@ -74,6 +80,9 @@ templates = Jinja2Templates(directory=TEMPLATES_DIR)
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Include metrics router
+app.include_router(metrics_router)
 
 # Simple in-memory cache for citation HTML, keyed by conversation_id
 _citation_cache: dict[str, tuple[str, float]] = {}
@@ -181,7 +190,7 @@ def launch_demo(demo_type: str, agent_id: str) -> subprocess.Popen:
 def dashboard_home(request: Request) -> HTMLResponse:
     """Render the main dashboard with three-panel layout."""
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "agent_config": agent_config}
+        request, "dashboard.html", {"agent_config": agent_config}
     )
 
 
@@ -220,9 +229,7 @@ def get_agents_list(request: Request) -> HTMLResponse:
             }
         )
 
-    return templates.TemplateResponse(
-        "agents_list.html", {"request": request, "agents": agents}
-    )
+    return templates.TemplateResponse(request, "agents_list.html", {"agents": agents})
 
 
 @app.get("/agent-details/{agent_id}", response_class=HTMLResponse)
@@ -259,7 +266,7 @@ def get_agent_details(request: Request, agent_id: str) -> HTMLResponse:
         }
 
     return templates.TemplateResponse(
-        "agent_details.html", {"request": request, "agent": agent_details}
+        request, "agent_details.html", {"agent": agent_details}
     )
 
 
@@ -500,3 +507,15 @@ async def health_check() -> dict[str, Any]:
         "sse_connections": len(sse_connections),
         "active_demos": len(demo_status),
     }
+
+
+@app.get("/metrics", response_class=HTMLResponse)
+def get_metrics_dashboard(request: Request) -> HTMLResponse:
+    """Metrics dashboard page"""
+    return templates.TemplateResponse(request, "metrics.html")
+
+
+@app.get("/metrics-panel", response_class=HTMLResponse)
+def get_metrics_panel(request: Request) -> HTMLResponse:
+    """HTMX endpoint for metrics panel"""
+    return templates.TemplateResponse(request, "metrics.html")

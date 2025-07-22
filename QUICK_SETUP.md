@@ -2,10 +2,10 @@
 
 ## 🚀 Prerequisites
 
-### 1. Python 3.10+ Required
-Your current Python version is 3.9.6, but iKOMA requires Python 3.10+.
+### 1. Python 3.11+ Required
+Your current Python version is 3.9.6, but iKOMA requires Python 3.11+.
 
-**Install Python 3.10+ on macOS:**
+**Install Python 3.11+ on macOS:**
 
 **Option A: Using Homebrew (Recommended)**
 ```bash
@@ -39,12 +39,14 @@ Run the setup script:
 ```
 
 This script will:
-- ✅ Check Python version
+- ✅ Check Python version (3.11+ required)
 - ✅ Create virtual environment
 - ✅ Install all dependencies
 - ✅ Create necessary directories
-- ✅ Set up environment file
-- ✅ Verify installation
+- ✅ Set up environment file with enhanced validation
+- ✅ Verify installation and configuration
+- ✅ Run environment sanity checks
+- ✅ Validate GitHub token format (if provided)
 
 ## 🔧 Manual Setup (if automated fails)
 
@@ -109,6 +111,23 @@ python -m pytest tests/test_agent_phase1b.py
 
 # Test memory persistence
 python -m pytest tests/test_persistence_vector_store.py
+
+# Test Phase 2 features
+python -m pytest tests/test_dashboard_mvp.py
+python -m pytest tests/test_web_extraction.py
+python -m pytest tests/test_continuous_mode.py
+```
+
+### Check Code Quality
+```bash
+# Run linting checks
+ruff check .
+
+# Check code formatting
+ruff format --check --diff .
+
+# Run type checking
+python -m mypy . --explicit-package-bases
 ```
 
 ### Check Code Formatting
@@ -132,6 +151,35 @@ source venv/bin/activate
 
 # Run the agent
 python run_agent.py
+```
+
+### Phase 2 Features
+
+#### Interactive Dashboard
+```bash
+# Start the metrics dashboard
+python dashboard/app.py
+
+# Access at http://localhost:8000
+# View real-time performance metrics and agent statistics
+```
+
+#### Continuous Mode (Autonomous)
+```bash
+# Run with safety limits (25 iterations, 10 minutes max)
+python run_agent.py --continuous --goal "Research Python best practices"
+
+# Custom limits
+python run_agent.py --continuous --goal "Create project structure" --max-iterations 15 --time-limit 20
+
+# Human checkpoint every 3 iterations
+python run_agent.py --continuous --goal "Refactor code" --checkpoint-every 3
+```
+
+#### Web Content Extraction
+```bash
+# The agent can now safely extract and process web content
+# With OWASP-compliant domain filtering and security validation
 ```
 
 ### Example Usage
@@ -206,14 +254,17 @@ mkdir -p agent/memory/vector_store
 
 ## ✅ Verification Checklist
 
-- [ ] Python 3.10+ installed
+- [ ] Python 3.11+ installed
 - [ ] Virtual environment created and activated
 - [ ] Dependencies installed (`pip install -r requirements.txt`)
-- [ ] Environment file configured (`.env`)
+- [ ] Environment file configured (`.env`) with enhanced validation
 - [ ] LM Studio installed and running on port 11434
 - [ ] Model downloaded in LM Studio
 - [ ] Tests passing (`python -m pytest tests/test_agent_phase1b.py`)
+- [ ] Phase 2 tests passing (`python -m pytest tests/test_dashboard_mvp.py`)
 - [ ] Agent runs successfully (`python run_agent.py`)
+- [ ] Dashboard accessible (`python dashboard/app.py`)
+- [ ] Code quality checks pass (`ruff check . && ruff format --check --diff .`)
 
 ## 🎯 Next Steps
 
@@ -221,7 +272,19 @@ mkdir -p agent/memory/vector_store
 2. **Download Models**: Add more models to LM Studio for different capabilities
 3. **Explore Tools**: Check `tools/mcp_schema.json` for available operations
 4. **Extend Functionality**: Add custom tools or modify agent behavior
-5. **Monitor Performance**: Check memory usage and optimize settings
+5. **Monitor Performance**: Use the dashboard to track metrics and performance
+6. **Try Continuous Mode**: Experiment with autonomous execution for complex tasks
+7. **Web Research**: Test the agent's web content extraction capabilities
+8. **Security Features**: Explore the enhanced validation and safety features
+
+## 🎉 Phase 2 Complete!
+
+This release includes all Phase 2 features:
+- ✅ **Internet Tooling**: Security-first web content extraction
+- ✅ **Continuous Mode**: Autonomous execution with safety guardrails
+- ✅ **Dashboard MVP**: Real-time metrics and performance monitoring
+- ✅ **Enhanced Security**: GitHub token validation and environment sanity checks
+- ✅ **Performance Benchmarking**: CI-integrated regression detection
 
 ---
 

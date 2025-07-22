@@ -5,6 +5,9 @@ Provides rate-limited HTTP request tools with domain filtering integration.
 Part of Epic E-01: Internet Tooling - Issue #5.
 """
 
+from typing import Any
+
+import requests
 from langchain.tools import tool
 
 from .http_client import RateLimitConfig, get_http_client
@@ -229,3 +232,80 @@ def test_http_connection(url: str = "https://httpbin.org/get") -> str:
 
     except Exception as e:
         return f"❌ HTTP connection test error: {str(e)}"
+
+
+def validate_github_token(token: str) -> dict[str, Any]:
+    """Validate GitHub token and return user info.
+
+    Args:
+        token: GitHub personal access token
+
+    Returns:
+        Dictionary with validation results and user info
+    """
+    if not token:
+        return {
+            "valid": False,
+            "error": "No token provided",
+            "user": None,
+            "scopes": [],
+        }
+
+    # Basic token format validation
+    if len(token) < 10:
+        return {
+            "valid": False,
+            "error": "Token too short (minimum 10 characters)",
+            "user": None,
+            "scopes": [],
+        }
+
+    if not token.startswith(("ghp_", "github_pat_")):
+        return {
+            "valid": False,
+            "error": "Invalid token format. Expected ghp_... or github_pat_...",
+            "user": None,
+            "scopes": [],
+        }
+
+    # Try to validate with GitHub API
+    try:
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+
+        response = requests.get(
+            "https://api.github.com/user", headers=headers, timeout=10
+        )
+
+        if response.status_code == 200:
+            user_data = response.json()
+            return {
+                "valid": True,
+                "error": None,
+                "user": user_data.get("login"),
+                "scopes": response.headers.get("X-OAuth-Scopes", "").split(", "),
+            }
+        elif response.status_code == 401:
+            return {
+                "valid": False,
+                "error": "Invalid token (401 Unauthorized)",
+                "user": None,
+                "scopes": [],
+            }
+        else:
+            return {
+                "valid": False,
+                "error": f"GitHub API error: {response.status_code}",
+                "user": None,
+                "scopes": [],
+            }
+
+    except requests.RequestException as e:
+        return {
+            "valid": False,
+            "error": f"Network error: {str(e)}",
+            "user": None,
+            "scopes": [],
+        }
