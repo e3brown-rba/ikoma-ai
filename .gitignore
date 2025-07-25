@@ -72,3 +72,6 @@ benchmark_results.json
 # Metrics and logs (local runtime artifacts)
 agent/logs/
 agent/logs/*.jsonl
+
+# Dashboard tests (local only)
+dashboard/tests/

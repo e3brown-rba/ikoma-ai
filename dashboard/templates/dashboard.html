@@ -8,6 +8,27 @@
     <!-- HTMX 2.0 -->
     <script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/htmx.min.js"></script>
     
+    <!-- HTMX SSE Extension -->
+    <script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/ext/sse.js"></script>
+    
+    <!-- Alternative SSE Extension Load -->
+    <script>
+        // Ensure SSE extension is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof htmx !== 'undefined') {
+                // Try to load SSE extension manually if needed
+                if (!htmx.ext || !htmx.ext.sse) {
+                    console.log('Loading SSE extension manually...');
+                    htmx.defineExtension('sse', {
+                        onEvent: function(name, evt) {
+                            console.log('SSE Extension Event:', name, evt);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+    
     <!-- Tailwind CSS + DaisyUI -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,6 +68,93 @@
         .sse-disconnected {
             background-color: #ef4444;
         }
+        
+        /* Fixed navigation layout */
+        .nav-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+        
+        .nav-header {
+            flex-shrink: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+        
+        .nav-settings {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid hsl(var(--bc) / 0.1);
+            min-height: 120px; /* Ensure minimum space for settings */
+        }
+        
+        /* Ensure settings stay at bottom */
+        .nav-settings-sticky {
+            position: sticky;
+            bottom: 0;
+            background: hsl(var(--b2));
+            padding: 1rem 0 0 0;
+            margin-top: 1rem;
+        }
+        
+        /* Responsive improvements for settings */
+        @media (max-height: 600px) {
+            .nav-settings {
+                min-height: 100px;
+            }
+        }
+        
+        @media (max-height: 500px) {
+            .nav-settings {
+                min-height: 80px;
+            }
+        }
+        
+        /* Ensure navigation panel maintains height regardless of content */
+        #nav-panel {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Ensure the main grid container maintains height */
+        .grid.h-screen {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Ensure detail pane doesn't affect navigation height */
+        #agent-details {
+            height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Ensure agent list doesn't affect navigation height */
+        #agent-list {
+            height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Additional stability for settings pane */
+        .nav-settings {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            border-top: 1px solid hsl(var(--bc) / 0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body class="bg-base-100">
@@ -61,7 +169,7 @@
                         </svg>
                     </div>
                     <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-                        <li><a href="#agents">Agents</a></li>
+                        <li><a href="#agents" class="active">Agents</a></li>
                         <li><a href="#plans">Plans</a></li>
                         <li><a href="#metrics">Metrics</a></li>
                         <li><a href="#logs">Logs</a></li>
@@ -80,26 +188,28 @@
         <!-- Navigation Panel (Left) -->
         <div id="nav-panel" class="col-span-10 md:col-span-3 lg:col-span-2 panel-desktop">
             <nav class="bg-base-200 h-full p-4">
-                <div class="flex flex-col h-full">
+                <div class="nav-container">
                     <!-- Logo/Brand -->
-                    <div class="mb-6">
+                    <div class="nav-header">
                         <h1 class="text-xl font-bold text-primary">Ikoma AI</h1>
                         <p class="text-sm text-base-content/70">AI Assistant Dashboard</p>
                     </div>
                     
                     <!-- Navigation Menu -->
-                    <div class="menu menu-vertical flex-1">
-                        <li class="menu-title">
-                            <span>Navigation</span>
-                        </li>
-                        <li><a href="#agents" class="menu-item">Agents</a></li>
-                        <li><a href="#plans" class="menu-item">Plans</a></li>
-                        <li><a href="/metrics" class="menu-item">Metrics Dashboard</a></li>
-                        <li><a href="#logs" class="menu-item">Logs</a></li>
+                    <div class="nav-menu">
+                        <div class="menu menu-vertical">
+                            <li class="menu-title">
+                                <span>Navigation</span>
+                            </li>
+                            <li><a href="#agents" class="menu-item active">Agents</a></li>
+                            <li><a href="/plans" class="menu-item">Plans</a></li>
+                            <li><a href="/metrics" class="menu-item">Metrics Dashboard</a></li>
+                            <li><a href="#logs" class="menu-item">Logs</a></li>
+                        </div>
                     </div>
                     
                     <!-- Settings Section -->
-                    <div class="mt-auto">
+                    <div class="nav-settings">
                         <div class="divider">Settings</div>
                         
                         <!-- Internet Toggle Control -->
@@ -212,107 +322,862 @@
                     <div class="badge badge-neutral" id="execution-status">Idle</div>
                 </div>
                 
-                <!-- Real-time Agent Execution Details -->
-                <div hx-ext="sse" sse-connect="/agent-stream" class="space-y-4">
-                    <!-- Execution Timeline -->
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body">
-                            <h3 class="card-title">Execution Timeline</h3>
-                            <div id="execution-timeline" sse-swap="node_start node_complete" class="timeline timeline-vertical">
-                                <!-- Timeline items populated by SSE -->
-                                <div class="timeline-item">
-                                    <div class="timeline-marker">
-                                        <div class="w-4 h-4 bg-base-300 rounded-full"></div>
-                                    </div>
-                                    <div class="timeline-content">
-                                        <h4 class="font-semibold">Waiting for agent...</h4>
-                                        <p class="text-sm text-base-content/70">Select an agent to view execution details</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Live LLM Output -->
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body">
-                            <h3 class="card-title">Agent Thinking</h3>
-                            <div id="llm-output" 
-                                 sse-swap="llm_token"
-                                 class="text-sm font-mono bg-base-200 p-4 rounded-lg max-h-48 overflow-y-auto">
-                                <!-- Streaming LLM tokens -->
-                                <div class="text-base-content/50">Waiting for agent activity...</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Progress Indicator -->
-                    <div class="card bg-base-100 shadow-xl">
-                        <div class="card-body">
-                            <h3 class="card-title">Execution Progress</h3>
-                            <div id="progress-display" sse-swap="progress_update">
-                                <div class="progress progress-primary w-full">
-                                    <div class="progress-bar" style="width: 0%"></div>
-                                </div>
-                                <div class="text-sm text-base-content/70 mt-2">0% Complete</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Status Indicators -->
-                    <div id="status-badges" sse-swap="status_update" class="flex gap-2">
-                        <div class="badge badge-success">Ready</div>
-                        <div class="badge badge-info">Internet: On</div>
+                <!-- Auto-refresh agent details using the same data as agent list -->
+                <div hx-get="/agent-details/selected" 
+                     hx-trigger="load, every 10s"
+                     hx-target="this"
+                     hx-swap="innerHTML"
+                     class="space-y-4">
+                    <div class="text-center text-base-content/50 p-8">
+                        <div class="text-lg mb-2">No Agent Selected</div>
+                        <div class="text-sm">Select an agent from the list to view details</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Native SSE Connection -->
+    <script>
+        // Native EventSource for SSE connection
+        let eventSource = null;
+        
+        function connectSSE() {
+            console.log('Connecting to SSE stream...');
+            eventSource = new EventSource('/agent-stream');
+            
+            eventSource.onopen = function(event) {
+                console.log('SSE connection opened');
+                console.log('SSE connection details:', event);
+                const indicator = document.getElementById('sse-indicator');
+                const statusText = document.getElementById('sse-status-text');
+                if (indicator) {
+                    indicator.classList.remove('sse-disconnected');
+                    indicator.classList.add('sse-connected');
+                }
+                if (statusText) {
+                    statusText.textContent = 'Connected';
+                }
+            };
+            
+            eventSource.onmessage = function(event) {
+                console.log('=== SSE MESSAGE RECEIVED ===');
+                console.log('SSE message received:', event);
+                console.log('Raw event data:', event.data);
+                console.log('Event type:', event.type);
+                console.log('Event lastEventId:', event.lastEventId);
+                console.log('Event target:', event.target);
+                console.log('Event currentTarget:', event.currentTarget);
+                console.log('Event readyState:', event.target.readyState);
+                console.log('=== END SSE MESSAGE ===');
+                
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Parsed SSE data:', data);
+                    console.log('Event type from data:', data.event);
+                    
+                    // Trigger HTMX SSE event for compatibility
+                    const htmxEvent = new CustomEvent('htmx:sseMessage', {
+                        detail: {
+                            event: data.event || 'message',
+                            data: event.data
+                        }
+                    });
+                    document.dispatchEvent(htmxEvent);
+                    console.log('Dispatched HTMX SSE event:', data.event);
+                } catch (e) {
+                    console.error('Failed to parse SSE data:', e);
+                }
+            };
+            
+            eventSource.onerror = function(event) {
+                console.log('SSE connection error:', event);
+                const indicator = document.getElementById('sse-indicator');
+                const statusText = document.getElementById('sse-status-text');
+                if (indicator) {
+                    indicator.classList.remove('sse-connected');
+                    indicator.classList.add('sse-disconnected');
+                }
+                if (statusText) {
+                    statusText.textContent = 'Error';
+                }
+            };
+        }
+        
+        // Connect on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, connecting to SSE...');
+            connectSSE();
+            
+            // Test if EventSource is working by sending a test message every 5 seconds
+            setInterval(function() {
+                console.log('Testing EventSource connection...');
+                console.log('EventSource readyState:', eventSource ? eventSource.readyState : 'null');
+                if (eventSource && eventSource.readyState === 1) {
+                    console.log('EventSource is connected and ready');
+                } else {
+                    console.log('EventSource is not ready, state:', eventSource ? eventSource.readyState : 'null');
+                }
+            }, 5000);
+        });
+    </script>
+    
+    <!-- Test SSE Connection -->
+    <script>
+        // Test SSE connection with a simple approach
+        let testEventSource = null;
+        
+        function testSSE() {
+            console.log('Testing SSE connection...');
+            testEventSource = new EventSource('/test-sse');
+            
+            testEventSource.onopen = function(event) {
+                console.log('Test SSE connection opened');
+            };
+            
+            testEventSource.onmessage = function(event) {
+                console.log('=== TEST SSE MESSAGE RECEIVED ===');
+                console.log('Test SSE message received:', event);
+                console.log('Test SSE raw event data:', event.data);
+                console.log('Test SSE event type:', event.type);
+                console.log('=== END TEST SSE MESSAGE ===');
+            };
+            
+            testEventSource.onerror = function(event) {
+                console.log('=== TEST SSE ERROR ===');
+                console.log('Test SSE error:', event);
+                console.log('Test SSE readyState:', testEventSource.readyState);
+                console.log('=== END TEST SSE ERROR ===');
+            };
+        }
+        
+        // Test SSE on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Testing SSE connection...');
+            testSSE();
+        });
+    </script>
+
     <!-- SSE Connection Management Script -->
     <script>
         // SSE connection management
         document.addEventListener('htmx:sseOpen', function(evt) {
             console.log('SSE connection opened');
-            document.getElementById('sse-indicator').classList.remove('sse-disconnected');
-            document.getElementById('sse-indicator').classList.add('sse-connected');
-            document.getElementById('sse-status-text').textContent = 'Connected';
+            const indicator = document.getElementById('sse-indicator');
+            const statusText = document.getElementById('sse-status-text');
+            if (indicator) {
+                indicator.classList.remove('sse-disconnected');
+                indicator.classList.add('sse-connected');
+            }
+            if (statusText) {
+                statusText.textContent = 'Connected';
+            }
         });
         
         document.addEventListener('htmx:sseClose', function(evt) {
             console.log('SSE connection closed');
-            document.getElementById('sse-indicator').classList.remove('sse-connected');
-            document.getElementById('sse-indicator').classList.add('sse-disconnected');
-            document.getElementById('sse-status-text').textContent = 'Disconnected';
-        });
-        
-        // Handle SSE events
-        document.addEventListener('htmx:sseMessage', function(evt) {
-            const event = evt.detail;
-            console.log('SSE event received:', event);
-            
-            // Handle different event types
-            if (event.type === 'state_change') {
-                const data = JSON.parse(event.data);
-                handleStateChange(data);
+            const indicator = document.getElementById('sse-indicator');
+            const statusText = document.getElementById('sse-status-text');
+            if (indicator) {
+                indicator.classList.remove('sse-connected');
+                indicator.classList.add('sse-disconnected');
+            }
+            if (statusText) {
+                statusText.textContent = 'Disconnected';
             }
         });
         
-        function handleStateChange(data) {
-            // Update execution status
-            if (data.event === 'agent_started') {
-                document.getElementById('execution-status').textContent = 'Running';
-                document.getElementById('execution-status').className = 'badge badge-success';
-            } else if (data.event === 'agent_stopped') {
-                document.getElementById('execution-status').textContent = 'Stopped';
-                document.getElementById('execution-status').className = 'badge badge-error';
-            } else if (data.event === 'internet_toggle') {
-                const internetBadge = document.querySelector('.badge-info');
-                if (internetBadge) {
-                    internetBadge.textContent = `Internet: ${data.enabled ? 'On' : 'Off'}`;
+        // Track currently selected agent
+        let selectedAgentId = null;
+
+        // Update selection tracking when agent details are loaded
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            console.log('HTMX afterRequest event:', evt.detail);
+            
+            if (evt.detail.elt.id === 'agent-details') {
+                const selectedAgentHeader = evt.detail.xhr.getResponseHeader('X-Selected-Agent');
+                console.log('X-Selected-Agent header:', selectedAgentHeader);
+                
+                if (selectedAgentHeader) {
+                    selectedAgentId = selectedAgentHeader;
+                    
+                    // Update detail pane dataset for tracking
+                    const detailPane = document.getElementById('agent-details');
+                    if (detailPane) {
+                        detailPane.dataset.selectedAgentId = selectedAgentId;
+                        console.log(`Updated detail pane dataset with selectedAgentId: ${selectedAgentId}`);
+                    }
+                    
+                    console.log(`Selected agent updated to: ${selectedAgentId}`);
+                } else {
+                    console.log('No X-Selected-Agent header found');
+                }
+            }
+        });
+
+        // Enhanced SSE message handling
+        document.addEventListener('htmx:sseMessage', function(evt) {
+            console.log('SSE event received:', evt.detail.event, 'Data:', evt.detail.data);
+            
+            const eventType = evt.detail.event;
+            let eventData = {};
+            
+            try {
+                // Parse the full event data
+                const fullEventData = JSON.parse(evt.detail.data || '{}');
+                console.log('Full parsed event data:', fullEventData);
+                
+                // Extract the actual data from the event structure
+                eventData = fullEventData.data || fullEventData;
+                console.log('Extracted event data:', eventData);
+            } catch (e) {
+                console.error('Failed to parse SSE event data:', e);
+                return;
+            }
+            
+            // Handle different event types with specific UI updates
+            switch(eventType) {
+                case 'progress_update':
+                    console.log('Handling progress update event');
+                    handleProgressUpdate(eventData);
+                    break;
+                    
+                case 'agent_status_update':
+                    console.log('Handling agent status update event');
+                    handleAgentStatusUpdate(eventData);
+                    break;
+                    
+                case 'step_change':
+                    console.log('Handling step change event');
+                    handleStepChange(eventData);
+                    break;
+                    
+                case 'agent_selected':
+                    console.log('Handling agent selection event');
+                    handleAgentSelection(eventData);
+                    break;
+                    
+                case 'agent_completed':
+                case 'agent_error':
+                case 'agent_started':
+                case 'agent_stopped':
+                    console.log('Handling full refresh event');
+                    handleFullRefresh();
+                    break;
+                    
+                case 'state_change':
+                    console.log('Handling unified state change event');
+                    handleUnifiedStateChange(eventData);
+                    break;
+                    
+                case 'demo_started':
+                    console.log('Handling demo started event');
+                    handleDemoStarted(eventData);
+                    break;
+                    
+                case 'demo_stopped':
+                    console.log('Handling demo stopped event');
+                    handleDemoStopped(eventData);
+                    break;
+                    
+                case 'agent_deleted':
+                    console.log('Handling agent deleted event');
+                    handleAgentDeleted(eventData);
+                    break;
+                    
+                default:
+                    console.log('Handling default event (full refresh)');
+                    handleFullRefresh();
+            }
+        });
+
+        // Enhanced SSE message handling with unified state
+        function handleUnifiedStateChange(eventData) {
+            const agentId = eventData.agent_id;
+            const changes = eventData.changes;
+            const agentState = eventData.agent;
+            
+            console.log(`State change for ${agentId}:`, changes);
+            
+            // Update agent card with all changes in one operation
+            updateAgentCard(agentId, agentState);
+            
+            // Update detail pane if selected
+            if (isAgentSelected(agentId)) {
+                updateDetailPane(agentState);
+            }
+            
+            // Update any plan views
+            updatePlanViews(agentId, agentState);
+        }
+
+        function updateAgentCard(agentId, agentState) {
+            const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
+            if (!agentCard) return;
+            
+            // Batch DOM updates to prevent flicker
+            requestAnimationFrame(() => {
+                // Update status badge
+                const statusBadge = agentCard.querySelector('.badge');
+                if (statusBadge) {
+                    statusBadge.className = `badge badge-sm ${getStatusClass(agentState.status)}`;
+                    statusBadge.textContent = agentState.status.charAt(0).toUpperCase() + agentState.status.slice(1);
+                }
+                
+                // Update progress bar with smooth animation
+                const progressBar = agentCard.querySelector('.progress-bar');
+                if (progressBar) {
+                    progressBar.style.transition = 'width 0.3s ease';
+                    progressBar.style.width = `${agentState.progress}%`;
+                }
+                
+                // Update progress text
+                const progressText = agentCard.querySelector('.progress-text');
+                if (progressText) {
+                    progressText.textContent = `${agentState.progress}%`;
+                }
+                
+                // Update steps
+                const stepsText = agentCard.querySelector('.steps-text');
+                if (stepsText) {
+                    stepsText.textContent = `${agentState.steps_completed}/${agentState.total_steps} steps`;
+                }
+                
+                // Update current step
+                const currentStep = agentCard.querySelector('.current-step');
+                if (currentStep) {
+                    currentStep.textContent = agentState.current_step;
+                    currentStep.title = agentState.current_step;
+                }
+            });
+        }
+
+        function getStatusClass(status) {
+            const statusClasses = {
+                'running': 'badge-success',
+                'completed': 'badge-info', 
+                'error': 'badge-error',
+                'stopped': 'badge-warning',
+                'idle': 'badge-neutral'
+            };
+            return statusClasses[status] || 'badge-neutral';
+        }
+
+        function updateDetailPane(agentState) {
+            const detailPane = document.getElementById('agent-details');
+            if (!detailPane) return;
+            
+            // Update status badge
+            const statusBadge = detailPane.querySelector('.badge');
+            if (statusBadge) {
+                statusBadge.className = `badge ${getStatusClass(agentState.status)}`;
+                statusBadge.textContent = agentState.status.charAt(0).toUpperCase() + agentState.status.slice(1);
+            }
+            
+            // Update current step
+            const currentStep = detailPane.querySelector('p.text-base-content\\/70');
+            if (currentStep && currentStep.previousElementSibling && currentStep.previousElementSibling.textContent.includes('Current Step')) {
+                currentStep.textContent = agentState.current_step;
+            }
+            
+            // Update progress bar
+            const progressBar = detailPane.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.transition = 'width 0.3s ease';
+                progressBar.style.width = `${agentState.progress}%`;
+            }
+            
+            // Update progress text
+            const progressText = detailPane.querySelector('.text-xs.text-base-content\\/50');
+            if (progressText) {
+                progressText.textContent = `${agentState.progress}% Complete`;
+            }
+            
+            // Update steps completed
+            const stepsText = detailPane.querySelector('.text-sm.text-base-content\\/70');
+            if (stepsText && stepsText.textContent.includes('steps')) {
+                stepsText.textContent = `${agentState.steps_completed}/${agentState.total_steps} steps`;
+            }
+            
+            // Update execution time
+            const executionTime = detailPane.querySelector('p.text-base-content\\/70');
+            if (executionTime && executionTime.previousElementSibling && executionTime.previousElementSibling.textContent.includes('Execution Time')) {
+                executionTime.textContent = agentState.execution_time;
+            }
+        }
+
+        function updatePlanViews(agentId, agentState) {
+            // Update any plan-related views if they exist
+            const planViews = document.querySelectorAll('[data-agent-id="' + agentId + '"] .plan-status');
+            planViews.forEach(view => {
+                if (agentState.current_plan) {
+                    view.textContent = `Plan v${agentState.plan_version}`;
+                }
+            });
+        }
+
+        function handleDemoStarted(eventData) {
+            console.log('Demo started event:', eventData);
+            
+            const agent = eventData.agent;
+            const demoType = eventData.demo_type;
+            const allAgents = eventData.all_agents || [];
+            const agentCount = eventData.agent_count || 0;
+            const isFirstAgent = eventData.is_first_agent || false;
+            const shouldAutoSelect = eventData.should_auto_select || false;
+            
+            console.log(`Demo started: ${demoType}, agent count: ${agentCount}, first agent: ${isFirstAgent}, auto-select: ${shouldAutoSelect}`);
+            
+            if (agent) {
+                console.log('Creating immediate agent card for:', agent.id);
+                
+                // Auto-select the new agent if requested
+                if (shouldAutoSelect) {
+                    selectedAgentId = agent.id;
+                    console.log(`Auto-selected agent: ${agent.id}`);
+                }
+                
+                // Update agent list to show the new agent
+                const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+                if (agentListElement) {
+                    if (isFirstAgent) {
+                        console.log('First agent created - updating from empty state');
+                        // If this is the first agent, we need to refresh the list
+                        htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+                    } else {
+                        console.log('Additional agent created - refreshing list');
+                        // For additional agents, refresh to show the new one
+                        htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+                    }
+                }
+                
+                // Load agent details if auto-selected
+                if (shouldAutoSelect) {
+                    const agentDetailsElement = document.querySelector('#agent-details');
+                    if (agentDetailsElement) {
+                        htmx.ajax('GET', `/agent-details/${agent.id}`, {target: agentDetailsElement, swap: 'innerHTML'});
+                    }
                 }
             }
         }
+
+        function handleAgentDeleted(eventData) {
+            console.log('Agent deleted event:', eventData);
+            
+            const agentId = eventData.agent_id;
+            const wasSelected = eventData.was_selected;
+            const isEmpty = eventData.is_empty;
+            const agentCount = eventData.agent_count;
+            
+            console.log(`Agent deletion: ${agentId}, was selected: ${wasSelected}, empty: ${isEmpty}, count: ${agentCount}`);
+            
+            // Remove the agent card from the DOM
+            const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
+            if (agentCard) {
+                console.log(`Removing agent card for ${agentId}`);
+                agentCard.remove();
+            }
+            
+            // Clear selected agent if it was this one
+            if (selectedAgentId === agentId) {
+                console.log(`Clearing selected agent ${agentId}`);
+                selectedAgentId = null;
+            }
+            
+            // Auto-update state based on event data
+            if (isEmpty) {
+                console.log('No agents remaining - updating to empty state');
+                
+                // Update agent list to show empty state
+                const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+                if (agentListElement) {
+                    // Use the event data to construct the empty state directly
+                    agentListElement.innerHTML = `
+                        <div class="card bg-base-100 shadow-sm border border-base-300">
+                            <div class="card-body p-4 text-center">
+                                <div class="text-base-content/50">
+                                    <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <h3 class="font-semibold mb-2">No Active Agents</h3>
+                                    <p class="text-sm">Create a new agent to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Update agent details to show empty state
+                const agentDetailsElement = document.querySelector('#agent-details');
+                if (agentDetailsElement) {
+                    agentDetailsElement.innerHTML = `
+                        <div class="text-center text-base-content/50 p-8">
+                            <div class="text-lg mb-2">No Agent Selected</div>
+                            <div class="text-sm">Select an agent from the list to view details</div>
+                        </div>
+                    `;
+                }
+            } else {
+                console.log(`${agentCount} agents remaining - refreshing lists`);
+                
+                // Refresh agent list to ensure consistency
+                const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+                if (agentListElement) {
+                    htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+                }
+                
+                // Refresh agent details to show proper state
+                const agentDetailsElement = document.querySelector('#agent-details');
+                if (agentDetailsElement) {
+                    htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+                }
+            }
+        }
+        
+        function handleDemoStopped(eventData) {
+            console.log('Demo stopped event:', eventData);
+            
+            const agentId = eventData.agent_id;
+            const allAgents = eventData.all_agents || [];
+            const agentCount = eventData.agent_count || 0;
+            const isEmpty = eventData.is_empty || false;
+            const wasSelected = eventData.was_selected || false;
+            
+            console.log(`Demo stopped: ${agentId}, agent count: ${agentCount}, empty: ${isEmpty}, was selected: ${wasSelected}`);
+            
+            // Clear selected agent if it was the stopped one
+            if (wasSelected) {
+                selectedAgentId = null;
+                console.log(`Cleared selected agent: ${agentId}`);
+            }
+            
+            // Update agent list based on current state
+            const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+            if (agentListElement) {
+                if (isEmpty) {
+                    console.log('No agents remaining - updating to empty state');
+                    agentListElement.innerHTML = `
+                        <div class="card bg-base-100 shadow-sm border border-base-300">
+                            <div class="card-body p-4 text-center">
+                                <div class="text-base-content/50">
+                                    <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <h3 class="font-semibold mb-2">No Active Agents</h3>
+                                    <p class="text-sm">Create a new agent to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    console.log(`${agentCount} agents remaining - refreshing list`);
+                    htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+                }
+            }
+            
+            // Update agent details if the stopped agent was selected
+            if (wasSelected) {
+                const agentDetailsElement = document.querySelector('#agent-details');
+                if (agentDetailsElement) {
+                    if (isEmpty) {
+                        agentDetailsElement.innerHTML = `
+                            <div class="text-center text-base-content/50 p-8">
+                                <div class="text-lg mb-2">No Agent Selected</div>
+                                <div class="text-sm">Select an agent from the list to view details</div>
+                            </div>
+                        `;
+                    } else {
+                        htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+                    }
+                }
+            }
+        }
+
+        function handleProgressUpdate(eventData) {
+            const agentId = eventData.agent?.id;
+            if (!agentId) return;
+            
+            console.log(`Updating progress for agent ${agentId}`);
+            
+            // Update agent card progress bar
+            updateAgentCardProgress(agentId, eventData.progress_data);
+            
+            // Update detail pane if this agent is selected
+            if (isAgentSelected(agentId)) {
+                updateDetailPaneProgress(eventData.progress_data);
+            }
+        }
+
+        function handleStepChange(eventData) {
+            const agentId = eventData.agent?.id;
+            if (!agentId) return;
+            
+            console.log(`Step change for agent ${agentId}: ${eventData.step_data.step_description}`);
+            
+            // Update current step in both card and detail pane
+            updateCurrentStep(agentId, eventData.step_data.step_description);
+        }
+
+        function handleAgentStatusUpdate(eventData) {
+            console.log('Handling agent status update:', eventData);
+            
+            // Extract agents from the event data
+            const agents = eventData.agents || eventData.data?.agents || [];
+            console.log('Agents in status update:', agents);
+            
+            // Update each agent's progress
+            agents.forEach(agent => {
+                console.log(`Updating agent ${agent.id} with progress ${agent.progress}%`);
+                
+                // Update agent card progress
+                updateAgentCardProgress(agent.id, {
+                    progress: agent.progress,
+                    steps_completed: agent.steps_completed,
+                    total_steps: agent.total_steps
+                });
+                
+                // Update detail pane if this agent is selected
+                if (isAgentSelected(agent.id)) {
+                    updateDetailPaneProgress({
+                        progress: agent.progress,
+                        steps_completed: agent.steps_completed,
+                        total_steps: agent.total_steps
+                    });
+                }
+            });
+        }
+
+        function handleAgentSelection(eventData) {
+            selectedAgentId = eventData.selected_agent_id;
+            console.log(`Agent selection changed via SSE: ${selectedAgentId}`);
+        }
+
+        function updateAgentCardProgress(agentId, progressData) {
+            console.log(`Updating agent card progress for ${agentId}:`, progressData);
+            
+            const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
+            if (!agentCard) {
+                console.log(`Agent card not found for ${agentId}`);
+                return;
+            }
+            
+            // Update progress bar
+            const progressBar = agentCard.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = `${progressData.progress}%`;
+                progressBar.dataset.progress = progressData.progress;
+                console.log(`Updated progress bar to ${progressData.progress}%`);
+            } else {
+                console.log('Progress bar element not found');
+            }
+            
+            // Update progress text
+            const progressText = agentCard.querySelector('.progress-text');
+            if (progressText) {
+                progressText.textContent = `${progressData.progress}%`;
+                console.log(`Updated progress text to ${progressData.progress}%`);
+            } else {
+                console.log('Progress text element not found');
+            }
+            
+            // Update steps completed
+            const stepsText = agentCard.querySelector('.steps-text');
+            if (stepsText) {
+                stepsText.textContent = `${progressData.steps_completed}/${progressData.total_steps} steps`;
+                console.log(`Updated steps text to ${progressData.steps_completed}/${progressData.total_steps}`);
+            } else {
+                console.log('Steps text element not found');
+            }
+        }
+
+        function updateDetailPaneProgress(progressData) {
+            console.log(`Updating detail pane progress:`, progressData);
+            
+            // Update detail pane progress without full refresh
+            const detailPane = document.getElementById('agent-details');
+            if (!detailPane) {
+                console.log('Detail pane not found');
+                return;
+            }
+            
+            const progressBar = detailPane.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = `${progressData.progress}%`;
+                console.log(`Updated detail pane progress bar to ${progressData.progress}%`);
+            } else {
+                console.log('Detail pane progress bar not found');
+            }
+            
+            const progressText = detailPane.querySelector('.text-xs.text-base-content\\/50');
+            if (progressText) {
+                progressText.textContent = `${progressData.progress}% Complete`;
+                console.log(`Updated detail pane progress text to ${progressData.progress}%`);
+            } else {
+                console.log('Detail pane progress text not found');
+            }
+            
+            const stepsText = detailPane.querySelector('.text-sm.text-base-content\\/70');
+            if (stepsText && stepsText.textContent.includes('steps')) {
+                stepsText.textContent = `${progressData.steps_completed}/${progressData.total_steps} steps`;
+                console.log(`Updated detail pane steps text to ${progressData.steps_completed}/${progressData.total_steps}`);
+            } else {
+                console.log('Detail pane steps text not found');
+            }
+        }
+
+        function updateCurrentStep(agentId, stepDescription) {
+            // Update agent card
+            const agentCard = document.querySelector(`[data-agent-id="${agentId}"]`);
+            if (agentCard) {
+                const stepElement = agentCard.querySelector('.current-step');
+                if (stepElement) {
+                    stepElement.textContent = stepDescription;
+                    stepElement.title = stepDescription;
+                }
+            }
+            
+            // Update detail pane if selected
+            if (isAgentSelected(agentId)) {
+                const detailPane = document.getElementById('agent-details');
+                const stepElement = detailPane?.querySelector('p.text-base-content\\/70');
+                if (stepElement && stepElement.previousElementSibling && stepElement.previousElementSibling.textContent.includes('Current Step')) {
+                    stepElement.textContent = stepDescription;
+                }
+            }
+        }
+
+        function isAgentSelected(agentId) {
+            console.log(`Checking if agent ${agentId} is selected. Current selectedAgentId: ${selectedAgentId}`);
+            const isSelected = selectedAgentId === agentId;
+            console.log(`Result: ${isSelected}`);
+            return isSelected;
+        }
+
+        function handleFullRefresh() {
+            console.log('Full refresh triggered');
+            
+            // Refresh agent list
+            const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+            if (agentListElement) {
+                htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+            }
+            
+            // Refresh agent details
+            const agentDetailsElement = document.querySelector('#agent-details');
+            if (agentDetailsElement) {
+                htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+            }
+        }
+        
+        // Handle agent deletion events
+        document.addEventListener('htmx:sseMessage', function(evt) {
+            if (evt.detail.event === 'agent_deleted') {
+                console.log('Agent deletion detected via SSE');
+                
+                // Parse event data
+                const eventData = evt.detail.data ? JSON.parse(evt.detail.data) : {};
+                const agentId = eventData.agent_id;
+                const wasSelected = eventData.was_selected;
+                const isEmpty = eventData.is_empty;
+                const agentCount = eventData.agent_count;
+                
+                console.log(`SSE Agent deletion: ${agentId}, was selected: ${wasSelected}, empty: ${isEmpty}, count: ${agentCount}`);
+                
+                // Clear selected agent if it was the deleted one
+                if (agentId && selectedAgentId === agentId) {
+                    selectedAgentId = null;
+                }
+                
+                // Auto-update state based on event data
+                if (isEmpty) {
+                    console.log('SSE: No agents remaining - updating to empty state');
+                    
+                    // Update agent list to show empty state
+                    const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+                    if (agentListElement) {
+                        agentListElement.innerHTML = `
+                            <div class="card bg-base-100 shadow-sm border border-base-300">
+                                <div class="card-body p-4 text-center">
+                                    <div class="text-base-content/50">
+                                        <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <h3 class="font-semibold mb-2">No Active Agents</h3>
+                                        <p class="text-sm">Create a new agent to get started</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Update agent details to show empty state
+                    const agentDetailsElement = document.querySelector('#agent-details');
+                    if (agentDetailsElement) {
+                        agentDetailsElement.innerHTML = `
+                            <div class="text-center text-base-content/50 p-8">
+                                <div class="text-lg mb-2">No Agent Selected</div>
+                                <div class="text-sm">Select an agent from the list to view details</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    console.log(`SSE: ${agentCount} agents remaining - refreshing lists`);
+                    
+                    // Refresh agent list to ensure consistency
+                    const agentListElement = document.querySelector('[hx-get="/agents/list"]');
+                    if (agentListElement) {
+                        htmx.ajax('GET', '/agents/list', {target: agentListElement, swap: 'innerHTML'});
+                    }
+                    
+                    // Refresh agent details to show proper state
+                    const agentDetailsElement = document.querySelector('#agent-details');
+                    if (agentDetailsElement) {
+                        htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+                    }
+                }
+            }
+        });
+        
+        // Handle manual refresh events
+        document.addEventListener('refresh', function(evt) {
+            const agentDetailsElement = document.querySelector('#agent-details');
+            if (agentDetailsElement) {
+                htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+            }
+        });
+        
+        // Additional SSE event handling for execution status updates
+        document.addEventListener('htmx:sseMessage', function(evt) {
+            const event = evt.detail;
+            console.log('SSE event received (status handler):', event);
+            
+            // Handle execution status updates
+            if (event.event === 'agent_started') {
+                const statusElement = document.getElementById('execution-status');
+                if (statusElement) {
+                    statusElement.textContent = 'Running';
+                    statusElement.className = 'badge badge-success';
+                }
+            } else if (event.event === 'agent_stopped') {
+                const statusElement = document.getElementById('execution-status');
+                if (statusElement) {
+                    statusElement.textContent = 'Stopped';
+                    statusElement.className = 'badge badge-error';
+                }
+            } else if (event.event === 'agent_completed') {
+                const statusElement = document.getElementById('execution-status');
+                if (statusElement) {
+                    statusElement.textContent = 'Completed';
+                    statusElement.className = 'badge badge-success';
+                }
+            } else if (event.event === 'agent_error') {
+                const statusElement = document.getElementById('execution-status');
+                if (statusElement) {
+                    statusElement.textContent = 'Error';
+                    statusElement.className = 'badge badge-error';
+                }
+            }
+        });
         
         // Initialize SSE connection status
         document.addEventListener('DOMContentLoaded', function() {
@@ -322,11 +1187,19 @@
             
             // Check if SSE is available
             if (typeof EventSource !== 'undefined') {
-                indicator.classList.add('sse-connected');
-                statusText.textContent = 'Connecting...';
+                if (indicator) {
+                    indicator.classList.add('sse-connected');
+                }
+                if (statusText) {
+                    statusText.textContent = 'Connected';
+                }
             } else {
-                indicator.classList.add('sse-disconnected');
-                statusText.textContent = 'Not Supported';
+                if (indicator) {
+                    indicator.classList.add('sse-disconnected');
+                }
+                if (statusText) {
+                    statusText.textContent = 'Not Supported';
+                }
             }
         });
     </script>

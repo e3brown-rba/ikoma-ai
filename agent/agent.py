@@ -34,6 +34,15 @@ try:
 except ImportError:
     tui_broadcaster = None
 
+# Add import for dashboard sender
+dashboard_sender_global: Any = None
+try:
+    from agent.ui.dashboard_sender import get_dashboard_sender
+
+    dashboard_sender_global = get_dashboard_sender()
+except ImportError:
+    pass
+
 # Load environment variables from .env file
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = "sk-dummy"
@@ -244,6 +253,17 @@ def plan_node(state: AgentState, config: dict, *, store: Any, llm: Any) -> Agent
                     "memory_context": state.get("memory_context"),
                 },
             )
+
+        # Dashboard Integration: planning_start
+        if dashboard_sender_global:
+            dashboard_sender_global.send_event(
+                "planning_start",
+                {
+                    "user_request": state["messages"][-1].content,
+                    "memory_context": state.get("memory_context"),
+                    "iteration": state.get("current_iteration", 0),
+                },
+            )
         # Get tool descriptions
         tool_descriptions = tool_loader.get_tool_descriptions()
 
@@ -254,6 +274,8 @@ Available tools:
 {tool_descriptions}
 
 Your task is to analyze the user's request and create a JSON plan that **conforms to the plan schema** (see below) and *nothing else*.
+
+CRITICAL: Return ONLY the JSON plan. Do not include any explanatory text, comments, or other content before or after the JSON.
 
 Important guidelines:
 1. Break complex tasks into logical steps
@@ -282,7 +304,7 @@ Tool argument examples:
 
 User's request: {state["messages"][-1].content}
 
-Return JSON that **conforms to the plan schema** and *nothing else*:
+Return ONLY the JSON that **conforms to the plan schema** and *nothing else*:
 
 ```json
 {{
@@ -310,14 +332,53 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
         if not response.content.strip():
             raise ValueError("Empty response from LLM")
 
+        # Debug: Log the raw response for troubleshooting
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(
+                f"[DEBUG] Raw LLM response (first 200 chars): {response.content[:200]}..."
+            )
+
         # Parse the plan
         try:
-            # Extract JSON from response
+            # Extract JSON from response with improved parsing
             plan_text = response.content.strip()
-            if plan_text.startswith("```json"):
-                plan_text = plan_text[7:-3].strip()
-            elif plan_text.startswith("```"):
-                plan_text = plan_text[3:-3].strip()
+
+            # Try to find JSON in the response
+            json_start = -1
+            json_end = -1
+
+            # Look for JSON code blocks first
+            if "```json" in plan_text:
+                json_start = plan_text.find("```json") + 7
+                json_end = plan_text.find("```", json_start)
+            elif "```" in plan_text:
+                json_start = plan_text.find("```") + 3
+                json_end = plan_text.find("```", json_start)
+
+            # If no code blocks found, look for JSON object directly
+            if json_start == -1:
+                # Find the first occurrence of '{' and last occurrence of '}'
+                brace_start = plan_text.find("{")
+                brace_end = plan_text.rfind("}")
+
+                if brace_start != -1 and brace_end != -1 and brace_end > brace_start:
+                    json_start = brace_start
+                    json_end = brace_end + 1
+
+            # Extract the JSON text
+            if json_start != -1 and json_end != -1:
+                plan_text = plan_text[json_start:json_end].strip()
+            else:
+                # If no JSON found, try to extract any text that looks like JSON
+                # Look for patterns that might be JSON
+                import re
+
+                json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
+                json_matches = re.findall(json_pattern, plan_text)
+                if json_matches:
+                    plan_text = json_matches[0]
+                else:
+                    raise ValueError("No valid JSON found in response")
 
             # Validate plan using schema with self-reflection retry (Issue-18)
             try:
@@ -427,9 +488,22 @@ Return JSON that **conforms to the plan schema** and *nothing else*:
         # After plan is generated
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             plan = state.get("current_plan") or []
-            print(f"[AGENT DEBUG] Broadcasting plan_generated: {len(plan)} steps")
+            if os.getenv("IKOMA_TUI_DEBUG") == "true":
+                print(f"[AGENT DEBUG] Broadcasting plan_generated: {len(plan)} steps")
             tui_broadcaster.broadcast(
                 "plan_generated", {"plan": plan, "step_count": len(plan)}
+            )
+
+        # Dashboard Integration: plan_generated
+        if dashboard_sender_global:
+            plan = state.get("current_plan") or []
+            dashboard_sender_global.send_event(
+                "plan_generated",
+                {
+                    "plan": plan,
+                    "step_count": len(plan),
+                    "iteration": state.get("current_iteration", 0),
+                },
             )
 
     except Exception as e:
@@ -480,13 +554,26 @@ def execute_node(
 
             # TUI Integration: step_start
             if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
-                print(f"[AGENT DEBUG] Broadcasting step_start: {tool_name}")
+                if os.getenv("IKOMA_TUI_DEBUG") == "true":
+                    print(f"[AGENT DEBUG] Broadcasting step_start: {tool_name}")
                 tui_broadcaster.broadcast(
                     "step_start",
                     {
                         "step_index": step.get("step", 0),
                         "tool_name": tool_name,
                         "description": description,
+                    },
+                )
+
+            # Dashboard Integration: step_start
+            if dashboard_sender_global:
+                dashboard_sender_global.send_event(
+                    "step_start",
+                    {
+                        "step_index": step.get("step", 0),
+                        "tool_name": tool_name,
+                        "description": description,
+                        "iteration": state.get("current_iteration", 0),
                     },
                 )
             # Find the tool (handle name mapping for math tools)
@@ -666,6 +753,18 @@ def execute_node(
                 },
             )
 
+        # Dashboard Integration: step_complete
+        if dashboard_sender_global:
+            dashboard_sender_global.send_event(
+                "step_complete",
+                {
+                    "step_index": step.get("step", 0),
+                    "status": execution_results[-1]["status"],
+                    "result": execution_results[-1]["result"],
+                    "iteration": state.get("current_iteration", 0),
+                },
+            )
+
     except Exception as e:
         print(f"Error in execute_node: {e}")
         state["execution_results"] = [
@@ -788,6 +887,19 @@ Return only the JSON, no other text."""
                     },
                 )
 
+            # Dashboard Integration: reflection
+            if dashboard_sender_global:
+                dashboard_sender_global.send_event(
+                    "reflection",
+                    {
+                        "reasoning": reflection_data.get("reasoning", ""),
+                        "summary": reflection_data.get("summary", ""),
+                        "success_rate": reflection_data.get("success_rate", ""),
+                        "task_completed": reflection_data.get("task_completed", None),
+                        "iteration": state.get("current_iteration", 0),
+                    },
+                )
+
             # Persist reflection for downstream heuristics
             state["reflection_json"] = reflection_data
 
@@ -876,6 +988,17 @@ Success Rate: {reflection_data.get("success_rate", "N/A")}"""
                     {"error": str(e), "raw_response": response.content},
                 )
 
+            # Dashboard Integration: reflection_error
+            if dashboard_sender_global:
+                dashboard_sender_global.send_event(
+                    "reflection_error",
+                    {
+                        "error": str(e),
+                        "raw_response": response.content,
+                        "iteration": state.get("current_iteration", 0),
+                    },
+                )
+
             # Create fallback response
             fallback_response = f"""I've completed the requested tasks. Here are the results:
 
@@ -908,6 +1031,16 @@ Let me know if you need anything else!"""
         # Broadcast reflection error
         if os.getenv("IKOMA_TUI_MODE") == "true" and tui_broadcaster:
             tui_broadcaster.broadcast("reflection_error", {"error": str(e)})
+
+        # Dashboard Integration: reflection_error
+        if dashboard_sender_global:
+            dashboard_sender_global.send_event(
+                "reflection_error",
+                {
+                    "error": str(e),
+                    "iteration": state.get("current_iteration", 0),
+                },
+            )
 
         # Instrumentation: Record error
         instrumentation.record_error(
@@ -1299,32 +1432,30 @@ def main() -> None:
         demo_script = args.demo if args.demo else "online"
         if demo_script == "online":
             args.goal = (
-                "Track the latest policy proposals on U.S. federal EV tax credits, "
-                "summarise the changes since 2023, list three credible sources, "
-                "store the summary to long-term memory, and add a weekly watch-task "
-                "that pings me if legislation status changes."
+                "Fetch the current weather for New York City and create a simple summary "
+                "with the temperature, conditions, and a brief description."
             )
-            args.max_iterations = 15
-            print("🎬 Demo mode: Online Research & Monitoring")
+            args.max_iterations = 5
+            print("🎬 Demo mode: Simple Weather Fetch")
 
         elif demo_script == "offline":
             args.goal = (
-                "Scan the repo for TODO & FIXME comments, group them by file, "
-                "output a docs/todo_report.md, and schedule a daily reminder."
+                "Create a simple text file called 'demo_output.txt' with the content 'Hello from Ikoma demo!' "
+                "and then read it back to verify the content."
             )
-            args.max_iterations = 8
+            args.max_iterations = 3
             os.environ["IKOMA_DISABLE_INTERNET"] = "true"
-            print("🎬 Demo mode: Offline Repository Intelligence")
+            print("🎬 Demo mode: Simple File Operations")
 
         elif demo_script == "continuous":
             args.goal = (
-                "Count word frequencies across all .md files in docs/, "
-                "write word_freq.csv, and stop when top 1000 words are written."
+                "Create a memory entry about 'Python best practices', then create another entry about "
+                "'Web development tips', and finally read both files and create a summary combining both topics."
             )
-            args.max_iterations = 25
+            args.max_iterations = 8
             args.time_limit = 10
             os.environ["IKOMA_DISABLE_INTERNET"] = "true"
-            print("🎬 Demo mode: Continuous Batch + Checkpoint Recovery")
+            print("🎬 Demo mode: Memory Operations & Retrieval")
 
         print(f"Goal: {args.goal}")
         print("TUI enabled for real-time monitoring")
@@ -1363,6 +1494,16 @@ def main() -> None:
             print(
                 f"🌐 Dashboard running at http://{os.getenv('IKOMA_DASHBOARD_HOST', '127.0.0.1')}:{args.dashboard_port}"
             )
+
+            # Enable dashboard events
+            if dashboard_sender_global:
+                # The original code had a function enable_dashboard_events() here,
+                # but it was not defined in the provided file.
+                # Assuming it's a placeholder or will be added elsewhere.
+                # For now, we'll just print a message if the function is not found.
+                print(
+                    "[Dashboard] Dashboard events are not enabled as enable_dashboard_events() is not defined."
+                )
         except ImportError as e:
             print(f"[Dashboard] Dashboard could not be imported: {e}")
             print("[Dashboard] Make sure FastAPI and uvicorn are installed")

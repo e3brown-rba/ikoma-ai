@@ -14,7 +14,12 @@ from .internet_tools import (
     reload_domain_filter_config,
     validate_url_for_access,
 )
-from .web_tools import search_web
+from .web_tools import (
+    extract_web_content,
+    get_web_extraction_status,
+    search_web,
+    search_web_memories,
+)
 
 
 class ToolLoader:
@@ -81,6 +86,19 @@ class ToolLoader:
                 tool_name = tool_info["name"]
                 if tool_name in internet_tools:
                     tools.append(internet_tools[tool_name])
+
+        # Load web tools
+        web_tools = {
+            "extract_web_content": extract_web_content,
+            "search_web_memories": search_web_memories,
+            "get_web_extraction_status": get_web_extraction_status,
+        }
+
+        for tool_info in self.schema.get("tools", []):
+            if tool_info["category"] == "web":
+                tool_name = tool_info["name"]
+                if tool_name in web_tools:
+                    tools.append(web_tools[tool_name])
 
         # Load math tools
         math_tool_names = [

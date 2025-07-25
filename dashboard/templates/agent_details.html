@@ -1,22 +1,36 @@
+{% if agent %}
 <div class="space-y-4">
-    <!-- Agent Header -->
-    <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="card-title">{{ agent.name }}</h3>
-                    <p class="text-sm text-base-content/70">Agent ID: {{ agent.id }}</p>
-                </div>
-                <div class="badge {% if agent.status == 'running' %}badge-success{% elif agent.status == 'idle' %}badge-neutral{% else %}badge-warning{% endif %}">
-                    {{ agent.status|title }}
-                </div>
-            </div>
+                <!-- Agent Header -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="card-title">{{ agent.name }}</h3>
+                            <p class="text-sm text-base-content/70">Agent ID: {{ agent.id }}</p>
+                        </div>
+                        <div class="badge {% if agent.status == 'running' %}badge-success{% elif agent.status == 'completed' %}badge-info{% elif agent.status == 'error' %}badge-error{% elif agent.status == 'idle' %}badge-neutral{% elif agent.status == 'deleted' %}badge-error{% else %}badge-warning{% endif %}">
+                            {{ agent.status|title }}
+                        </div>
+                    </div>
             
             <!-- Current Step -->
             <div class="mt-4">
                 <h4 class="font-semibold text-sm">Current Step</h4>
                 <p class="text-base-content/70">{{ agent.current_step }}</p>
             </div>
+            
+            <!-- Goal (for demo agents) -->
+            {% if agent.is_demo and agent.goal %}
+            <div class="mt-4">
+                <h4 class="font-semibold text-sm">Goal</h4>
+                <p class="text-base-content/70">{{ agent.goal }}</p>
+            </div>
+            {% elif agent.goal %}
+            <div class="mt-4">
+                <h4 class="font-semibold text-sm">Goal</h4>
+                <p class="text-base-content/70">{{ agent.goal }}</p>
+            </div>
+            {% endif %}
             
             <!-- Progress Information -->
             <div class="mt-4">
@@ -35,6 +49,28 @@
                 <h4 class="font-semibold text-sm">Execution Time</h4>
                 <p class="text-base-content/70">{{ agent.execution_time }}</p>
             </div>
+            
+            <!-- Latest Plan (if available) -->
+            {% if agent.latest_plan %}
+            <div class="mt-4">
+                <h4 class="font-semibold text-sm">Latest Plan (v{{ agent.latest_plan.plan_version }})</h4>
+                <div class="bg-base-200 p-3 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-base-content/70">Status: {{ agent.latest_plan.status|title }}</span>
+                        <span class="text-xs text-base-content/70">Progress: {{ agent.latest_plan.progress }}%</span>
+                    </div>
+                    <div class="progress progress-primary w-full mb-2">
+                        <div class="progress-bar" style="width: {{ agent.latest_plan.progress }}%"></div>
+                    </div>
+                    <details class="collapse collapse-arrow bg-base-100">
+                        <summary class="collapse-title text-sm font-medium">View Plan Details</summary>
+                        <div class="collapse-content">
+                            <pre class="text-xs text-base-content/70 whitespace-pre-wrap">{{ agent.latest_plan.plan_data }}</pre>
+                        </div>
+                    </details>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     
@@ -43,7 +79,9 @@
         <div class="card-body">
             <h3 class="card-title">Controls</h3>
             <div class="flex gap-2 flex-wrap">
-                {% if agent.is_demo %}
+                {% if agent.status == 'deleted' %}
+                    <div class="text-sm text-base-content/70 italic">Agent has been deleted</div>
+                {% elif agent.is_demo %}
                     {% if agent.status == 'running' %}
                     <button class="btn btn-sm btn-outline btn-error"
                             hx-post="/demo/stop/{{ agent.id }}"
@@ -71,7 +109,7 @@
                             hx-vals='{"action": "stop", "agent_id": "{{ agent.id }}"}'
                             hx-swap="none">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L6M6 6l12 12"></path>
                         </svg>
                         Stop Agent
                     </button>
@@ -97,8 +135,9 @@
                     {% endif %}
                 {% endif %}
                 
+                {% if agent.status != 'deleted' %}
                 <button class="btn btn-sm btn-outline btn-info"
-                        hx-get="/agent-details/{{ agent.id }}"
+                        hx-get="/agent-details/selected"
                         hx-target="#agent-details"
                         hx-swap="innerHTML">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,6 +145,18 @@
                     </svg>
                     Refresh
                 </button>
+                
+                <button class="btn btn-sm btn-outline btn-warning"
+                        hx-delete="/agent/{{ agent.id }}"
+                        hx-swap="innerHTML"
+                        hx-target="#agent-details"
+                        hx-confirm="Are you sure you want to delete this agent?">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -139,27 +190,46 @@
         <div class="card-body">
             <h3 class="card-title">Recent Activity</h3>
             <div class="space-y-2">
+                {% if agent.is_demo and agent.output %}
+                    {% for line in agent.output[-5:] %}
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="w-2 h-2 bg-info rounded-full"></div>
+                        <span class="text-base-content/80 font-mono text-xs">{{ line[:100] }}{% if line|length > 100 %}...{% endif %}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="flex items-center gap-2 text-sm">
+                        <div class="w-2 h-2 bg-base-content/30 rounded-full"></div>
+                        <span class="text-base-content/50">No recent activity</span>
+                    </div>
+                {% endif %}
+                
+                {% if agent.status == 'running' %}
+                <div class="flex items-center gap-2 text-sm">
+                    <div class="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                    <span class="text-success">Currently executing: {{ agent.current_step }}</span>
+                </div>
+                {% elif agent.status == 'completed' %}
                 <div class="flex items-center gap-2 text-sm">
                     <div class="w-2 h-2 bg-success rounded-full"></div>
-                    <span>Agent started execution</span>
-                    <span class="text-base-content/50 text-xs">2 minutes ago</span>
+                    <span class="text-success">Execution completed</span>
                 </div>
-                <div class="flex items-center gap-2 text-sm">
-                    <div class="w-2 h-2 bg-info rounded-full"></div>
-                    <span>Completed step 1: Research initialization</span>
-                    <span class="text-base-content/50 text-xs">1 minute ago</span>
-                </div>
-                <div class="flex items-center gap-2 text-sm">
-                    <div class="w-2 h-2 bg-info rounded-full"></div>
-                    <span>Completed step 2: Data collection</span>
-                    <span class="text-base-content/50 text-xs">30 seconds ago</span>
-                </div>
-                <div class="flex items-center gap-2 text-sm">
-                    <div class="w-2 h-2 bg-warning rounded-full"></div>
-                    <span>Currently executing: Data analysis</span>
-                    <span class="text-base-content/50 text-xs">Now</span>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-</div> 
+</div>
+{% else %}
+<!-- No Agent Selected State -->
+<div class="text-center text-base-content/50 p-8">
+    <div class="text-lg mb-2">No Agent Selected</div>
+    <div class="text-sm">Select an agent from the list to view details</div>
+</div>
+{% endif %}
+
+<!-- Agent details template loaded -->
+<script>
+    console.log('Agent details template loaded for agent: {{ agent.id if agent else "none" }}');
+</script>
+
+ 

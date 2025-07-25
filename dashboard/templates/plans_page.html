@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Plans - Ikoma AI Dashboard</title>
+    
+    <!-- HTMX 2.0 -->
+    <script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/htmx.min.js"></script>
+    
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js for minimal client-side logic -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX Security Configuration -->
+    <script>
+        htmx.config.selfRequestsOnly = true;
+        htmx.config.allowScriptTags = false;
+        htmx.config.allowEval = false;
+        htmx.config.historyCacheSize = 0;
+    </script>
+    
+    <style>
+        /* Custom styles for responsive layout */
+        @media (max-width: 768px) {
+            .panel-desktop { display: none; }
+            .panel-mobile { display: block; }
+        }
+        
+        @media (min-width: 1024px) {
+            .panel-mobile { display: none; }
+            .panel-desktop { display: block; }
+        }
+        
+        /* SSE connection status indicator */
+        .sse-status {
+            transition: all 0.3s ease;
+        }
+        
+        .sse-connected {
+            background-color: #10b981;
+        }
+        
+        .sse-disconnected {
+            background-color: #ef4444;
+        }
+        
+        /* Fixed navigation layout */
+        .nav-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+        
+        .nav-header {
+            flex-shrink: 0;
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-menu {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+        
+        .nav-settings {
+            flex-shrink: 0;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid hsl(var(--bc) / 0.1);
+            min-height: 120px; /* Ensure minimum space for settings */
+        }
+        
+        /* Ensure settings stay at bottom */
+        .nav-settings-sticky {
+            position: sticky;
+            bottom: 0;
+            background: hsl(var(--b2));
+            padding: 1rem 0 0 0;
+            margin-top: 1rem;
+        }
+        
+        /* Responsive improvements for settings */
+        @media (max-height: 600px) {
+            .nav-settings {
+                min-height: 100px;
+            }
+        }
+        
+        @media (max-height: 500px) {
+            .nav-settings {
+                min-height: 80px;
+            }
+        }
+        
+        /* Ensure navigation panel maintains height regardless of content */
+        #nav-panel {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Ensure the main grid container maintains height */
+        .grid.h-screen {
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Ensure detail pane doesn't affect navigation height */
+        #agent-details {
+            height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Ensure agent list doesn't affect navigation height */
+        #agent-list {
+            height: 100vh;
+            max-height: 100vh;
+            overflow-y: auto;
+        }
+        
+        /* Additional stability for settings pane */
+        .nav-settings {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            border-top: 1px solid hsl(var(--bc) / 0.1);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-base-100">
+    <!-- Mobile Navigation (visible on small screens) -->
+    <div class="panel-mobile lg:hidden">
+        <div class="navbar bg-base-200">
+            <div class="navbar-start">
+                <div class="dropdown">
+                    <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </div>
+                    <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+                        <li><a href="/">Agents</a></li>
+                        <li><a href="/plans" class="active">Plans</a></li>
+                        <li><a href="/metrics">Metrics</a></li>
+                        <li><a href="#logs">Logs</a></li>
+                    </ul>
+                </div>
+                <a href="/" class="btn btn-ghost text-xl">Ikoma AI</a>
+            </div>
+            <div class="navbar-end">
+                <div class="badge badge-primary">SSE Connected</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Layout -->
+    <div class="grid grid-cols-10 gap-4 h-screen">
+        <!-- Navigation Panel (Left) -->
+        <div id="nav-panel" class="col-span-10 md:col-span-3 lg:col-span-2 panel-desktop">
+            <nav class="bg-base-200 h-full p-4">
+                <div class="nav-container">
+                    <!-- Logo/Brand -->
+                    <div class="nav-header">
+                        <h1 class="text-xl font-bold text-primary">Ikoma AI</h1>
+                        <p class="text-sm text-base-content/70">AI Assistant Dashboard</p>
+                    </div>
+                    
+                    <!-- Navigation Menu -->
+                    <div class="nav-menu">
+                        <div class="menu menu-vertical">
+                            <li class="menu-title">
+                                <span>Navigation</span>
+                            </li>
+                            <li><a href="/" class="menu-item">Agents</a></li>
+                            <li><a href="/plans" class="menu-item active">Plans</a></li>
+                            <li><a href="/metrics" class="menu-item">Metrics Dashboard</a></li>
+                            <li><a href="#logs" class="menu-item">Logs</a></li>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Section -->
+                    <div class="nav-settings">
+                        <div class="divider">Settings</div>
+                        
+                        <!-- Internet Toggle Control -->
+                        <div class="form-control">
+                            <label class="label cursor-pointer">
+                                <span class="label-text">Internet Access</span>
+                                <input type="checkbox" 
+                                       class="toggle toggle-primary"
+                                       hx-post="/settings/internet-toggle"
+                                       hx-trigger="change"
+                                       hx-swap="none"
+                                       hx-headers='{"X-Requested-With": "XMLHttpRequest"}'
+                                       {% if agent_config.internet_enabled %}checked{% endif %}>
+                            </label>
+                        </div>
+                        
+                        <!-- SSE Connection Status -->
+                        <div class="mt-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full sse-status sse-connected" id="sse-indicator"></div>
+                                <span class="text-sm" id="sse-status-text">Connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <!-- Plans Content Panel (Center) -->
+        <div class="col-span-10 md:col-span-7 lg:col-span-8">
+            <div class="h-full p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Agent Plans</h2>
+                    <div class="flex gap-2">
+                        <!-- Demo Launch Dropdown -->
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-primary btn-sm whitespace-nowrap min-h-0 h-auto py-2 px-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-xs">Launch Demo</span>
+                            </div>
+                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "online"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                                        </svg>
+                                        Online Research
+                                    </button>
+                                </li>
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "offline"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        Offline Analysis
+                                    </button>
+                                </li>
+                                <li>
+                                    <button hx-post="/demo/launch" 
+                                            hx-vals='{"demo_type": "continuous"}'
+                                            hx-swap="none"
+                                            class="text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Continuous Processing
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Plans Content -->
+                <div class="space-y-4">
+                    <!-- Plans Header -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Agent Plans</h2>
+                        <div class="badge badge-neutral">{{ plans|length }} Active Plans</div>
+                    </div>
+                    
+                    {% if plans %}
+                        {% for plan in plans %}
+                        <div class="card bg-base-100 shadow-xl">
+                            <div class="card-body">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="card-title">{{ plan.agent_name }}</h3>
+                                        <p class="text-sm text-base-content/70">Agent ID: {{ plan.agent_id }}</p>
+                                    </div>
+                                    <div class="badge {% if plan.status == 'running' %}badge-success{% elif plan.status == 'archived' %}badge-info{% elif plan.status == 'inactive' %}badge-warning{% else %}badge-neutral{% endif %}">
+                                        {{ plan.status|title }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Plan Goal -->
+                                <div class="mt-4">
+                                    <h4 class="font-semibold text-sm">Goal</h4>
+                                    <p class="text-base-content/70 text-sm">{{ plan.goal }}</p>
+                                </div>
+                                
+                                <!-- Current Step -->
+                                <div class="mt-4">
+                                    <h4 class="font-semibold text-sm">Current Step</h4>
+                                    <p class="text-base-content/70 text-sm">{{ plan.current_step }}</p>
+                                </div>
+                                
+                                <!-- Plan Data -->
+                                <div class="mt-4">
+                                    <h4 class="font-semibold text-sm">Agent Plan</h4>
+                                    <div class="bg-base-200 p-3 rounded-lg">
+                                        <pre class="text-xs text-base-content/70 whitespace-pre-wrap">{{ plan.plan_data }}</pre>
+                                    </div>
+                                </div>
+                                
+                                <!-- Progress -->
+                                <div class="mt-4">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-sm font-medium">Progress</span>
+                                        <span class="text-sm text-base-content/70">{{ plan.progress }}%</span>
+                                    </div>
+                                    <div class="progress progress-primary w-full">
+                                        <div class="progress-bar" style="width: {{ plan.progress }}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Start Time -->
+                                <div class="mt-4">
+                                    <h4 class="font-semibold text-sm">Started</h4>
+                                    <p class="text-base-content/70 text-sm">{{ plan.start_time }}</p>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="card-actions justify-end mt-4">
+                                    <button class="btn btn-sm btn-outline btn-primary"
+                                            hx-get="/agent-details/{{ plan.agent_id }}"
+                                            hx-target="#agent-details"
+                                            hx-swap="innerHTML">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                    
+                                    {% if plan.status == 'running' %}
+                                    <button class="btn btn-sm btn-outline btn-error"
+                                            hx-post="/demo/stop/{{ plan.agent_id }}"
+                                            hx-swap="none">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        Stop
+                                    </button>
+                                    {% endif %}
+                                    
+                                                        <button class="btn btn-sm btn-outline btn-warning"
+                            hx-delete="/plan/{{ plan.plan_id }}"
+                            hx-swap="none"
+                            hx-confirm="Are you sure you want to delete this plan? This will only remove the plan entry, not the agent.">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Delete Plan
+                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="card bg-base-100 shadow-sm border border-base-300">
+                            <div class="card-body p-4 text-center">
+                                <div class="text-base-content/50">
+                                    <svg class="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    <h3 class="font-semibold mb-2">No Active Plans</h3>
+                                    <p class="text-sm">Launch a demo to see agent plans in action</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SSE Connection Management Script -->
+    <script>
+        // SSE connection management
+        let eventSource;
+        
+        function connectSSE() {
+            eventSource = new EventSource('/agent-stream');
+            
+            eventSource.onopen = function() {
+                document.getElementById('sse-indicator').classList.remove('sse-disconnected');
+                document.getElementById('sse-indicator').classList.add('sse-connected');
+                document.getElementById('sse-status-text').textContent = 'Connected';
+            };
+            
+            eventSource.onerror = function() {
+                document.getElementById('sse-indicator').classList.remove('sse-connected');
+                document.getElementById('sse-indicator').classList.add('sse-disconnected');
+                document.getElementById('sse-status-text').textContent = 'Disconnected';
+                
+                // Reconnect after 5 seconds
+                setTimeout(connectSSE, 5000);
+            };
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('SSE message:', data);
+            };
+        }
+        
+        // Initialize SSE connection
+        document.addEventListener('DOMContentLoaded', function() {
+            connectSSE();
+        });
+    </script>
+</body>
+</html> 

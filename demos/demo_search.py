@@ -49,7 +49,7 @@ def main():
 
     # Import and test our search tool
     try:
-        from tools.web_tools import get_search_status, search_web
+        from tools.web_tools import get_web_extraction_status, search_web
 
         print("✅ Web search tools loaded")
     except ImportError as e:
@@ -58,7 +58,7 @@ def main():
 
     # Test search status
     print("\n📊 Search Status:")
-    status = get_search_status.invoke("")
+    status = get_web_extraction_status.invoke("")
     print(status)
 
     # Test search functionality
