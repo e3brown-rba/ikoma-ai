@@ -17,14 +17,21 @@ try:
     import trafilatura
     from trafilatura.metadata import extract_metadata
     from trafilatura.settings import use_config
+
+    TRAFILATURA_AVAILABLE = True
 except ImportError:
-    trafilatura = None
+    trafilatura = None  # type: ignore[assignment]
+    TRAFILATURA_AVAILABLE = False
 
 HTMLParser = None
 try:
-    from selectolax.parser import HTMLParser  # type: ignore
+    from selectolax.parser import HTMLParser as SelectolaxHTMLParser
+
+    HTMLParser = SelectolaxHTMLParser
+    SELECTOLAX_AVAILABLE = True
 except ImportError:
-    pass
+    HTMLParser = None
+    SELECTOLAX_AVAILABLE = False
 
 
 @dataclass
@@ -52,8 +59,8 @@ class WebContentExtractor:
             prefer_speed: If True, prefer selectolax for simple content
         """
         self.prefer_speed = prefer_speed
-        self.trafilatura_available = trafilatura is not None
-        self.selectolax_available = HTMLParser is not None
+        self.trafilatura_available = TRAFILATURA_AVAILABLE
+        self.selectolax_available = SELECTOLAX_AVAILABLE
         self.beautifulsoup_available = BeautifulSoup is not None
 
         # Configure trafilatura for optimal extraction
@@ -190,7 +197,7 @@ class WebContentExtractor:
         try:
             if HTMLParser is None:
                 raise RuntimeError("selectolax is not available")
-            tree = HTMLParser(html)  # type: ignore
+            tree = HTMLParser(html)
 
             # Remove unwanted elements
             for element in tree.css(
@@ -256,9 +263,7 @@ class WebContentExtractor:
     def _extract_with_beautifulsoup(self, html: str, url: str) -> ExtractedContent:
         """Fallback extraction using BeautifulSoup."""
         try:
-            if not self.beautifulsoup_available:
-                raise RuntimeError("BeautifulSoup is not available")
-            if BeautifulSoup is None:
+            if not self.beautifulsoup_available or BeautifulSoup is None:
                 raise RuntimeError("BeautifulSoup is not available")
             soup = BeautifulSoup(html, "html.parser")  # type: ignore[unreachable]
 
@@ -301,9 +306,7 @@ class WebContentExtractor:
 
     def _extract_headers_from_html(self, html: str) -> dict[str, list[str]]:
         """Extract headers using BeautifulSoup for structure analysis."""
-        if not self.beautifulsoup_available:
-            return {"h1": [], "h2": [], "h3": []}
-        if BeautifulSoup is None:
+        if not self.beautifulsoup_available or BeautifulSoup is None:
             return {"h1": [], "h2": [], "h3": []}
         soup = BeautifulSoup(html, "html.parser")  # type: ignore[unreachable]
         return self._extract_headers_bs4(soup)
@@ -322,9 +325,7 @@ class WebContentExtractor:
 
     def _extract_title_fallback(self, html: str) -> str:
         """Extract page title using multiple strategies, prioritizing og:title."""
-        if not self.beautifulsoup_available:
-            return "Untitled"
-        if BeautifulSoup is None:
+        if not self.beautifulsoup_available or BeautifulSoup is None:
             return "Untitled"
         soup = BeautifulSoup(html, "html.parser")  # type: ignore[unreachable]
 

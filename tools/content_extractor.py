@@ -138,7 +138,7 @@ class ModernContentExtractor:
             self.trafilatura_config.set("DEFAULT", "EXTRACTION_TIMEOUT", "30")
             self.trafilatura_config.set("DEFAULT", "MIN_EXTRACTED_SIZE", "200")
         else:
-            self.trafilatura_config = None
+            self.trafilatura_config = None  # type: ignore
 
     def extract_content(
         self, url: str, html_content: str, chunk_size: int = 1000
@@ -151,14 +151,16 @@ class ModernContentExtractor:
 
         if TRAFILATURA_AVAILABLE:
             try:
-                extracted_text = trafilatura.extract(
+                extracted_result = trafilatura.extract(
                     html_content,
                     config=self.trafilatura_config,
                     include_comments=False,
                     include_tables=True,
                     include_formatting=False,
                 )
-                extraction_method = "trafilatura"
+                if extracted_result is not None:
+                    extracted_text = extracted_result
+                    extraction_method = "trafilatura"
             except Exception as e:
                 logger.warning(f"Trafilatura extraction failed: {e}")
 
@@ -166,13 +168,15 @@ class ModernContentExtractor:
         if not extracted_text or len(extracted_text.strip()) < 100:
             if TRAFILATURA_AVAILABLE:
                 try:
-                    extracted_text = trafilatura.extract(
+                    extracted_result = trafilatura.extract(
                         html_content,
                         config=self.trafilatura_config,
                         favor_precision=False,
                         favor_recall=True,
                     )
-                    extraction_method = "trafilatura_fallback"
+                    if extracted_result is not None:
+                        extracted_text = extracted_result
+                        extraction_method = "trafilatura_fallback"
                 except Exception as e:
                     logger.warning(f"Trafilatura fallback failed: {e}")
 
@@ -204,12 +208,14 @@ class ModernContentExtractor:
                 extraction_method = "regex_fallback"
 
         # Extract title
-        title = url
+        title: str = url
         if TRAFILATURA_AVAILABLE:
             try:
-                metadata = trafilatura.extract_metadata(html_content)
-                if metadata and metadata.title:
-                    title = metadata.title
+                metadata_obj = trafilatura.extract_metadata(html_content)
+                if metadata_obj and metadata_obj.title:
+                    extracted_title = metadata_obj.title
+                    if extracted_title is not None:
+                        title = str(extracted_title)
             except Exception as e:
                 logger.debug(f"Title extraction failed: {e}")
 
@@ -222,7 +228,7 @@ class ModernContentExtractor:
         chunks = self._intelligent_chunk_text(extracted_text or "", chunk_size)
 
         # Metadata compilation
-        metadata = {
+        metadata: dict[str, Any] = {
             "extraction_method": extraction_method,
             "content_length": len(extracted_text or ""),
             "chunk_count": len(chunks),
@@ -236,7 +242,9 @@ class ModernContentExtractor:
             try:
                 metadata_obj = trafilatura.extract_metadata(html_content)
                 if metadata_obj and metadata_obj.language:
-                    metadata["language"] = metadata_obj.language
+                    extracted_language = metadata_obj.language
+                    if extracted_language is not None:
+                        metadata["language"] = str(extracted_language)
             except Exception as e:
                 logger.debug(f"Language extraction failed: {e}")
 

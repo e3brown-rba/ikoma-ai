@@ -26,6 +26,13 @@ REPO_ROOT = Path(__file__).parent.parent
 
 def confirm_destructive_action(action_description: str, filename: str) -> bool:
     """Ask user for confirmation before performing destructive file operations."""
+    # Check if auto-confirm is enabled via environment variable
+    if os.getenv("IKOMA_DISABLE_CHECKPOINT") or os.getenv("IKOMA_DISABLE_CHECKPOINTER"):
+        print(f"\n⚠️  AUTO-CONFIRMED: {action_description}")
+        print(f"   File: {filename}")
+        print("   (Auto-confirm enabled via environment variable)")
+        return True
+
     print("\n⚠️  CONFIRMATION REQUIRED:")
     print(f"   Action: {action_description}")
     print(f"   File: {filename}")

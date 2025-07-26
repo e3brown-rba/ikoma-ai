@@ -1,3 +1,4 @@
+import os
 import queue
 import threading
 import time
@@ -19,7 +20,10 @@ def safe_get(d: dict[str, Any], key: str, default: Any = None) -> Any:
 
 
 class AsyncLogger:
-    def __init__(self, filename: str = "ikoma_agent.log") -> None:
+    def __init__(self, filename: str | None = None) -> None:
+        # Use environment variable or default to the expected debug log filename
+        if filename is None:
+            filename = os.getenv("IKOMA_TUI_LOG_FILE", "ikoma_tui_debug.log")
         self.filename = filename
         self.log_queue: queue.Queue[str] = queue.Queue()
         self.running = True
@@ -62,7 +66,9 @@ class IkomaTUI:
 
         # Setup async logging
         self.async_logger = AsyncLogger()
-        print("[TUI DEBUG] TUI initialized")  # Console debug
+        # Only show debug output if explicitly enabled
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print("[TUI DEBUG] TUI initialized")  # Console debug
 
         self.setup_layout()
         self.subscribe_events()
@@ -81,17 +87,21 @@ class IkomaTUI:
         )
 
     def subscribe_events(self) -> None:
-        print("[TUI DEBUG] Subscribing to events")  # Console debug
+        # Only show debug output if explicitly enabled
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print("[TUI DEBUG] Subscribing to events")  # Console debug
         broadcaster.subscribe("planning_start", self.on_planning_start)
         broadcaster.subscribe("plan_generated", self.on_plan_generated)
         broadcaster.subscribe("step_start", self.on_step_start)
         broadcaster.subscribe("step_complete", self.on_step_complete)
         broadcaster.subscribe("reflection", self.on_reflection)
         broadcaster.subscribe("reflection_error", self.on_reflection_error)
-        print("[TUI DEBUG] Event subscriptions complete")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print("[TUI DEBUG] Event subscriptions complete")  # Console debug
 
     def on_planning_start(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Planning started: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Planning started: {data}")  # Console debug
         self.async_logger.log(
             "PLANNING_START", f"Planning started: {data.get('user_request', '')}", data
         )
@@ -104,7 +114,8 @@ class IkomaTUI:
         self.changelog.appendleft(message)
 
     def on_plan_generated(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Plan generated: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Plan generated: {data}")  # Console debug
         self.async_logger.log(
             "PLAN_GENERATED",
             f"Plan generated with {data.get('step_count', 0)} steps",
@@ -122,7 +133,8 @@ class IkomaTUI:
             self.async_logger.log("PLAN_REASONING", data["reasoning"])
 
     def on_step_start(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Step start: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Step start: {data}")  # Console debug
         self.async_logger.log(
             "STEP_START",
             f"Step {data.get('step_index')} started: {data.get('tool_name')} - {data.get('description')}",
@@ -135,7 +147,8 @@ class IkomaTUI:
         self.changelog.appendleft(message)
 
     def on_step_complete(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Step complete: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Step complete: {data}")  # Console debug
         self.async_logger.log(
             "STEP_COMPLETE",
             f"Step {data.get('step_index')} {data.get('status')}: {data.get('result')}",
@@ -154,7 +167,8 @@ class IkomaTUI:
         self.changelog.appendleft(message)
 
     def on_reflection(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Reflection: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Reflection: {data}")  # Console debug
         self.async_logger.log(
             "REFLECTION",
             f"Reflection: {data.get('reasoning', '')} | Summary: {data.get('summary', '')} | Success Rate: {data.get('success_rate', '')}",
@@ -177,7 +191,8 @@ class IkomaTUI:
             self.changelog.appendleft(message)
 
     def on_reflection_error(self, data: dict[str, Any]) -> None:
-        print(f"[TUI DEBUG] Reflection error: {data}")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print(f"[TUI DEBUG] Reflection error: {data}")  # Console debug
         self.async_logger.log(
             "REFLECTION_ERROR", f"Reflection error: {data.get('error')}", data
         )
@@ -221,7 +236,8 @@ class IkomaTUI:
 
     def start_monitoring(self, agent_state_callback: Any = None) -> None:
         """Start TUI monitoring with live updates"""
-        print("[TUI DEBUG] TUI monitoring started")  # Console debug
+        if os.getenv("IKOMA_TUI_DEBUG") == "true":
+            print("[TUI DEBUG] TUI monitoring started")  # Console debug
         self.async_logger.log("TUI_START", "TUI monitoring started")
         with Live(
             self.layout, refresh_per_second=self.refresh_rate, screen=True

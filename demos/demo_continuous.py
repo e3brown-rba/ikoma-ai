@@ -9,13 +9,13 @@ import sys
 def main():
     os.environ["LMSTUDIO_MODEL"] = "meta-llama-3-8b-instruct"
     cmd = [sys.executable, "-m", "agent.agent", "--demo", "continuous"]
-    print("🎬 Launching Continuous Batch Processing Demo")
+    print("🎬 Launching Memory Operations & Retrieval Demo")
     print("=" * 60)
     print("This demo will:")
-    print("• Count word frequencies across .md files")
-    print("• Write word_freq.csv")
-    print("• Run for multiple iterations")
-    print("• Demonstrate checkpoint recovery")
+    print("• Create memory entries about Python best practices")
+    print("• Create memory entries about web development tips")
+    print("• Retrieve and summarize both memory entries")
+    print("• Demonstrate memory operations and retrieval")
     print("• Work entirely offline")
     print("=" * 60)
     print("Press Ctrl+C to stop the demo.")

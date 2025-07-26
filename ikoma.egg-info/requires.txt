@@ -1,7 +1,0 @@
-langchain-openai
-langgraph
-chromadb
-python-dotenv
-openai
-pathlib
-uuid
