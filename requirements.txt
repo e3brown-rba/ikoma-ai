@@ -36,6 +36,7 @@ selectolax==0.3.25         # High-performance HTML parsing for speed-critical sc
 lxml>=4.6.5                # Security-patched XML/HTML processing (CVE fixes)
 beautifulsoup4>=4.12.0     # HTML/XML parsing library
 types-beautifulsoup4==4.12.0.20250516  # Type stubs for BeautifulSoup
+types-requests==2.32.4.20250611  # Type stubs for requests library
 textstat>=0.7.8            # Text quality scoring and readability metrics
 
 # Development Tools
