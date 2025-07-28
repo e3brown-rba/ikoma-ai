@@ -46,7 +46,10 @@ phishing.org
         """Clean up test fixtures."""
         import shutil
 
-        shutil.rmtree(self.temp_dir)
+        try:
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
+        except Exception:
+            pass  # Ignore cleanup errors
 
     def test_domain_filter_initialization(self):
         """Test domain filter initialization."""

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import signal
 import sys
 import time
 import uuid
@@ -46,6 +47,18 @@ except ImportError:
 # Load environment variables from .env file
 load_dotenv()
 os.environ["OPENAI_API_KEY"] = "sk-dummy"
+
+
+def signal_handler(sig: int, frame: Any) -> None:
+    """Handle shutdown signals gracefully."""
+    print("\n🛑 Received shutdown signal, cleaning up...")
+    # Force close ChromaDB connections
+    try:
+        from tools.vector_store import cleanup_vector_store
+        cleanup_vector_store()
+    except ImportError:
+        pass
+    sys.exit(0)
 
 
 # --- Enhanced State Definition ---
@@ -1421,6 +1434,10 @@ def main() -> None:
         help="Dashboard server port (default: 8000)",
     )
     args = parser.parse_args()
+
+    # Register signal handlers for clean shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     # Handle demo mode - pre-loads specific tasks and enables TUI
     if getattr(args, "demo", False):

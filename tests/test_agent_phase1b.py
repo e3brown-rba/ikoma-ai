@@ -95,7 +95,10 @@ class TestAgentPhase1B:
             yield store
 
         # Use ignore_errors to handle any remaining file locks
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        try:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception:
+            pass  # Ignore cleanup errors
 
     def test_tool_loader_initialization(self):
         """Test that ToolLoader initializes properly."""

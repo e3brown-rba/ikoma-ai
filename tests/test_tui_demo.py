@@ -22,9 +22,9 @@ def main():
     print("Command:", " ".join(cmd))
     print("\nPress Ctrl+C to stop the demo.")
     try:
-        subprocess.run(cmd)
-    except KeyboardInterrupt:
-        print("\nDemo stopped by user.")
+        subprocess.run(cmd, timeout=30)  # Add timeout to prevent hanging
+    except (KeyboardInterrupt, subprocess.TimeoutExpired):
+        print("\nDemo stopped by user or timeout.")
 
 
 if __name__ == "__main__":
