@@ -138,7 +138,7 @@ class ModernContentExtractor:
             self.trafilatura_config.set("DEFAULT", "EXTRACTION_TIMEOUT", "30")
             self.trafilatura_config.set("DEFAULT", "MIN_EXTRACTED_SIZE", "200")
         else:
-            self.trafilatura_config = None  # type: ignore
+            self.trafilatura_config = None  # type: ignore[assignment]
 
     def extract_content(
         self, url: str, html_content: str, chunk_size: int = 1000

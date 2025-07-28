@@ -23,8 +23,8 @@ try:
     from sse_starlette import EventSourceResponse
 except ImportError:
     # Fallback for environments where sse_starlette is not available
-    from starlette.responses import (
-        StreamingResponse as EventSourceResponse,  # type: ignore[assignment]
+    from starlette.responses import (  # type: ignore[assignment]
+        StreamingResponse as EventSourceResponse,
     )
 
 from dashboard.metrics import metrics_router
