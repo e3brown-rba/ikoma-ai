@@ -50,7 +50,7 @@ def test_agent_with_citations():
     # Test state management
     state_dict = citation_mgr.to_dict()
     print(f"✅ State management: {len(state_dict['citations'])} citations stored")
-    
+
     # Assert that citations were added successfully
     assert citation_id1 is not None
     assert citation_id2 is not None
