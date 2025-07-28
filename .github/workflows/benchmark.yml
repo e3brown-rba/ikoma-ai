@@ -1,0 +1,40 @@
+name: Performance
+
+on:
+  pull_request:
+    paths: ['agent/**', 'tools/**', 'benchmarks/**']
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+        cache-dependency-path: pyproject.toml
+        
+    - name: Install dependencies
+      run: |
+        pip install -e .
+        pip install matplotlib
+        
+    - name: Run benchmarks
+      run: |
+        python -m benchmarks.bench --ci-mode
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results
+        path: |
+          benchmark_results.json
+          benchmark_*.txt 

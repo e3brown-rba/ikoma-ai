@@ -56,6 +56,9 @@ Thumbs.db
 # Project retrospectives (local only)
 RETRO_PHASE_1B.md
 
+# Claude Code configuration (local only)
+CLAUDE.md
+
 # Release notes storage (local only)
 releases/
 

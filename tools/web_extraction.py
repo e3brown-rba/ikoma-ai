@@ -25,7 +25,7 @@ except ImportError:
 
 HTMLParser = None
 try:
-    from selectolax.parser import HTMLParser as SelectolaxHTMLParser
+    from selectolax.parser import HTMLParser as SelectolaxHTMLParser  # type: ignore
 
     HTMLParser = SelectolaxHTMLParser
     SELECTOLAX_AVAILABLE = True
