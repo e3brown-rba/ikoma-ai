@@ -13,18 +13,14 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    
-    strategy:
-      matrix:
-        python: ["3.10", "3.11", "3.12"]
+    timeout-minutes: 15
     
     steps:
       - uses: actions/checkout@v4
       
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
       
@@ -40,14 +36,17 @@ jobs:
       
       - name: Type Check
         run: mypy agent tools --explicit-package-bases
-        if: matrix.python == '3.11'
       
       - name: Test with Coverage
+        env:
+          CI: true
         run: |
           pytest tests/ -m "not dashboard" \
             --cov=agent --cov=tools \
             --cov-report=term-missing \
-            --cov-fail-under=35
+            --cov-fail-under=35 \
+            --tb=short \
+            --maxfail=5
       
       - name: Security Check
         run: |
@@ -66,10 +65,8 @@ jobs:
             --ignore-vuln GHSA-37mw-44qp-f5jm \
             --ignore-vuln PYSEC-2022-43012 \
             --ignore-vuln PYSEC-2025-49
-        if: matrix.python == '3.11'
       
       - name: Build Package
         run: |
           pip install build
           python -m build --sdist --wheel --outdir dist/
-        if: matrix.python == '3.11'

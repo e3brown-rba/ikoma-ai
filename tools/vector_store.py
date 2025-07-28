@@ -328,9 +328,11 @@ def cleanup_vector_store() -> None:
             # Close ChromaDB client connection
             if hasattr(vector_store, "client"):
                 vector_store.client.reset()
-            vector_store = None
         except Exception as e:
             print(f"Warning: Error during vector store cleanup: {e}")
+        finally:
+            # Always set to None regardless of cleanup success
+            vector_store = None
 
     # Force close any ChromaDB global instances
     try:
