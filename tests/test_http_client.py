@@ -333,7 +333,7 @@ class TestHTTPTools:
             }
             mock_get_client.return_value = mock_client
 
-            result = make_http_request("https://example.com/test")
+            result = make_http_request.invoke({"url": "https://example.com/test"})
 
             assert "❌ Request failed" in result
             assert "Connection timeout" in result

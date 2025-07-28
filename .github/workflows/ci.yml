@@ -60,10 +60,6 @@ jobs:
           # Dashboard tests can be run locally with: pytest tests/ -m dashboard
           pytest tests/ -m "not dashboard" --cov --cov-report=term-missing
           # Note: No coverage enforcement for POC - just run tests to ensure they pass
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage-xml
-          path: coverage.xml
 
   security:
     needs: test
