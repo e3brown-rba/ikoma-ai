@@ -37,8 +37,8 @@ class TestResourceCleanupAnalysis:
             assert not temp_dir.exists()
 
     @pytest.mark.skipif(
-        os.getenv("CI") == "true", 
-        reason="ChromaDB cleanup test can hang in CI - run locally only"
+        os.getenv("CI") == "true",
+        reason="ChromaDB cleanup test can hang in CI - run locally only",
     )
     def test_chromadb_connection_cleanup(self):
         """Test that ChromaDB connections are properly cleaned up."""
@@ -78,7 +78,7 @@ class TestResourceCleanupAnalysis:
                         os.environ["VECTOR_STORE_PATH"] = original_env
                     elif "VECTOR_STORE_PATH" in os.environ:
                         del os.environ["VECTOR_STORE_PATH"]
-                    
+
                     # Cleanup temp directory
                     if temp_dir.exists():
                         shutil.rmtree(temp_dir, ignore_errors=True)
