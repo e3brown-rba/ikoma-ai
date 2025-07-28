@@ -55,6 +55,7 @@ def signal_handler(sig: int, frame: Any) -> None:
     # Force close ChromaDB connections
     try:
         from tools.vector_store import cleanup_vector_store
+
         cleanup_vector_store()
     except ImportError:
         pass

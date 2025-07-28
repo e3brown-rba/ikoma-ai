@@ -56,10 +56,10 @@ def sample_metrics_file():
             f.write(json.dumps(metric) + "\n")
 
         temp_file = f.name
-    
+
     # Yield the file name and clean up after the test
     yield temp_file
-    
+
     # Cleanup
     try:
         if os.path.exists(temp_file):
