@@ -54,7 +54,7 @@ def test_agent_with_citations():
     # Assert that citations were added successfully
     assert citation_id1 is not None
     assert citation_id2 is not None
-    assert len(state_dict['citations']) >= 2
+    assert len(state_dict["citations"]) >= 2
 
 
 def test_citation_parsing():
