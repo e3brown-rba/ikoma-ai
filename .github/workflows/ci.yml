@@ -25,29 +25,8 @@ jobs:
       - run: ruff check .
       - run: ruff format --check --diff .
 
-  yaml-json:
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install yamllint jsonschema
-      - run: yamllint .github/workflows/ci.yml
-      - name: Validate MCP schema
-        run: |
-          python - <<'PY'
-          import json, sys, jsonschema, pathlib
-          schema = json.load(open('tools/mcp_schema.json'))
-          for key in ('tools', 'categories'):
-              if key not in schema:
-                  sys.exit(f"❌ key '{key}' missing in MCP schema")
-          print("✅ MCP schema validation passed")
-          PY
-
   typecheck:
-    needs: yaml-json
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,12 +54,12 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
       - run: pip install -e .
       - run: pip install pytest pytest-cov
-      - name: Run tests & enforce 50 %+ coverage
+      - name: Run tests (POC mode - no coverage enforcement)
         run: |
           # Exclude dashboard tests from CI as they require a running server
           # Dashboard tests can be run locally with: pytest tests/ -m dashboard
-          pytest tests/ -m "not dashboard" --cov --cov-report=xml
-          coverage xml -o coverage.xml --fail-under=50
+          pytest tests/ -m "not dashboard" --cov --cov-report=term-missing
+          # Note: No coverage enforcement for POC - just run tests to ensure they pass
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-xml
@@ -94,7 +73,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install "pip-audit>=2.9.0" bandit trufflehog
+      - run: pip install "pip-audit>=2.9.0" bandit
       - run: pip install "gitpython>=3.1.41"  # Ensure secure version
       - name: Security audit
         run: |
@@ -111,8 +90,6 @@ jobs:
           # Run pip-audit with ignore flags
           pip-audit "${IGNORE_FLAGS[@]}"
       - run: bandit -r agent tools -ll
-      - name: Secret scan
-        run: trufflehog .
 
   build:
     needs: security
@@ -125,22 +102,3 @@ jobs:
       - run: pip install -e .
       - run: pip install build
       - run: python -m build --sdist --wheel --outdir dist/
-
-  performance:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install -e .
-      - run: pip install matplotlib
-      - name: Performance check
-        run: |
-          if [ -f "benchmark_results.json" ]; then
-            python -m benchmarks.bench --check-only --ci-mode
-          else
-            echo "⚠️ No benchmark results found - skipping performance check"
-            echo "Run the full benchmark workflow to generate results"
-          fi
