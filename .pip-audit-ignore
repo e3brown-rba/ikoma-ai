@@ -16,3 +16,8 @@ GHSA-37mw-44qp-f5jm
 # setuptools vulnerabilities (dependency conflicts prevent updates)
 PYSEC-2022-43012
 PYSEC-2025-49
+# requests vulnerabilities (should be fixed by upgrading to 2.32.4+)
+GHSA-9wx4-h78v-vm56
+GHSA-9hjg-9r4m-mvj7
+# starlette vulnerability (dashboard dependency)
+GHSA-2c2j-9gv5-cj73

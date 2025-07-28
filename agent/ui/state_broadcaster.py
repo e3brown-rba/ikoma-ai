@@ -35,7 +35,8 @@ class AgentStateBroadcaster:
             # Notify all subscribers (TUI + WebSocket clients)
             for callback in self.listeners[event_type]:
                 try:
-                    callback(event)
+                    # Pass the data dictionary to callbacks, not the AgentEvent object
+                    callback(data)
                 except Exception as e:
                     print(f"Broadcast error: {e}")
 

@@ -1,0 +1,150 @@
+<div class="card bg-base-100 shadow-sm border border-base-300" 
+     data-agent-id="{{ agent.id }}">
+    <div class="card-body p-4">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h3 class="font-semibold text-base">{{ agent.name }}</h3>
+                <p class="text-sm text-base-content/70">ID: {{ agent.id }}</p>
+                {% if agent.is_demo %}
+                <div class="badge badge-sm badge-primary mt-1">
+                    {{ agent.demo_type|title }} Demo
+                </div>
+                {% endif %}
+                {% if agent.goal %}
+                <p class="text-xs text-base-content/50 mt-1">{{ agent.goal[:100] }}{% if agent.goal|length > 100 %}...{% endif %}</p>
+                {% endif %}
+            </div>
+            <div class="flex flex-col items-end gap-2">
+                <!-- Status Badge -->
+                <div class="badge badge-sm 
+                    {% if agent.status == 'running' %}badge-success
+                    {% elif agent.status == 'completed' %}badge-info
+                    {% elif agent.status == 'error' %}badge-error
+                    {% elif agent.status == 'stopped' %}badge-warning
+                    {% else %}badge-neutral{% endif %}">
+                    {{ agent.status|title }}
+                </div>
+                
+                <!-- Enhanced Progress Bar with specific classes -->
+                {% if agent.progress > 0 %}
+                <div class="w-20">
+                    <div class="progress progress-primary w-full h-2">
+                        <div class="progress-bar" style="width: {{ agent.progress }}%"
+                             data-progress="{{ agent.progress }}"></div>
+                    </div>
+                    <div class="text-xs text-center mt-1 progress-text">{{ agent.progress }}%</div>
+                    <div class="text-xs text-center text-base-content/50 steps-text">
+                        {{ agent.steps_completed }}/{{ agent.total_steps }} steps
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Current Step Indicator -->
+                <div class="text-xs text-base-content/60 current-step max-w-20 truncate" 
+                     title="{{ agent.current_step }}">
+                    {{ agent.current_step[:15] }}{% if agent.current_step|length > 15 %}...{% endif %}
+                </div>
+                
+                <!-- Execution Time -->
+                {% if agent.execution_time and agent.execution_time != '00:00:00' %}
+                <div class="text-xs text-base-content/50">
+                    {{ agent.execution_time }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="card-actions justify-end mt-3">
+            {% if agent.is_demo %}
+                {% if agent.status == 'running' %}
+                <button class="btn btn-sm btn-outline btn-error"
+                        hx-post="/demo/stop/{{ agent.id }}"
+                        hx-swap="none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Stop Demo
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-outline btn-success"
+                        hx-post="/demo/launch"
+                        hx-vals='{"demo_type": "{{ agent.demo_type }}", "agent_id": "{{ agent.id }}"}'
+                        hx-swap="none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Restart
+                </button>
+                {% endif %}
+            {% else %}
+                {% if agent.status == 'running' %}
+                <button class="btn btn-sm btn-outline btn-error"
+                        hx-post="/agent-control"
+                        hx-vals='{"action": "stop", "agent_id": "{{ agent.id }}"}'
+                        hx-swap="none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Stop
+                </button>
+                {% else %}
+                <button class="btn btn-sm btn-outline btn-success"
+                        hx-post="/agent-control"
+                        hx-vals='{"action": "start", "agent_id": "{{ agent.id }}"}'
+                        hx-swap="none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Start
+                </button>
+                {% endif %}
+            {% endif %}
+            
+            <button class="btn btn-sm btn-outline btn-primary"
+                    hx-get="/agent-details/{{ agent.id }}"
+                    hx-target="#agent-details"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-on="htmx:afterRequest: 
+                        // Set the selected agent and refresh the details pane
+                        fetch('/agent-details/{{ agent.id }}', {method: 'GET'})
+                        .then(() => {
+                            // Trigger a refresh of the details pane using the SSE logic
+                            const agentDetailsElement = document.querySelector('[hx-get=\'/agent-details/selected\']');
+                            if (agentDetailsElement) {
+                                htmx.ajax('GET', '/agent-details/selected', {target: agentDetailsElement, swap: 'innerHTML'});
+                            }
+                        });">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                Details
+            </button>
+            
+            <button class="btn btn-sm btn-outline btn-warning"
+                    hx-delete="/agent/{{ agent.id }}"
+                    hx-swap="innerHTML"
+                    hx-target="#agent-details"
+                    hx-confirm="Are you sure you want to delete this agent?"
+                    hx-on="htmx:afterRequest: 
+                        // Remove the agent card from the DOM
+                        const agentCard = document.querySelector('[data-agent-id=\'{{ agent.id }}\']');
+                        if (agentCard) {
+                            agentCard.remove();
+                        }
+                        // Clear selected agent if it was this one
+                        if (selectedAgentId === '{{ agent.id }}') {
+                            selectedAgentId = null;
+                        }
+                        // Event system will handle state updates automatically
+                        console.log('Agent deletion initiated - event system will handle state updates');">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete
+            </button>
+        </div>
+    </div>
+</div> 

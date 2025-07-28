@@ -17,49 +17,44 @@ def test_agent_with_citations():
     """Test the agent with citation functionality."""
     print("🧪 Testing Agent with Citations...")
 
-    try:
-        # Create agent
-        create_agent()  # Test that agent creation works
-        print("✅ Agent created successfully")
+    # Create agent
+    create_agent()  # Test that agent creation works
+    print("✅ Agent created successfully")
 
-        # Test citation manager integration
-        citation_mgr = ProductionCitationManager()
+    # Test citation manager integration
+    citation_mgr = ProductionCitationManager()
 
-        # Add some test citations
-        citation_id1 = citation_mgr.add_citation(
-            url="https://example.com/test1",
-            title="Test Source 1",
-            content_preview="This is a test source",
-            domain="example.com",
-        )
-        citation_id2 = citation_mgr.add_citation(
-            url="https://example.com/test2",
-            title="Test Source 2",
-            content_preview="This is another test source",
-            domain="example.com",
-        )
+    # Add some test citations
+    citation_id1 = citation_mgr.add_citation(
+        url="https://example.com/test1",
+        title="Test Source 1",
+        content_preview="This is a test source",
+        domain="example.com",
+    )
+    citation_id2 = citation_mgr.add_citation(
+        url="https://example.com/test2",
+        title="Test Source 2",
+        content_preview="This is another test source",
+        domain="example.com",
+    )
 
-        print(f"✅ Added test citations: {citation_id1}, {citation_id2}")
+    print(f"✅ Added test citations: {citation_id1}, {citation_id2}")
 
-        # Test citation rendering
-        test_response = "Here is some information [[1]] and more details [[2]]."
-        print("\n🤖 Ikoma: ", end="")
-        citation_mgr.render_response_with_citations(test_response)
+    # Test citation rendering
+    test_response = "Here is some information [[1]] and more details [[2]]."
+    print("\n🤖 Ikoma: ", end="")
+    citation_mgr.render_response_with_citations(test_response)
 
-        print("✅ Citation rendering works correctly")
+    print("✅ Citation rendering works correctly")
 
-        # Test state management
-        state_dict = citation_mgr.to_dict()
-        print(f"✅ State management: {len(state_dict['citations'])} citations stored")
+    # Test state management
+    state_dict = citation_mgr.to_dict()
+    print(f"✅ State management: {len(state_dict['citations'])} citations stored")
 
-        return True
-
-    except Exception as e:
-        print(f"❌ Test failed: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+    # Assert that citations were added successfully
+    assert citation_id1 is not None
+    assert citation_id2 is not None
+    assert len(state_dict["citations"]) >= 2
 
 
 def test_citation_parsing():

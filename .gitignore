@@ -56,6 +56,9 @@ Thumbs.db
 # Project retrospectives (local only)
 RETRO_PHASE_1B.md
 
+# Claude Code configuration (local only)
+CLAUDE.md
+
 # Release notes storage (local only)
 releases/
 
@@ -72,3 +75,6 @@ benchmark_results.json
 # Metrics and logs (local runtime artifacts)
 agent/logs/
 agent/logs/*.jsonl
+
+# Dashboard tests (local only)
+dashboard/tests/

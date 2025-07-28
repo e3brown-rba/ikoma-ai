@@ -320,6 +320,30 @@ def get_vector_store() -> PersistentVectorStore:
     return vector_store
 
 
+def cleanup_vector_store() -> None:
+    """Clean up vector store connections and resources."""
+    global vector_store
+    if vector_store is not None:
+        try:
+            # Close ChromaDB client connection
+            if hasattr(vector_store, "client"):
+                vector_store.client.reset()
+        except Exception as e:
+            print(f"Warning: Error during vector store cleanup: {e}")
+        finally:
+            # Always set to None regardless of cleanup success
+            vector_store = None
+
+    # Force close any ChromaDB global instances
+    try:
+        import chromadb
+
+        if hasattr(chromadb, "_client_instance"):
+            chromadb._client_instance = None
+    except ImportError:
+        pass
+
+
 def example_persist() -> dict[str, Any] | None:
     """Minimal example to verify persistence in regression tests."""
     store = get_vector_store()

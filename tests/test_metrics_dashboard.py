@@ -1,6 +1,7 @@
 """Tests for metrics dashboard functionality."""
 
 import json
+import os
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -54,7 +55,17 @@ def sample_metrics_file():
         for metric in metrics:
             f.write(json.dumps(metric) + "\n")
 
-        return f.name
+        temp_file = f.name
+
+    # Yield the file name and clean up after the test
+    yield temp_file
+
+    # Cleanup
+    try:
+        if os.path.exists(temp_file):
+            os.unlink(temp_file)
+    except Exception:
+        pass  # Ignore cleanup errors
 
 
 def test_metrics_dashboard_page(client):
